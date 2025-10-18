@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { attestationSchema } from "@/lib/validation";
-import { useAccount, usePublicClient } from "wagmi";
+import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { env } from "@/lib/env";
 import { EAS, SchemaEncoder, ZERO_BYTES32, NO_EXPIRATION } from "@ethereum-attestation-service/eas-sdk";
 import { EAS_GET_NONCE_ABI } from "@/lib/eas";
@@ -13,6 +13,7 @@ const formSchema = attestationSchema;
 
 export function AttestationForm() {
   const { address, isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<null | { txHash?: string; uid?: string; error?: string }>(null);
   const [errors, setErrors] = useState<string | null>(null);
@@ -168,13 +169,22 @@ export function AttestationForm() {
     }
     try {
       setSubmitting(true);
-      // Build EAS SDK objects from wallet (ethers provider)
-      if (!(window as any).ethereum) throw new Error("No injected wallet available");
-      // BrowserProvider does not accept an options object; passing { staticNetwork: true }
-      // as the second param triggers "invalid network object name or chainId".
-      const provider = new ethers.BrowserProvider((window as any).ethereum);
-      const signer = await provider.getSigner();
-      const attesterAddr = await signer.getAddress();
+      // Get signer from connected wagmi wallet (Web3Auth connector or injected)
+      let signer: ethers.Signer;
+      let attesterAddr: string;
+      let eip1193: any = null;
+      try {
+        const t: any = walletClient?.transport as any;
+        if (t && t.type === "custom" && t.value) eip1193 = t.value;
+      } catch {}
+      if (!eip1193 && typeof window !== "undefined" && (window as any).ethereum) {
+        eip1193 = (window as any).ethereum;
+      }
+      if (!eip1193) throw new Error("No wallet connected. Please connect a wallet first.");
+      const ethersProvider = new ethers.BrowserProvider(eip1193 as any);
+      signer = await ethersProvider.getSigner();
+
+      attesterAddr = await signer.getAddress();
 
       const eas = new EAS(env.easAddress);
       eas.connect(signer as any);
@@ -474,6 +484,7 @@ export function AttestationForm() {
       <div style={{ fontSize: 12, color: "#555", marginBottom: 8 }}>
         Env default schema: {env.defaultSchemaUid || "(none)"}
       </div>
+      {/* Removed inline wallet connect buttons; use the global WalletConnect component instead */}
       <label>
         Schema UID
         <input
