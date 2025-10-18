@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureFilebaseEnv, serverEnv } from "@/lib/env-server";
-import { buildGatewayUrl, putObjectToFilebase } from "@/lib/filebase";
+import { buildGatewayUrl, putObjectToFilebase, ipfsRpcAdd } from "@/lib/filebase";
 
 export const runtime = "nodejs";
 
@@ -10,6 +10,16 @@ export async function POST(req: NextRequest) {
     const form = await req.formData();
     const file = form.get("file") as File | null;
     if (!file) return NextResponse.json({ error: "file field is required" }, { status: 400 });
+    const useRpc = Boolean(process.env.FILEBASE_IPFS_RPC_KEY);
+    if (useRpc) {
+      try {
+        const { cid, url } = await ipfsRpcAdd(file, file.name || "file");
+        return NextResponse.json({ ok: true, key: null, cid, url });
+      } catch (e: any) {
+        // fall back to S3 path
+      }
+    }
+
     const arrayBuffer = await file.arrayBuffer();
     const buf = Buffer.from(arrayBuffer);
     const ext = (file.name || "").split(".").pop() || "bin";
@@ -27,4 +37,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: e?.message || String(e) }, { status: 500 });
   }
 }
-

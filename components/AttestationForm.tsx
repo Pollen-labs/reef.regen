@@ -75,6 +75,7 @@ export function AttestationForm() {
       const species = values.speciesCsv.split(",").map(s => s.trim()).filter(Boolean);
       const contributors = values.contributorsCsv.split(",").map(s => s.trim()).filter(Boolean);
       const regenLocation = [values.lat, values.lng].filter(v => v !== "");
+      const fileCidNorm = values.fileCid || "";
       return encoder.encodeData([
         { name: "regenType", type: "string", value: values.regenType },
         { name: "regenLocation", type: "string[]", value: regenLocation as any },
@@ -84,7 +85,7 @@ export function AttestationForm() {
         { name: "species", type: "string[]", value: species as any },
         { name: "summary", type: "string", value: values.summary },
         { name: "contributors", type: "string[]", value: contributors as any },
-        { name: "fileCID", type: "string", value: values.fileCid || "" },
+        { name: "fileCID", type: "string", value: fileCidNorm },
       ]);
     } catch {
       return "0x";
@@ -99,6 +100,7 @@ export function AttestationForm() {
     const species = v.speciesCsv.split(",").map(s => s.trim()).filter(Boolean);
     const contributors = v.contributorsCsv.split(",").map(s => s.trim()).filter(Boolean);
     const regenLocation = [v.lat, v.lng].filter(x => x !== "");
+    const fileCidNorm = v.fileCid || "";
     return encoder.encodeData([
       { name: "regenType", type: "string", value: v.regenType },
       { name: "regenLocation", type: "string[]", value: regenLocation as any },
@@ -108,7 +110,7 @@ export function AttestationForm() {
       { name: "species", type: "string[]", value: species as any },
       { name: "summary", type: "string", value: v.summary },
       { name: "contributors", type: "string[]", value: contributors as any },
-      { name: "fileCID", type: "string", value: v.fileCid || "" },
+      { name: "fileCID", type: "string", value: fileCidNorm },
     ]);
   }
 
@@ -182,7 +184,9 @@ export function AttestationForm() {
       addDebug(`Connected ${attesterAddr}; chain nonce=${chainNonce.toString()}`);
 
       // Upload selected file now (pre-sign) if needed
-      if (selectedFile && !values.fileCid) {
+      let cidLocal = values.fileCid || "";
+      let urlLocal = values.fileUrl || "";
+      if (selectedFile && !cidLocal) {
         setProgress("Uploading file to IPFS…");
         setUploadStatus("uploading");
         setUploadError(null);
@@ -192,9 +196,12 @@ export function AttestationForm() {
           const resUp = await fetch("/api/storage/upload", { method: "POST", body: form });
           const upJson = await resUp.json();
           if (!resUp.ok) throw new Error(upJson.error || `Upload failed (${resUp.status})`);
-          setValues((s) => ({ ...s, fileCid: upJson.cid || "", fileUrl: upJson.url || "" }));
+          cidLocal = upJson.cid || "";
+          urlLocal = upJson.url || "";
+          // also store to state for preview/debug
+          setValues((s) => ({ ...s, fileCid: cidLocal, fileUrl: urlLocal }));
           setUploadStatus("success");
-          addDebug(`Upload ok; cid=${upJson.cid || ""}`);
+          addDebug(`Upload ok; cid=${cidLocal}`);
         } catch (e: any) {
           setUploadStatus("error");
           setUploadError(e?.message || String(e));
@@ -204,7 +211,7 @@ export function AttestationForm() {
       }
 
       // Encode data for schema (include CID if present)
-      const dataHex = buildEncodedDataLocal({ ...values });
+      const dataHex = buildEncodedDataLocal({ ...values, fileCid: cidLocal });
       addDebug(`Encoded bytes length=${dataHex.length}`);
 
       // Compute a safe future deadline (>= now + 10 min)
@@ -255,8 +262,8 @@ export function AttestationForm() {
                 species,
                 summary: values.summary || null,
                 contributor_name,
-                file_cid: values.fileCid || null,
-                file_gateway_url: values.fileUrl || null,
+                file_cid: cidLocal || null,
+                file_gateway_url: urlLocal || null,
               })
             });
             const crtJson = await crt.json();
@@ -321,6 +328,22 @@ export function AttestationForm() {
             body: JSON.stringify({ attestation_id: attestationId, uid: json.uid })
           });
           addDebug("DB updated with UID");
+        } catch {}
+      }
+
+      // Ensure file CID/URL are persisted in DB even if we didn't create a draft earlier
+      if (json.uid && (values.fileCid || values.fileUrl)) {
+        try {
+          await fetch("/api/attestations/set-file", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              uid: json.uid as string,
+              file_cid: values.fileCid || null,
+              file_gateway_url: values.fileUrl || null,
+            }),
+          });
+          addDebug("DB updated with file CID/URL");
         } catch {}
       }
     } catch (err: any) {

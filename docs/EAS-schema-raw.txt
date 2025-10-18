@@ -38,6 +38,6 @@ string regenType,string[] regenLocation,string regenDate,uint256 depthScaled,uin
 depoly on: https://optimism-sepolia.easscan.org/schema/view/0xd15191c82976ae7030dc20f56430b998d9ad586b243d29dbb58522f709af3b46
 
 Notes
-- fileCID stores the IPFS CID returned by Filebase after upload.
+- fileCID stores the raw IPFS CID (no prefix) returned by Filebase after upload.
 - The UI also stores a gateway URL off-chain (DB) for convenience; on-chain we keep only the CID.
 - Gateway is configurable (e.g., https://ipfs.filebase.io/ipfs/{cid}).

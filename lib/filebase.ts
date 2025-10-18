@@ -41,3 +41,31 @@ export function buildGatewayUrl(cid: string) {
   return `${gateway.replace(/\/$/, "")}/ipfs/${cid}`;
 }
 
+// Prefer IPFS RPC for deterministic CID when available
+export async function ipfsRpcAdd(file: File | Blob, filename: string) {
+  const rpcKey = process.env.FILEBASE_IPFS_RPC_KEY || "";
+  const rpcEndpoint = (process.env.FILEBASE_IPFS_RPC_ENDPOINT || "https://rpc.filebase.io").replace(/\/$/, "");
+  if (!rpcKey) throw new Error("FILEBASE_IPFS_RPC_KEY not configured");
+  const form = new FormData();
+  form.append("file", file, filename);
+  const url = `${rpcEndpoint}/api/v0/add?cid-version=1&pin=true`;
+  const headers: Record<string, string> = {};
+  // Try both common header styles
+  headers["authorization"] = `Bearer ${rpcKey}`;
+  headers["x-api-key"] = rpcKey;
+  const res = await fetch(url, { method: "POST", body: form as any, headers });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`IPFS RPC add failed (${res.status}) ${text}`);
+  // Try parse JSON, else try to extract CID from text
+  let cid = "";
+  try {
+    const json = JSON.parse(text);
+    cid = json?.Hash || json?.cid || json?.Cid || json?.Cid?.["/" ] || "";
+  } catch {
+    const m = text.match(/"Hash"\s*:\s*"([^"]+)"/i) || text.match(/cid\s*[:=]\s*"?([a-z0-9]+)"?/i);
+    cid = m?.[1] || "";
+  }
+  if (!cid) throw new Error("IPFS RPC add returned no CID");
+  const urlGateway = buildGatewayUrl(cid);
+  return { cid, url: urlGateway };
+}
