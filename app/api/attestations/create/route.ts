@@ -13,6 +13,9 @@ type Body = {
   species?: string[];
   summary?: string | null;
   contributor_name?: string[];
+  file_cid?: string | null;
+  file_gateway_url?: string | null;
+  show_on_map?: boolean;
 };
 
 export async function POST(req: NextRequest) {
@@ -47,6 +50,9 @@ export async function POST(req: NextRequest) {
     species: body.species ?? [],
     summary: body.summary ?? null,
     contributor_name: body.contributor_name ?? [],
+    file_cid: body.file_cid ?? null,
+    file_gateway_url: body.file_gateway_url ?? null,
+    show_on_map: body.show_on_map ?? true,
   } as const;
 
   const { data: inserted, error } = await supabaseAdmin
@@ -58,4 +64,3 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true, attestationId: inserted.id });
 }
-

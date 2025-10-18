@@ -18,7 +18,7 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
 
   const { data: attests } = await supabaseAdmin
     .from("attestations")
-    .select("id, uid, created_at")
+    .select("id, uid, created_at, file_gateway_url")
     .eq("profile_id", profile.id)
     .order("created_at", { ascending: false });
 
@@ -52,6 +52,11 @@ export default async function Page({ params }: { params: Promise<{ handle: strin
                 </a>
               ) : (
                 <span>UID pending…</span>
+              )}
+              {(a as any).file_gateway_url && (
+                <div>
+                  <a href={(a as any).file_gateway_url as string} target="_blank" rel="noreferrer">View file</a>
+                </div>
               )}
             </li>
           ))}

@@ -16,6 +16,12 @@ export function AttestationForm() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<null | { txHash?: string; uid?: string; error?: string }>(null);
   const [errors, setErrors] = useState<string | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
+  const [debugOpen, setDebugOpen] = useState(false);
+  const [debugEvents, setDebugEvents] = useState<string[]>([]);
+  const [uploadStatus, setUploadStatus] = useState<"idle"|"uploading"|"success"|"error">("idle");
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [values, setValues] = useState({
     // DB fields
@@ -34,6 +40,8 @@ export function AttestationForm() {
     speciesCsv: "",
     summary: "",
     contributorsCsv: "",
+    fileCid: "",
+    fileUrl: "",
 
     // EAS fields
     schemaUid: env.defaultSchemaUid || "",
@@ -49,8 +57,13 @@ export function AttestationForm() {
     return isConnected && !!values.recipient && !!values.schemaUid;
   }, [isConnected, values.recipient, values.schemaUid]);
 
-  // Build EAS encoded data for the deployed MVP schema
-  const schemaString = "string regenType,string[] regenLocation,string regenDate,uint256 depthScaled,uint256 surfaceAreaScaled,string[] species,string summary,string[] contributors";
+  function addDebug(msg: string) {
+    const line = `[${new Date().toISOString()}] ${msg}`;
+    setDebugEvents((prev) => [line, ...prev].slice(0, 100));
+  }
+
+  // Build EAS encoded data for the deployed schema (v0.3 includes fileCID)
+  const schemaString = "string regenType,string[] regenLocation,string regenDate,uint256 depthScaled,uint256 surfaceAreaScaled,string[] species,string summary,string[] contributors,string fileCID";
   const encodedData = useMemo(() => {
     try {
       const encoder = new SchemaEncoder(schemaString);
@@ -71,11 +84,43 @@ export function AttestationForm() {
         { name: "species", type: "string[]", value: species as any },
         { name: "summary", type: "string", value: values.summary },
         { name: "contributors", type: "string[]", value: contributors as any },
+        { name: "fileCID", type: "string", value: values.fileCid || "" },
       ]);
     } catch {
       return "0x";
     }
-  }, [values.regenType, values.actionDate, values.lat, values.lng, values.depth, values.surfaceArea, values.speciesCsv, values.summary, values.contributorsCsv]);
+  }, [values.regenType, values.actionDate, values.lat, values.lng, values.depth, values.surfaceArea, values.speciesCsv, values.summary, values.contributorsCsv, values.fileCid]);
+
+  function buildEncodedDataLocal(v: typeof values) {
+    const encoder = new SchemaEncoder(schemaString);
+    const dateStr = v.actionDate ? (() => { const [y,m,d] = v.actionDate.split("-"); return `${m}-${d}-${y}`; })() : "";
+    const depthScaled = v.depth === "" ? 0n : BigInt(Math.round(Number(v.depth) * 100));
+    const areaScaled = v.surfaceArea === "" ? 0n : BigInt(Math.round(Number(v.surfaceArea) * 100));
+    const species = v.speciesCsv.split(",").map(s => s.trim()).filter(Boolean);
+    const contributors = v.contributorsCsv.split(",").map(s => s.trim()).filter(Boolean);
+    const regenLocation = [v.lat, v.lng].filter(x => x !== "");
+    return encoder.encodeData([
+      { name: "regenType", type: "string", value: v.regenType },
+      { name: "regenLocation", type: "string[]", value: regenLocation as any },
+      { name: "regenDate", type: "string", value: dateStr },
+      { name: "depthScaled", type: "uint256", value: depthScaled },
+      { name: "surfaceAreaScaled", type: "uint256", value: areaScaled },
+      { name: "species", type: "string[]", value: species as any },
+      { name: "summary", type: "string", value: v.summary },
+      { name: "contributors", type: "string[]", value: contributors as any },
+      { name: "fileCID", type: "string", value: v.fileCid || "" },
+    ]);
+  }
+
+  async function onFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0] || null;
+    setSelectedFile(f);
+    setUploadStatus("idle");
+    setUploadError(null);
+    // reset any previous CID/URL
+    setValues((s) => ({ ...s, fileCid: "", fileUrl: "" }));
+    addDebug(f ? `File selected: ${f.name} (${f.type || "unknown"}, ${f.size} bytes)` : "File cleared");
+  }
 
   // Prefill recipient with connected address if empty
   useEffect(() => {
@@ -134,14 +179,39 @@ export function AttestationForm() {
 
       // Ensure on-chain nonce matches what we sign with
       const chainNonce = await eas.getNonce(attesterAddr);
+      addDebug(`Connected ${attesterAddr}; chain nonce=${chainNonce.toString()}`);
 
-      // Encode data for MVP schema based on form fields
-      const dataHex = encodedData;
+      // Upload selected file now (pre-sign) if needed
+      if (selectedFile && !values.fileCid) {
+        setProgress("Uploading file to IPFS…");
+        setUploadStatus("uploading");
+        setUploadError(null);
+        try {
+          const form = new FormData();
+          form.append("file", selectedFile);
+          const resUp = await fetch("/api/storage/upload", { method: "POST", body: form });
+          const upJson = await resUp.json();
+          if (!resUp.ok) throw new Error(upJson.error || `Upload failed (${resUp.status})`);
+          setValues((s) => ({ ...s, fileCid: upJson.cid || "", fileUrl: upJson.url || "" }));
+          setUploadStatus("success");
+          addDebug(`Upload ok; cid=${upJson.cid || ""}`);
+        } catch (e: any) {
+          setUploadStatus("error");
+          setUploadError(e?.message || String(e));
+          addDebug(`Upload error: ${e?.message || String(e)}`);
+          throw e;
+        }
+      }
+
+      // Encode data for schema (include CID if present)
+      const dataHex = buildEncodedDataLocal({ ...values });
+      addDebug(`Encoded bytes length=${dataHex.length}`);
 
       // Compute a safe future deadline (>= now + 10 min)
       const nowSec = Math.floor(Date.now() / 1000);
       const desired = parsed.data.deadline || 0;
       const safeDeadlineSec = Math.max(desired, nowSec + 10 * 60);
+      addDebug(`Deadline(s)=${safeDeadlineSec}`);
 
       // Upsert profile + create a draft attestation only if DB fields are valid (optional)
       let profileId: string | null = null;
@@ -159,6 +229,7 @@ export function AttestationForm() {
           });
           const upJson = await up.json();
           if (up.ok && upJson.profileId) profileId = upJson.profileId as string;
+          addDebug(`Profile upsert ${up.ok ? "ok" : "fail"}; profileId=${profileId || ""}`);
           if (profileId) {
             const depthNum = values.depth === "" ? null : Number(values.depth);
             const areaNum = values.surfaceArea === "" ? null : Number(values.surfaceArea);
@@ -184,10 +255,13 @@ export function AttestationForm() {
                 species,
                 summary: values.summary || null,
                 contributor_name,
+                file_cid: values.fileCid || null,
+                file_gateway_url: values.fileUrl || null,
               })
             });
             const crtJson = await crt.json();
             if (crt.ok && crtJson.attestationId) attestationId = crtJson.attestationId as string;
+            addDebug(`Draft create ${crt.ok ? "ok" : "fail"}; attestationId=${attestationId || ""}`);
           }
         }
       } catch {
@@ -195,6 +269,7 @@ export function AttestationForm() {
       }
 
       // Sign delegated attestation via SDK
+      setProgress("Awaiting wallet signature…");
       const delegated = await (await eas.getDelegated()).signDelegatedAttestation({
         schema: parsed.data.schemaUid as `0x${string}`,
         recipient: parsed.data.recipient as `0x${string}`,
@@ -206,6 +281,7 @@ export function AttestationForm() {
         deadline: BigInt(safeDeadlineSec),
         nonce: chainNonce,
       }, signer as any);
+      addDebug(`Signed delegated attestation (schema=${parsed.data.schemaUid})`);
 
       // Build a plain JSON-friendly payload that explicitly carries deadline/nonce as numbers/strings
       const delegatedPayload = {
@@ -222,6 +298,7 @@ export function AttestationForm() {
         delegatedAttestation: delegatedPayload,
       };
 
+      setProgress("Submitting transaction…");
       const res = await fetch("/api/relay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -232,6 +309,8 @@ export function AttestationForm() {
       if (!res.ok) throw new Error(json.error || `Relay failed (${res.status})`);
       // Worker returns { uid }; edge function returned { txHash }
       setResult({ txHash: json.txHash, uid: json.uid });
+      setProgress("Completed.");
+      addDebug(`Relay ok: txHash=${json.txHash || ""}, uid=${json.uid || ""}`);
 
       // If we created a draft, store UID now
       if (attestationId && json.uid) {
@@ -241,6 +320,7 @@ export function AttestationForm() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ attestation_id: attestationId, uid: json.uid })
           });
+          addDebug("DB updated with UID");
         } catch {}
       }
     } catch (err: any) {
@@ -350,10 +430,27 @@ export function AttestationForm() {
             style={{ width: "100%" }}
           />
         </label>
+        <label>
+          Evidence File (optional)
+          <input type="file" onChange={onFileSelected} />
+          {(values.fileCid || values.fileUrl) && (
+            <div style={{ fontSize: 12 }}>
+              {values.fileCid && <div>CID: {values.fileCid}</div>}
+              {values.fileUrl && (
+                <div>
+                  <a href={values.fileUrl} target="_blank" rel="noreferrer">View file</a>
+                </div>
+              )}
+            </div>
+          )}
+        </label>
       </fieldset>
 
       <fieldset style={{ border: "1px solid #ddd", padding: 12 }}>
         <legend>EAS Delegation</legend>
+      <div style={{ fontSize: 12, color: "#555", marginBottom: 8 }}>
+        Env default schema: {env.defaultSchemaUid || "(none)"}
+      </div>
       <label>
         Schema UID
         <input
@@ -361,6 +458,7 @@ export function AttestationForm() {
           onChange={(e) => update("schemaUid", e.target.value)}
           placeholder="0x…"
           required
+          readOnly={Boolean(env.defaultSchemaUid)}
           style={{ width: "100%" }}
         />
       </label>
@@ -394,6 +492,25 @@ export function AttestationForm() {
         />
       </label>
       </fieldset>
+      {progress && (
+        <div style={{ padding: 8, background: "#eef", border: "1px solid #ccd" }}>{progress}</div>
+      )}
+      <details open={debugOpen} onToggle={(e) => setDebugOpen((e.target as HTMLDetailsElement).open)}>
+        <summary>Debug</summary>
+        <div style={{ fontSize: 12, display: "grid", gap: 6 }}>
+          <div>Upload status: {uploadStatus}{uploadError ? ` — ${uploadError}` : ""}</div>
+          {(values.fileCid || values.fileUrl) && (
+            <div>
+              {values.fileCid && <div>CID: {values.fileCid}</div>}
+              {values.fileUrl && <div>URL: {values.fileUrl}</div>}
+            </div>
+          )}
+          <div>Events:</div>
+          <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", background: "#f6f6f6", padding: 8, maxHeight: 160, overflow: "auto" }}>
+            {debugEvents.join("\n") || "(no events yet)"}
+          </pre>
+        </div>
+      </details>
       <button type="submit" disabled={!canSubmit || submitting}>
         {submitting ? "Submitting…" : "Sign & Relay"}
       </button>
@@ -403,7 +520,7 @@ export function AttestationForm() {
           Submitted. Tx Hash: {result.txHash}
           <div>
             <a
-              href={`https://sepolia.easscan.org/tx/${result.txHash}`}
+              href={`https://optimism-sepolia.easscan.org/tx/${result.txHash}`}
               target="_blank"
               rel="noreferrer"
             >
@@ -417,7 +534,7 @@ export function AttestationForm() {
           Attestation UID: {result.uid}
           <div>
             <a
-              href={`https://sepolia.easscan.org/attestation/view/${result.uid}`}
+              href={`https://optimism-sepolia.easscan.org/attestation/view/${result.uid}`}
               target="_blank"
               rel="noreferrer"
             >

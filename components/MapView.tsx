@@ -43,7 +43,9 @@ export function MapView() {
         center: [0, 15],
         zoom: 1.6,
         attributionControl: true,
-        transformRequest: (url: string, _resourceType?: ResourceType): RequestParameters => {
+        transformRequest: (u: string | RequestParameters, _resourceType?: ResourceType): RequestParameters => {
+          const url = typeof u === "string" ? u : (u?.url as string | undefined) || "";
+          if (!url) return typeof u === "string" ? { url: u } : (u as RequestParameters);
           if (!token) return { url };
           const needsKey = url.includes("api.maptiler.com") || url.includes("tilehosting.com");
           if (!needsKey) return { url };
@@ -91,6 +93,7 @@ export function MapView() {
           const orgName = (f.properties as any)?.orgName || "Unknown org";
           const handle = (f.properties as any)?.handle || null;
           const regenType = (f.properties as any)?.regenType || "";
+          const fileUrl = (f.properties as any)?.fileUrl || null;
 
           const html = document.createElement("div");
           html.style.minWidth = "220px";
@@ -100,6 +103,7 @@ export function MapView() {
               ${regenType ? `<div>Type: ${regenType}</div>` : ""}
               ${handle ? `<a href="/profile/${handle}">View profile</a>` : ""}
               ${uid ? `<a target="_blank" rel="noreferrer" href="https://optimism-sepolia.easscan.org/attestation/view/${uid}">View on blockchain</a>` : ""}
+              ${fileUrl ? `<a target="_blank" rel="noreferrer" href="${fileUrl}">View file</a>` : ""}
             </div>
           `;
           new maplib.Popup({ closeOnMove: true })

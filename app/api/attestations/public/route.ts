@@ -12,9 +12,10 @@ type AttRow = {
 export async function GET() {
   const { data, error } = await supabaseAdmin
     .from("attestations")
-    .select("uid, location_lat, location_lng, regen_type, profile_id")
+    .select("uid, location_lat, location_lng, regen_type, profile_id, file_gateway_url, show_on_map")
     .not("location_lat", "is", null)
     .not("location_lng", "is", null)
+    .eq("show_on_map", true)
     .limit(1000);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -49,6 +50,7 @@ export async function GET() {
           regenType: r.regen_type || null,
           orgName: prof.org_name,
           handle: prof.handle,
+          fileUrl: (r as any).file_gateway_url || null,
         }
       } as const;
     })

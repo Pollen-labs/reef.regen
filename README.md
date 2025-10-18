@@ -53,7 +53,7 @@ Backend Env (Supabase Function Secrets)
 - ALLOWED_ORIGINS: comma-separated list of allowed origins for CORS (e.g., http://localhost:3000)
 - SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY: auto-injected by Supabase Functions (verify present)
 
-Deploy Edge Function
+Deploy Edge Function (not in used)
 1) Install Supabase CLI and login: `supabase login`
 2) Link project: `supabase link --project-ref <your-ref>`
 3) Deploy: `supabase functions deploy relay-attest`

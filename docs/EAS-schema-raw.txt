@@ -23,3 +23,21 @@ Rationale and notes
 - Date: stored as a human-readable string as requested. Consider ISO (YYYY-MM-DD) to avoid locale ambiguity.
 - Numeric fields: EAS does not support decimals. Use scaled integers for depth and surface area (x100) so you keep two decimals.
 - Recipient: not part of schema; passed in the attestation params separately.
+
+---
+
+v0.3 schema extension (Filebase/IPFS)
+
+Added field for linking off-chain evidence via IPFS (Filebase):
+
+string fileCID
+
+Complete v0.3 schema string:
+string regenType,string[] regenLocation,string regenDate,uint256 depthScaled,uint256 surfaceAreaScaled,string[] species,string summary,string[] contributors,string fileCID
+
+depoly on: https://optimism-sepolia.easscan.org/schema/view/0xd15191c82976ae7030dc20f56430b998d9ad586b243d29dbb58522f709af3b46
+
+Notes
+- fileCID stores the IPFS CID returned by Filebase after upload.
+- The UI also stores a gateway URL off-chain (DB) for convenience; on-chain we keep only the CID.
+- Gateway is configurable (e.g., https://ipfs.filebase.io/ipfs/{cid}).
