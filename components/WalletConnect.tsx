@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useAccount, useDisconnect } from "wagmi";
-import { useWeb3AuthConnect, useWeb3AuthDisconnect } from "@web3auth/modal/react";
+import { useWeb3AuthConnect, useWeb3AuthDisconnect, useWeb3AuthUser } from "@web3auth/modal/react";
 
 export function WalletConnect() {
   const { address, isConnected } = useAccount();
@@ -12,10 +12,26 @@ export function WalletConnect() {
   const [web3AuthError, setWeb3AuthError] = useState<string | null>(null);
   const { connect: connectWeb3Auth, loading: web3authLoadingHook, error: web3authError } = useWeb3AuthConnect();
   const { disconnect: disconnectWeb3Auth } = useWeb3AuthDisconnect();
+  const { userInfo } = useWeb3AuthUser();
+  const [emailSaved, setEmailSaved] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
   if (mounted && isConnected) {
+    // Fire-and-forget email upsert when connected and we have userInfo
+    if (!emailSaved && userInfo?.email && address) {
+      (async () => {
+        try {
+          await fetch("/api/profiles/upsert", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ wallet_address: address, email: userInfo.email }),
+          });
+        } finally {
+          setEmailSaved(true);
+        }
+      })();
+    }
     return (
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <span>Connected: {address?.slice(0, 6)}...{address?.slice(-4)}</span>
