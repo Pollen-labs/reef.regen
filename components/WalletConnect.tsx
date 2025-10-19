@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useAccount, useConnect, useDisconnect, useConnectors } from "wagmi";
+import { useAccount, useDisconnect } from "wagmi";
 import { useWeb3AuthConnect, useWeb3AuthDisconnect } from "@web3auth/modal/react";
 
 export function WalletConnect() {
   const { address, isConnected } = useAccount();
   const [mounted, setMounted] = useState(false);
-  const { connect, isPending, error: connectError } = useConnect();
-  const connectors = useConnectors();
   const { disconnect } = useDisconnect();
   const [web3AuthLoading, setWeb3AuthLoading] = useState(false);
   const [web3AuthError, setWeb3AuthError] = useState<string | null>(null);
@@ -28,13 +26,6 @@ export function WalletConnect() {
     );
   }
 
-  const injectedConnector = connectors.find((c) => c.id === "metaMask" || c.id === "injected");
-  const web3authConnector = connectors.find((c) => c.id?.toLowerCase?.().includes("web3auth") || c.name?.toLowerCase?.().includes("web3auth"));
-
-  const onConnectMetaMask = () => {
-    if (injectedConnector) connect({ connector: injectedConnector });
-  };
-
   const onConnectWeb3Auth = async () => {
     setWeb3AuthLoading(true);
     setWeb3AuthError(null);
@@ -47,8 +38,6 @@ export function WalletConnect() {
     }
   };
 
-  const hasProvider = typeof window !== "undefined" && (window as any).ethereum;
-
   const friendly = (msg?: string | null) => {
     if (!msg) return null;
     if (msg.toLowerCase().includes("user rejected")) return "Request cancelled";
@@ -59,7 +48,7 @@ export function WalletConnect() {
     <div style={{ display: "grid", gap: 8 }}>
       <button
         onClick={onConnectWeb3Auth}
-        disabled={web3AuthLoading || isPending}
+        disabled={web3AuthLoading || web3authLoadingHook}
         style={{
           background: "#0364ff",
           color: "white",
@@ -69,22 +58,8 @@ export function WalletConnect() {
           cursor: web3AuthLoading ? "wait" : "pointer"
         }}
       >
-        {web3AuthLoading ? "Connecting…" : "Connect Embedded Wallet"}
+        {web3AuthLoading || web3authLoadingHook ? "Connecting…" : "Connect Embedded Wallet"}
       </button>
-
-      <div style={{ textAlign: "center", color: "#999", fontSize: "12px" }}>or</div>
-
-      <button onClick={onConnectMetaMask} disabled={isPending || !injectedConnector}>
-        {isPending ? "Connecting…" : injectedConnector ? `Connect ${injectedConnector.name}` : "No wallet found"}
-      </button>
-
-      {!hasProvider && (
-        <a href="https://metamask.io/download/" target="_blank" rel="noreferrer" style={{ fontSize: "12px", textAlign: "center" }}>
-          Install MetaMask
-        </a>
-      )}
-
-      {connectError && <div style={{ color: "#b00", fontSize: "12px" }}>{friendly(connectError.message)}</div>}
       {(web3AuthError || web3authError) && (
         <div style={{ color: "#b00", fontSize: "12px" }}>{friendly((web3AuthError || web3authError?.message) || null)}</div>
       )}

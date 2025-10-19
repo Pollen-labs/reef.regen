@@ -41,7 +41,7 @@ export default function ConnectPage() {
     <div style={{ display: "grid", gap: 16, padding: 24, maxWidth: 400, margin: "0 auto" }}>
       <h1>Connect Your Wallet</h1>
       <p style={{ color: "#666" }}>
-        Choose how you'd like to connect to start creating attestations.
+        Connect with the Embedded Wallet to start creating attestations.
       </p>
       <WalletConnect />
     </div>

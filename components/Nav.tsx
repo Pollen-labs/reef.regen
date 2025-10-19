@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAccount, useDisconnect } from "wagmi";
+import { useWeb3AuthDisconnect } from "@web3auth/modal/react";
 
 export function Nav() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+  const { disconnect: disconnectWeb3Auth } = useWeb3AuthDisconnect();
   const [handle, setHandle] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export function Nav() {
 
   const profileLabel = isConnected ? "Profile" : "Connect";
   const profileHref = isConnected
-    ? (handle ? { pathname: "/profile/[handle]", query: { handle } } : "/attest")
+    ? (handle ? `/profile/${handle}` : "/attest")
     : "/connect";
 
   return (
@@ -40,10 +42,10 @@ export function Nav() {
         <Link href="/">Home</Link>
         <Link href="/attest">Attest</Link>
         <Link href="/map">Map</Link>
-      <Link href={profileHref}>{profileLabel}</Link>
+        <Link href={profileHref}>{profileLabel}</Link>
       </div>
       {isConnected && (
-        <button onClick={() => disconnect()} style={{ marginLeft: "auto" }}>
+        <button onClick={async () => { await disconnectWeb3Auth(); disconnect(); }} style={{ marginLeft: "auto" }}>
           Logout
         </button>
       )}
