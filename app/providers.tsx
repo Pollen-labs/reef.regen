@@ -24,6 +24,7 @@ export default function Providers({ children }: { children: ReactNode }) {
           ticker: "ETH",
           tickerName: "Ethereum",
           blockExplorerUrl: "https://sepolia-optimism.etherscan.io",
+          logo: "https://images.toruswallet.io/eth.svg",
         },
       ],
       uiConfig: {
