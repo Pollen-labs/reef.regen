@@ -436,29 +436,29 @@ export function AttestationForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} style={{ display: "grid", gap: 16 }}>
-      <fieldset style={{ border: "1px solid #ddd", padding: 12 }}>
-        <legend>Attestation Details (DB)</legend>
-        <label>
+    <form onSubmit={onSubmit} className="grid gap-6">
+      <fieldset className="border border-vulcan-300 rounded-lg p-6">
+        <legend className="body-lg font-semibold text-black px-2">Attestation Details (DB)</legend>
+        <label className="block body-sm font-medium text-vulcan-700">
           Regeneration Type
-          <select value={values.regenType} onChange={(e) => update("regenType", e.target.value)} style={{ width: "100%" }}>
+          <select value={values.regenType} onChange={(e) => update("regenType", e.target.value)} className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500">
             <option value="transplantation">transplantation</option>
             <option value="nursery">nursery</option>
             <option value="other">other</option>
           </select>
         </label>
-        <label>
+        <label className="block body-sm font-medium text-vulcan-700 mt-4">
           Action Date
           <input
             type="date"
             value={values.actionDate}
             onChange={(e) => update("actionDate", e.target.value)}
             required
-            style={{ width: "100%" }}
+            className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
           />
         </label>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <label>
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <label className="block body-sm font-medium text-vulcan-700">
             Latitude
             <input
               inputMode="decimal"
@@ -466,10 +466,10 @@ export function AttestationForm() {
               onChange={(e) => update("lat", e.target.value)}
               placeholder="e.g. 25.0343"
               required
-              style={{ width: "100%" }}
+              className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
             />
           </label>
-          <label>
+          <label className="block body-sm font-medium text-vulcan-700">
             Longitude
             <input
               inputMode="decimal"
@@ -477,69 +477,69 @@ export function AttestationForm() {
               onChange={(e) => update("lng", e.target.value)}
               placeholder="e.g. -77.3963"
               required
-              style={{ width: "100%" }}
+              className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
             />
           </label>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <label>
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <label className="block body-sm font-medium text-vulcan-700">
             Depth (m)
             <input
               inputMode="decimal"
               value={values.depth}
               onChange={(e) => update("depth", e.target.value)}
               placeholder="optional"
-              style={{ width: "100%" }}
+              className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
             />
           </label>
-          <label>
+          <label className="block body-sm font-medium text-vulcan-700">
             Surface Area (m²)
             <input
               inputMode="decimal"
               value={values.surfaceArea}
               onChange={(e) => update("surfaceArea", e.target.value)}
               placeholder="optional"
-              style={{ width: "100%" }}
+              className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
             />
           </label>
         </div>
-        <label>
+        <label className="block body-sm font-medium text-vulcan-700 mt-4">
           Species (comma separated)
           <input
             value={values.speciesCsv}
             onChange={(e) => update("speciesCsv", e.target.value)}
             placeholder="Elkhorn coral, Brain coral"
-            style={{ width: "100%" }}
+            className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
           />
         </label>
-        <label>
+        <label className="block body-sm font-medium text-vulcan-700 mt-4">
           Summary
           <textarea
             value={values.summary}
             onChange={(e) => update("summary", e.target.value)}
             placeholder="Short description"
             rows={3}
-            style={{ width: "100%" }}
+            className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
           />
         </label>
-        <label>
+        <label className="block body-sm font-medium text-vulcan-700 mt-4">
           Contributors (comma separated)
           <input
             value={values.contributorsCsv}
             onChange={(e) => update("contributorsCsv", e.target.value)}
             placeholder="Alice, Bob"
-            style={{ width: "100%" }}
+            className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
           />
         </label>
-        <label>
+        <label className="block body-sm font-medium text-vulcan-700 mt-4">
           Evidence File (optional)
-          <input type="file" onChange={onFileSelected} />
+          <input type="file" onChange={onFileSelected} className="mt-1 w-full body-sm text-vulcan-700" />
           {(values.fileCid || values.fileUrl) && (
-            <div style={{ fontSize: 12 }}>
+            <div className="mt-2 body-xs text-vulcan-600 bg-vulcan-50 p-2 rounded">
               {values.fileCid && <div>CID: {values.fileCid}</div>}
               {values.fileUrl && (
                 <div>
-                  <a href={values.fileUrl} target="_blank" rel="noreferrer">View file</a>
+                  <a href={values.fileUrl} target="_blank" rel="noreferrer" className="text-ribbon-600 hover:text-ribbon-700 underline">View file</a>
                 </div>
               )}
             </div>
@@ -547,13 +547,13 @@ export function AttestationForm() {
         </label>
       </fieldset>
 
-      <fieldset style={{ border: "1px solid #ddd", padding: 12 }}>
-        <legend>EAS Delegation</legend>
-      <div style={{ fontSize: 12, color: "#555", marginBottom: 8 }}>
+      <fieldset className="border border-vulcan-300 rounded-lg p-6">
+        <legend className="body-lg font-semibold text-black px-2">EAS Delegation</legend>
+      <div className="body-sm text-vulcan-500 mb-3">
         Env default schema: {env.defaultSchemaUid || "(none)"}
       </div>
       {/* Removed inline wallet connect buttons; use the global WalletConnect component instead */}
-      <label>
+      <label className="block body-sm font-medium text-vulcan-700">
         Schema UID
         <input
           value={values.schemaUid}
@@ -561,91 +561,93 @@ export function AttestationForm() {
           placeholder="0x…"
           required
           readOnly={Boolean(env.defaultSchemaUid)}
-          style={{ width: "100%" }}
+          className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500 read-only:bg-vulcan-50 read-only:text-vulcan-600"
         />
       </label>
-      <label>
+      <label className="block body-sm font-medium text-vulcan-700 mt-4">
         Recipient Address
         <input
           value={values.recipient}
           onChange={(e) => update("recipient", e.target.value)}
           placeholder="0x…"
           required
-          style={{ width: "100%" }}
+          className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
         />
       </label>
-      <div>
-        Encoded data (auto):
-        <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-all", background: "#f6f6f6", padding: 8 }}>
+      <div className="mt-4">
+        <p className="body-sm font-medium text-vulcan-700 mb-1">Encoded data (auto):</p>
+        <pre className="whitespace-pre-wrap break-all bg-vulcan-50 p-3 rounded-lg body-xs text-vulcan-700 font-mono">
           {encodedData}
         </pre>
       </div>
-      <label>
+      <label className="block body-sm font-medium text-vulcan-700 mt-4">
         Nonce (auto from chain)
-        <input value={values.nonce} readOnly style={{ width: "100%", background: "#f6f6f6" }} />
+        <input value={values.nonce} readOnly className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base bg-vulcan-50 text-vulcan-600" />
       </label>
-      <label>
+      <label className="block body-sm font-medium text-vulcan-700 mt-4">
         Deadline (unix seconds)
         <input
           type="number"
           value={values.deadline}
           onChange={(e) => update("deadline", e.target.value)}
-          style={{ width: "100%" }}
+          className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
         />
       </label>
       </fieldset>
       {progress && (
-        <div style={{ padding: 8, background: "#eef", border: "1px solid #ccd" }}>{progress}</div>
+        <div className="body-sm text-ribbon-700 bg-ribbon-50 p-4 rounded-lg border border-ribbon-200">{progress}</div>
       )}
-      <details open={debugOpen} onToggle={(e) => setDebugOpen((e.target as HTMLDetailsElement).open)}>
-        <summary>Debug</summary>
-        <div style={{ fontSize: 12, display: "grid", gap: 6 }}>
-          <div>Upload status: {uploadStatus}{uploadError ? ` — ${uploadError}` : ""}</div>
+      <details open={debugOpen} onToggle={(e) => setDebugOpen((e.target as HTMLDetailsElement).open)} className="border border-vulcan-200 rounded-lg p-4">
+        <summary className="body-sm font-semibold text-vulcan-700 cursor-pointer">Debug</summary>
+        <div className="body-xs grid gap-2 mt-3">
+          <div className="text-vulcan-600">Upload status: {uploadStatus}{uploadError ? ` — ${uploadError}` : ""}</div>
           {(values.fileCid || values.fileUrl) && (
-            <div>
+            <div className="text-vulcan-600">
               {values.fileCid && <div>CID: {values.fileCid}</div>}
               {values.fileUrl && <div>URL: {values.fileUrl}</div>}
             </div>
           )}
-          <div>Events:</div>
-          <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", background: "#f6f6f6", padding: 8, maxHeight: 160, overflow: "auto" }}>
+          <div className="text-vulcan-700 font-medium">Events:</div>
+          <pre className="whitespace-pre-wrap break-words bg-vulcan-50 p-3 rounded max-h-40 overflow-auto font-mono text-vulcan-600">
             {debugEvents.join("\n") || "(no events yet)"}
           </pre>
         </div>
       </details>
-      <button type="submit" disabled={!canSubmit || submitting}>
+      <button
+        type="submit"
+        disabled={!canSubmit || submitting}
+        className="w-full px-6 py-3 bg-flamingo-400 text-white body-base font-semibold rounded-lg hover:bg-flamingo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
         {submitting ? "Submitting…" : "Sign & Relay"}
       </button>
-      {errors && <div style={{ color: "#b00" }}>{errors}</div>}
+      {errors && <div className="body-sm text-flamingo-600 bg-flamingo-50 p-4 rounded-lg border border-flamingo-200">{errors}</div>}
       {result?.txHash && (
-        <div>
-          Submitted. Tx Hash: {result.txHash}
-          <div>
-            <a
-              href={`https://optimism-sepolia.easscan.org/tx/${result.txHash}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              View in EAS Explorer
-            </a>
-          </div>
+        <div className="body-sm text-aquamarine-800 bg-aquamarine-50 p-4 rounded-lg border border-aquamarine-200">
+          <p className="font-semibold mb-1">Submitted. Tx Hash: {result.txHash}</p>
+          <a
+            href={`https://optimism-sepolia.easscan.org/tx/${result.txHash}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-aquamarine-600 hover:text-aquamarine-700 underline"
+          >
+            View in EAS Explorer
+          </a>
         </div>
       )}
       {result?.uid && (
-        <div>
-          Attestation UID: {result.uid}
-          <div>
-            <a
-              href={`https://optimism-sepolia.easscan.org/attestation/view/${result.uid}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              View Attestation
-            </a>
-          </div>
+        <div className="body-sm text-aquamarine-800 bg-aquamarine-50 p-4 rounded-lg border border-aquamarine-200">
+          <p className="font-semibold mb-1">Attestation UID: {result.uid}</p>
+          <a
+            href={`https://optimism-sepolia.easscan.org/attestation/view/${result.uid}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-aquamarine-600 hover:text-aquamarine-700 underline"
+          >
+            View Attestation
+          </a>
         </div>
       )}
-      {result?.error && <div style={{ color: "#b00" }}>{result.error}</div>}
+      {result?.error && <div className="body-sm text-flamingo-600 bg-flamingo-50 p-4 rounded-lg border border-flamingo-200">{result.error}</div>}
     </form>
   );
 }

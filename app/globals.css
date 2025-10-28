@@ -1,0 +1,42 @@
+/* app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base defaults */
+@layer base {
+  :root {
+    /* semantic aliases (use or extend as needed) */
+    --bg:        theme(colors.white);
+    --fg:        theme(colors.black);
+    --brand:     theme(colors.ribbon.500);
+    --accent:    theme(colors.flamingo.400);
+    --muted:     theme(colors.vulcan.500);
+  }
+
+  html, body {
+    @apply bg-[var(--bg)] text-[var(--fg)];
+    @apply font-sans antialiased;
+  }
+
+  /* Default typography rhythm */
+  p { @apply leading-body; }
+}
+
+@layer components {
+  /* Headings (Outfit Black, -2% tracking, 104% leading) */
+  .hd-1 { @apply text-h1 font-black tracking-hd; }
+  .hd-2 { @apply text-h2 font-black tracking-hd; }
+  .hd-3 { @apply text-h3 font-black tracking-hd; }
+  .hd-4 { @apply text-h4 font-black tracking-hd; }
+  .hd-5 { @apply text-h5 font-black tracking-hd; }
+  .hd-6 { @apply text-h6 font-black tracking-hd; }
+
+  /* Body sizes (140% leading) */
+  .body-2xl { @apply text-2xlb; }
+  .body-xl  { @apply text-xlb;  }
+  .body-lg  { @apply text-lgb;  }
+  .body-base{ @apply text-baseb;}
+  .body-sm  { @apply text-smb;  }
+  .body-xs  { @apply text-xsb;  }
+}
