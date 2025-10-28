@@ -7,6 +7,7 @@ type Body = {
   website?: string;
   description?: string;
   handle?: string;
+  email?: string | null;
 };
 
 function isAddress(addr: string): boolean {
@@ -65,6 +66,7 @@ export async function POST(req: NextRequest) {
     if (body.website != null) updates.website = body.website;
     if (body.description != null) updates.description = body.description;
     if (body.handle) updates.handle = await ensureUniqueHandle(body.handle, found.id);
+    if (typeof body.email === "string") updates.email = body.email || null;
 
     if (Object.keys(updates).length > 0) {
       const { error: upErr } = await supabaseAdmin
@@ -88,6 +90,7 @@ export async function POST(req: NextRequest) {
       website: body.website || null,
       description: body.description || null,
       handle,
+      email: typeof body.email === "string" ? body.email : null,
     })
     .select("id")
     .single();
@@ -95,4 +98,3 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true, profileId: inserted.id, handle });
 }
-

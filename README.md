@@ -2,7 +2,7 @@ Coral Attestation POC (Delegated EAS)
 
 Overview
 - Next.js (App Router) + TypeScript scaffold for delegated EAS attestations per PRD-1.md.
-- Wallet connect via wagmi (MetaMask injected connector).
+- Embedded wallet via MetaMask Embedded (Web3Auth) + Wagmi bridge.
 - Client builds EIP-712 typed data for delegated attestation and signs it.
 - API proxy forwards the signed payload to your Supabase Edge Function relayer.
 - PWA is intentionally omitted per request.
@@ -21,9 +21,10 @@ Getting Started
    - Start dev server: `pnpm dev`
 
 3) Frontend flow
-   - Connect MetaMask.
+   - Connect Embedded Wallet.
    - Fill schema UID, recipient, data hex, nonce, deadline.
    - Click "Sign & Relay" to sign typed data and POST it to `/api/relay`.
+   - If on the wrong network, the app will attempt to switch/add OP Sepolia automatically during submit.
 
 4) Backend relayer (Supabase Edge)
    - Follow PRD-1.md section 9 (B–F) to create tables, enable RLS, and deploy the `relay-attest` function.
@@ -36,7 +37,7 @@ Important Notes
 
 Key Files
 - app/page.tsx: Home view with WalletConnect and AttestationForm.
-- components/WalletConnect.tsx: Simple MetaMask connect/disconnect.
+- components/WalletConnect.tsx: Embedded wallet connect/disconnect.
 - components/AttestationForm.tsx: zod-validated form, EIP-712 signing, and relay call.
 - lib/eas.ts: Delegated attestation typed data builder.
 - app/api/relay/route.ts: Proxy to `RELAYER_URL`.
@@ -65,5 +66,4 @@ Deploy Edge Function (not in used)
 - RELAYER_INVOKE_KEY: Supabase anon key used to authorize function invocation from the Next.js server route
   - Next.js server forwards Authorization and apikey headers so Supabase doesn’t return 401
  - NEXT_PUBLIC_EAS_VERSION: must match the target EAS deployment domain version. For Sepolia EAS at 0xC2679f… use "0.26". For newer v1 deployments use "1.0.0".
-
 

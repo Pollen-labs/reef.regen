@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { attestationSchema } from "@/lib/validation";
 import { useAccount, usePublicClient } from "wagmi";
+import { useWeb3Auth } from "@web3auth/modal/react";
 import { env } from "@/lib/env";
 import { EAS, SchemaEncoder, ZERO_BYTES32, NO_EXPIRATION } from "@ethereum-attestation-service/eas-sdk";
 import { EAS_GET_NONCE_ABI } from "@/lib/eas";
@@ -12,7 +13,8 @@ import { ethers } from "ethers";
 const formSchema = attestationSchema;
 
 export function AttestationForm() {
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
+  const { isConnected: isEmbeddedConnected, provider: embeddedProvider } = useWeb3Auth();
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<null | { txHash?: string; uid?: string; error?: string }>(null);
   const [errors, setErrors] = useState<string | null>(null);
@@ -53,9 +55,9 @@ export function AttestationForm() {
   const publicClient = usePublicClient();
 
   const canSubmit = useMemo(() => {
-    // Allow sign & relay even if attestation details are empty (optional DB fields)
-    return isConnected && !!values.recipient && !!values.schemaUid;
-  }, [isConnected, values.recipient, values.schemaUid]);
+    // Require Embedded Wallet connection for signing & relaying
+    return isEmbeddedConnected && !!embeddedProvider && !!values.recipient && !!values.schemaUid;
+  }, [isEmbeddedConnected, embeddedProvider, values.recipient, values.schemaUid]);
 
   function addDebug(msg: string) {
     const line = `[${new Date().toISOString()}] ${msg}`;
@@ -159,6 +161,11 @@ export function AttestationForm() {
     e.preventDefault();
     setErrors(null);
     setResult(null);
+    addDebug(`Env: chainId=${env.chainId}, easAddress=${env.easAddress}`);
+    if (!env.easAddress || !/^0x[0-9a-fA-F]{40}$/.test(env.easAddress)) {
+      setErrors("EAS address is not configured or invalid. Set NEXT_PUBLIC_EAS_ADDRESS to the EAS contract on your chain.");
+      return;
+    }
     // Ensure recipient defaults to connected address if missing
     const candidate = { ...values, recipient: values.recipient || (address ?? "") };
     const parsed = formSchema.safeParse(candidate);
@@ -168,19 +175,90 @@ export function AttestationForm() {
     }
     try {
       setSubmitting(true);
-      // Build EAS SDK objects from wallet (ethers provider)
-      if (!(window as any).ethereum) throw new Error("No injected wallet available");
-      // BrowserProvider does not accept an options object; passing { staticNetwork: true }
-      // as the second param triggers "invalid network object name or chainId".
-      const provider = new ethers.BrowserProvider((window as any).ethereum);
-      const signer = await provider.getSigner();
-      const attesterAddr = await signer.getAddress();
+      // Only use Embedded Wallet provider from Web3Auth
+      if (!isEmbeddedConnected || !embeddedProvider) {
+        throw new Error("Embedded wallet not connected. Use 'Connect Embedded Wallet' first.");
+      }
+      let ethersProvider = new ethers.BrowserProvider(embeddedProvider as any);
+      let signer = await ethersProvider.getSigner();
+      let attesterAddr: string;
+
+      // Preflight: confirm chain + contract code exists
+      try {
+        const net = await ethersProvider.getNetwork();
+        const rawChainId = await (embeddedProvider as any).request?.({ method: "eth_chainId" }).catch(() => null);
+        addDebug(`Network check: ethers.chainId=${net.chainId.toString()} raw=${String(rawChainId)}`);
+        if (Number(net.chainId) !== Number(env.chainId)) {
+          addDebug(`Wrong network. Connected=${net.chainId.toString()} expected=${env.chainId}. Attempting wallet_switchEthereumChain…`);
+          const targetHex = "0x" + Number(env.chainId).toString(16);
+          try {
+            await (embeddedProvider as any).request?.({
+              method: "wallet_switchEthereumChain",
+              params: [{ chainId: targetHex }],
+            });
+          } catch (swErr: any) {
+            const msg = swErr?.message || String(swErr || "");
+            addDebug(`Switch failed: ${msg}`);
+            // If chain not added, try adding
+            if ((swErr?.code === 4902) || /unrecognized|not added|4902/i.test(msg)) {
+              try {
+                await (embeddedProvider as any).request?.({
+                  method: "wallet_addEthereumChain",
+                  params: [{
+                    chainId: targetHex,
+                    chainName: "OP Sepolia",
+                    nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 },
+                    rpcUrls: ["https://optimism-sepolia.blockpi.network/v1/rpc/public"],
+                    blockExplorerUrls: ["https://sepolia-optimism.etherscan.io"],
+                  }],
+                });
+                await (embeddedProvider as any).request?.({
+                  method: "wallet_switchEthereumChain",
+                  params: [{ chainId: targetHex }],
+                });
+              } catch (addErr: any) {
+                addDebug(`Add chain failed: ${addErr?.message || String(addErr)}`);
+              }
+            }
+          }
+          // Re-instantiate provider & signer after (possible) chain change
+          ethersProvider = new ethers.BrowserProvider(embeddedProvider as any);
+          signer = await ethersProvider.getSigner();
+          const net2 = await ethersProvider.getNetwork().catch((e:any)=>{ addDebug(`getNetwork after switch error: ${e?.message||String(e)}`); return null; });
+          if (!net2 || Number(net2.chainId) !== Number(env.chainId)) {
+            setErrors(`Wrong network. Connected chainId=${net2 ? net2.chainId.toString() : "(unknown)"} but expected ${env.chainId}.`);
+            setSubmitting(false);
+            return;
+          }
+          addDebug(`After switch: ethers.chainId=${net2.chainId.toString()}`);
+        }
+        const code = await ethersProvider.getCode(env.easAddress);
+        addDebug(`Code at EAS address length=${code?.length || 0}`);
+        if (!code || code === "0x") {
+          setErrors(`No contract code at EAS address ${env.easAddress} on chain ${env.chainId}.`);
+          setSubmitting(false);
+          return;
+        }
+      } catch (preErr: any) {
+        addDebug(`Preflight error: ${preErr?.message || String(preErr)}`);
+      }
+
+      attesterAddr = await signer.getAddress();
 
       const eas = new EAS(env.easAddress);
       eas.connect(signer as any);
 
       // Ensure on-chain nonce matches what we sign with
-      const chainNonce = await eas.getNonce(attesterAddr);
+      let chainNonce: bigint;
+      try {
+        chainNonce = await eas.getNonce(attesterAddr);
+      } catch (err: any) {
+        const msg = "Failed to read nonce from EAS. Check NEXT_PUBLIC_EAS_ADDRESS and network (chainId 11155420).";
+        addDebug(`${msg} Error: ${err?.message || String(err)}`);
+        setErrors(msg);
+        setSubmitting(false);
+        return;
+      }
       addDebug(`Connected ${attesterAddr}; chain nonce=${chainNonce.toString()}`);
 
       // Upload selected file now (pre-sign) if needed
@@ -474,6 +552,7 @@ export function AttestationForm() {
       <div style={{ fontSize: 12, color: "#555", marginBottom: 8 }}>
         Env default schema: {env.defaultSchemaUid || "(none)"}
       </div>
+      {/* Removed inline wallet connect buttons; use the global WalletConnect component instead */}
       <label>
         Schema UID
         <input

@@ -1,17 +1,14 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import type { Route } from "next";
-import { useAccount, useConnect, useConnectors } from "wagmi";
+import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
+import { WalletConnect } from "@/components/WalletConnect";
 
 export default function ConnectPage() {
   const { isConnected, address } = useAccount();
   const router = useRouter();
-  const { connect, isPending } = useConnect();
-  const connectors = useConnectors();
-
-  const injectedConnector = useMemo(() => connectors.find((c) => c.id === "metaMask" || c.id === "injected"), [connectors]);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,12 +29,6 @@ export default function ConnectPage() {
     };
   }, [isConnected, address, router]);
 
-  const onConnect = () => {
-    if (injectedConnector) connect({ connector: injectedConnector });
-  };
-
-  const hasProvider = typeof window !== "undefined" && (window as any).ethereum;
-
   if (isConnected) {
     return (
       <div style={{ padding: 24 }}>
@@ -47,17 +38,12 @@ export default function ConnectPage() {
   }
 
   return (
-    <div style={{ display: "grid", gap: 12, padding: 24 }}>
-      <h1>Connect</h1>
-      <p>Please connect with MetaMask to continue.</p>
-      <button onClick={onConnect} disabled={isPending || !injectedConnector}>
-        {isPending ? "Connecting…" : injectedConnector ? `Connect ${injectedConnector.name}` : "MetaMask not detected"}
-      </button>
-      {!hasProvider && (
-        <a href="https://metamask.io/download/" target="_blank" rel="noreferrer">
-          Install MetaMask
-        </a>
-      )}
+    <div style={{ display: "grid", gap: 16, padding: 24, maxWidth: 400, margin: "0 auto" }}>
+      <h1>Connect Your Wallet</h1>
+      <p style={{ color: "#666" }}>
+        Connect with the Embedded Wallet to start creating attestations.
+      </p>
+      <WalletConnect />
     </div>
   );
 }
