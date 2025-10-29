@@ -40,3 +40,28 @@
   .body-sm  { @apply text-smb;  }
   .body-xs  { @apply text-xsb;  }
 }
+
+/* Custom scrollbar styles */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(44, 46, 60, 0.5);
+  border-radius: 9999px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgb(75, 85, 99);
+  border-radius: 9999px;
+}
+
+.scrollbar-thin:hover::-webkit-scrollbar-thumb {
+  background: rgb(107, 114, 128);
+}
+
+/* For Firefox */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(75, 85, 99) rgba(44, 46, 60, 0.5);
+}

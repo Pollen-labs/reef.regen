@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { ResourceType, RequestParameters } from "maplibre-gl";
 import type { LocationPoint } from "@/types/map";
 
@@ -34,7 +34,6 @@ export default function MapView({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
-  const [ready, setReady] = useState(false);
 
   // ESC key to deselect
   useEffect(() => {
@@ -105,7 +104,6 @@ export default function MapView({
       map.addControl(new maplib.NavigationControl({ visualizePitch: true }));
 
       map.on("load", () => {
-        setReady(true);
 
         // Convert LocationPoint[] to GeoJSON
         const geojson = {
@@ -157,12 +155,24 @@ export default function MapView({
           });
         }
 
-        // Click handler
+        // Click handler for pins
         map.on("click", "location-pins", (e: any) => {
+          e.originalEvent.stopPropagation(); // Prevent map click
           const feature = e?.features?.[0];
           if (!feature) return;
           const locationId = feature.properties.id;
           onSelect(locationId);
+        });
+
+        // Click handler for map background (deselect)
+        map.on("click", (e: any) => {
+          // Only deselect if clicking empty map (not on a pin)
+          const features = map.queryRenderedFeatures(e.point, {
+            layers: ["location-pins"],
+          });
+          if (features.length === 0 && activeId) {
+            onDeselect();
+          }
         });
 
         // Cursor pointer on hover
@@ -181,7 +191,7 @@ export default function MapView({
         mapRef.current?.remove();
       } catch {}
     };
-  }, [points, activeId, onSelect]);
+  }, [points, activeId, onSelect, onDeselect]);
 
   return (
     <div className="absolute inset-0 bg-vulcan-900 overflow-hidden">
