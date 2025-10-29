@@ -2,7 +2,7 @@ import "./globals.css";
 import { Outfit } from "next/font/google";
 import type { Metadata } from "next";
 import Providers from "./providers";
-import { Nav } from "@/components/Nav";
+import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: "Reef.Regen",
@@ -22,8 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={outfit.variable}>
       <body>
         <Providers>
-          <Nav />
-          <main style={{ margin: "2rem auto", maxWidth: 720, padding: 16 }}>{children}</main>
+          <AppShell>{children}</AppShell>
         </Providers>
       </body>
     </html>
