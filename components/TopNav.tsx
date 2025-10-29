@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useWeb3AuthConnect } from "@web3auth/modal/react";
 import { useAccount } from "wagmi";
@@ -24,6 +24,29 @@ export default function TopNav() {
   const pathname = usePathname();
   const { connect: connectWeb3Auth, loading: web3authLoading } = useWeb3AuthConnect();
   const { isConnected, address } = useAccount();
+  const [profileHandle, setProfileHandle] = useState<string | null>(null);
+
+  // Fetch user's profile handle when connected
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchProfile() {
+      if (!isConnected || !address) {
+        setProfileHandle(null);
+        return;
+      }
+      try {
+        const res = await fetch(`/api/profiles/by-wallet?address=${address}`);
+        const json = await res.json().catch(() => ({}));
+        if (!cancelled) setProfileHandle(json?.handle || null);
+      } catch {
+        if (!cancelled) setProfileHandle(null);
+      }
+    }
+    fetchProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [address, isConnected]);
 
   const handleSignIn = async () => {
     if (!isConnected) {
@@ -34,6 +57,8 @@ export default function TopNav() {
       }
     }
   };
+
+  const accountHref = profileHandle ? `/profile/${profileHandle}` : "/attest";
 
   return (
     <header className="sticky top-0 z-40 bg-black text-white">
@@ -67,9 +92,14 @@ export default function TopNav() {
             Submit
           </a>
           {isConnected ? (
-            <span className="px-4 py-2 text-xl font-bold leading-8">
-              {address?.slice(0, 6)}...{address?.slice(-4)}
-            </span>
+            <a
+              className={`px-4 py-2 text-xl font-bold leading-8 hover:text-white/90 ${
+                pathname.startsWith("/profile") ? "text-orange" : ""
+              }`}
+              href={accountHref}
+            >
+              Account
+            </a>
           ) : (
             <button
               onClick={handleSignIn}
@@ -127,9 +157,14 @@ export default function TopNav() {
                 Submit
               </a>
               {isConnected ? (
-                <span className="mt-2 px-4 py-2 text-xl font-bold leading-8">
-                  {address?.slice(0, 6)}...{address?.slice(-4)}
-                </span>
+                <a
+                  href={accountHref}
+                  className={`mt-2 px-4 py-2 text-xl font-bold leading-8 ${
+                    pathname.startsWith("/profile") ? "text-orange" : ""
+                  }`}
+                >
+                  Account
+                </a>
               ) : (
                 <button
                   onClick={handleSignIn}
