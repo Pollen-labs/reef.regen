@@ -27,6 +27,9 @@
       ],
       "@/hooks/*": [
         "hooks/*"
+      ],
+      "@/types/*": [
+        "types/*"
       ]
     },
     "plugins": [

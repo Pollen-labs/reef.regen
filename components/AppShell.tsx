@@ -1,3 +1,5 @@
+"use client";
+import { usePathname } from "next/navigation";
 import TopNav from "./TopNav";
 import Footer from "./Footer";
 
@@ -7,7 +9,7 @@ import Footer from "./Footer";
  * Provides:
  * - Sticky TopNav at the top
  * - Main content area (flexible for full-bleed or contained layouts)
- * - Footer at the bottom
+ * - Footer at the bottom (hidden on /map page for full-height experience)
  *
  * Z-layers:
  * - Map content: z-0
@@ -17,11 +19,14 @@ import Footer from "./Footer";
  * - TopNav: z-40
  */
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isMapPage = pathname === "/map";
+
   return (
     <div className="min-h-dvh flex flex-col bg-white text-vulcan-900">
       <TopNav />
       <main className="relative flex-1">{children}</main>
-      <Footer />
+      {!isMapPage && <Footer />}
     </div>
   );
 }
