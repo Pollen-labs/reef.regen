@@ -37,7 +37,7 @@ export default function TopNav() {
 
   return (
     <header className="sticky top-0 z-40 bg-black text-white">
-      <div className="px-8 py-6 flex justify-between items-end">
+      <div className="w-full max-w-[1440px] mx-auto px-8 py-6 flex justify-between items-end">
         {/* Left: Logo + Wordmark */}
         <a href="/" className="flex items-center gap-1">
           <img

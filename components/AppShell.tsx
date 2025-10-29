@@ -7,9 +7,15 @@ import Footer from "./Footer";
  * AppShell — Global layout wrapper
  *
  * Provides:
- * - Sticky TopNav at the top
- * - Main content area (flexible for full-bleed or contained layouts)
+ * - Sticky TopNav at the top (max-width 1440px content)
+ * - Main content area:
+ *   - Map page: Full-bleed for absolute positioning
+ *   - Other pages: Constrained container (max-width 1440px)
  * - Footer at the bottom (hidden on /map page for full-height experience)
+ *
+ * Usage:
+ * - For full-width colored sections: Use absolute/fixed positioning or render outside AppShell
+ * - For standard content: Automatically constrained to 1440px with proper padding
  *
  * Z-layers:
  * - Map content: z-0
@@ -25,7 +31,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh flex flex-col bg-white text-vulcan-900">
       <TopNav />
-      <main className="relative flex-1">{children}</main>
+      <main className="relative flex-1">
+        {isMapPage ? (
+          // Map page: full-bleed for absolute positioning
+          children
+        ) : (
+          // Other pages: constrained container with padding
+          <div className="w-full max-w-[1440px] mx-auto px-8 py-8">
+            {children}
+          </div>
+        )}
+      </main>
       {!isMapPage && <Footer />}
     </div>
   );
