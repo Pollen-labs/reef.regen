@@ -1,0 +1,55 @@
+const faqs = [
+  {
+    q: "What is Reef.Regen?",
+    a: "Reef.Regen is a decentralized platform for documenting and verifying coral restoration actions using blockchain attestations.",
+  },
+  {
+    q: "Do I need blockchain experience to use it?",
+    a: "No. You can log in with Google, Apple, or LinkedIn; your wallet is created automatically and we cover the transaction gas.",
+  },
+  {
+    q: "Who can submit a restoration action?",
+    a: "Anyone. From community groups to NGOs, dive shops, or individual volunteers.",
+  },
+  {
+    q: "What happens after I submit an action?",
+    a: "Your submission is stored as a verifiable record on Ethereum (Optimism network) and appears on the public reef map.",
+  },
+  {
+    q: "Can I attach evidence or data?",
+    a: "Yes. You can include photos, reports, or other files (up to 5MB) to support your attestation.",
+  },
+  {
+    q: "Is Reef.Regen free to use?",
+    a: "Yes. All transactions are gasless; you don’t pay any blockchain fees.",
+  },
+];
+
+export default function FAQ() {
+  return (
+    <section className="bg-black text-white">
+      <div className="w-full max-w-[1120px] mx-auto px-6 md:px-10 pt-16 pb-20 flex flex-col items-center gap-8">
+        <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-orange/90 flex items-center justify-center -mb-2" aria-hidden>
+          <span className="sr-only">Coral</span>
+          <span className="block h-6 w-6 bg-white rounded" />
+        </div>
+        <h3 className="hd-5 text-center text-white">
+          Frequently Asked Questions
+        </h3>
+
+        <dl className="w-full grid gap-6">
+          {faqs.map((f) => (
+            <div key={f.q} className="rounded-2xl border border-white/10 p-6">
+              <dt className="text-xl md:text-2xl font-black leading-8 text-white">
+                {f.q}
+              </dt>
+              <dd className="mt-2 text-baseb md:text-lgb text-vulcan-200">
+                {f.a}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
+  );
+}

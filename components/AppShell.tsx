@@ -27,12 +27,13 @@ import Footer from "./Footer";
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isMapPage = pathname === "/map";
+  const isHomePage = pathname === "/";
 
   return (
     <div className="min-h-dvh flex flex-col bg-white text-vulcan-900">
       <TopNav />
       <main className="relative flex-1">
-        {isMapPage ? (
+        {isMapPage || isHomePage ? (
           // Map page: full-bleed for absolute positioning
           children
         ) : (

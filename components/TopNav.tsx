@@ -104,7 +104,7 @@ export default function TopNav() {
             <button
               onClick={handleSignIn}
               disabled={web3authLoading}
-              className="px-4 py-2 text-xl font-bold leading-8 rounded outline outline-4 outline-offset-[-4px] outline-orange hover:bg-white/5 disabled:opacity-50 disabled:cursor-wait"
+              className="px-4 py-2 text-xl font-bold leading-8 rounded-2xl outline outline-4 outline-offset-[-4px] outline-orange hover:bg-white/5 disabled:opacity-50 disabled:cursor-wait"
             >
               {web3authLoading ? "Connecting..." : "Sign in"}
             </button>
