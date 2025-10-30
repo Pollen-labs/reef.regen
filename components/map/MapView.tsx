@@ -34,6 +34,11 @@ export default function MapView({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
+  // Keep latest points for when map loads later
+  const pointsRef = useRef(points);
+  useEffect(() => {
+    pointsRef.current = points;
+  }, [points]);
 
   // ESC key to deselect
   useEffect(() => {
@@ -46,18 +51,26 @@ export default function MapView({
     return () => window.removeEventListener("keydown", handleEscape);
   }, [activeId, onDeselect]);
 
+  // Keep latest callbacks in refs to avoid re-binding map events
+  const onSelectRef = useRef(onSelect);
+  const onDeselectRef = useRef(onDeselect);
   useEffect(() => {
-    let maplib: any;
-    let map: any;
-    let destroyed = false;
+    onSelectRef.current = onSelect;
+  }, [onSelect]);
+  useEffect(() => {
+    onDeselectRef.current = onDeselect;
+  }, [onDeselect]);
 
+  // Initialize map once
+  useEffect(() => {
+    let destroyed = false;
     (async () => {
       const [{ default: maplibregl }] = await Promise.all([
         import("maplibre-gl"),
       ]);
       if (destroyed) return;
 
-      // Inject MapLibre CSS via CDN
+      // Inject MapLibre CSS via CDN once
       const linkId = "maplibre-css";
       if (!document.getElementById(linkId)) {
         const link = document.createElement("link");
@@ -67,10 +80,7 @@ export default function MapView({
         document.head.appendChild(link);
       }
 
-      maplib = maplibregl;
-
-      // Initialize map with dark theme
-      map = new maplibregl.Map({
+      const map = new maplibregl.Map({
         container: containerRef.current!,
         style: "/map/styles/dark_matter.json",
         center: [0, 15],
@@ -83,7 +93,6 @@ export default function MapView({
           const url = typeof u === "string" ? u : (u?.url as string | undefined) || "";
           if (!url) return typeof u === "string" ? { url: u } : (u as RequestParameters);
 
-          // Handle MapTiler API key if needed
           const token = process.env.NEXT_PUBLIC_MAPTILER_KEY;
           if (!token) return { url };
 
@@ -100,78 +109,70 @@ export default function MapView({
 
       mapRef.current = map;
 
-      // Add navigation controls
-      map.addControl(new maplib.NavigationControl({ visualizePitch: true }));
+      // Controls
+      map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }));
 
       map.on("load", () => {
-
-        // Convert LocationPoint[] to GeoJSON
-        const geojson = {
-          type: "FeatureCollection",
-          features: points.map((point) => ({
-            type: "Feature",
-            geometry: {
-              type: "Point",
-              coordinates: [point.lng, point.lat],
-            },
-            properties: {
-              id: point.id,
-              name: point.name,
-              attestationCount: point.attestationCount,
-            },
-          })),
-        };
-
-        // Add source
+        // Initial empty source (data will be set by points effect)
         if (!map.getSource("locations")) {
           map.addSource("locations", {
             type: "geojson",
-            data: geojson,
+            data: { type: "FeatureCollection", features: [] },
           });
         }
-
-        // Add layer with flamingo-400 color (#FF7F5C per Tailwind config)
         if (!map.getLayer("location-pins")) {
           map.addLayer({
             id: "location-pins",
             type: "circle",
             source: "locations",
             paint: {
-              "circle-radius": [
-                "case",
-                ["==", ["get", "id"], activeId || ""],
-                10, // Highlighted size
-                6,  // Default size
-              ],
-              "circle-color": "#FF7F5C", // flamingo-400
+              "circle-radius": ["case", ["==", ["get", "id"], ""], 10, 6],
+              "circle-color": "#FF7F5C",
               "circle-stroke-width": 2,
               "circle-stroke-color": [
                 "case",
-                ["==", ["get", "id"], activeId || ""],
-                "#FFFFFF", // White stroke when selected
-                "rgba(255, 127, 92, 0.4)", // Flamingo with opacity
+                ["==", ["get", "id"], ""],
+                "#FFFFFF",
+                "rgba(255, 127, 92, 0.4)",
               ],
             },
           });
         }
 
+        // Set initial data using the latest points
+        const source = map.getSource("locations");
+        if (source) {
+          const geojson = {
+            type: "FeatureCollection",
+            features: pointsRef.current.map((point) => ({
+              type: "Feature",
+              geometry: { type: "Point", coordinates: [point.lng, point.lat] },
+              properties: {
+                id: point.id,
+                name: point.name,
+                attestationCount: point.attestationCount,
+              },
+            })),
+          } as const;
+          try {
+            (source as any).setData(geojson);
+          } catch {}
+        }
+
         // Click handler for pins
         map.on("click", "location-pins", (e: any) => {
-          e.originalEvent.stopPropagation(); // Prevent map click
+          e.originalEvent.stopPropagation();
           const feature = e?.features?.[0];
           if (!feature) return;
           const locationId = feature.properties.id;
-          onSelect(locationId);
+          onSelectRef.current(locationId);
         });
 
-        // Click handler for map background (deselect)
+        // Click handler for background: deselect if not on a pin
         map.on("click", (e: any) => {
-          // Only deselect if clicking empty map (not on a pin)
-          const features = map.queryRenderedFeatures(e.point, {
-            layers: ["location-pins"],
-          });
-          if (features.length === 0 && activeId) {
-            onDeselect();
+          const features = map.queryRenderedFeatures(e.point, { layers: ["location-pins"] });
+          if (features.length === 0) {
+            onDeselectRef.current();
           }
         });
 
@@ -191,7 +192,57 @@ export default function MapView({
         mapRef.current?.remove();
       } catch {}
     };
-  }, [points, activeId, onSelect, onDeselect]);
+  }, []);
+
+  // Update source data when points change
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const source = map.getSource("locations");
+    if (!source) return;
+
+    const geojson = {
+      type: "FeatureCollection",
+      features: points.map((point) => ({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [point.lng, point.lat] },
+        properties: {
+          id: point.id,
+          name: point.name,
+          attestationCount: point.attestationCount,
+        },
+      })),
+    };
+
+    try {
+      (source as any).setData(geojson);
+    } catch {}
+  }, [points]);
+
+  // Update styling for active selection without recreating map
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (!map.getLayer("location-pins")) return;
+
+    const radiusExpr = [
+      "case",
+      ["==", ["get", "id"], activeId || ""],
+      10,
+      6,
+    ];
+    const strokeExpr = [
+      "case",
+      ["==", ["get", "id"], activeId || ""],
+      "#FFFFFF",
+      "rgba(255, 127, 92, 0.4)",
+    ];
+
+    try {
+      map.setPaintProperty("location-pins", "circle-radius", radiusExpr as any);
+      map.setPaintProperty("location-pins", "circle-stroke-color", strokeExpr as any);
+    } catch {}
+  }, [activeId]);
 
   return (
     <div className="absolute inset-0 bg-vulcan-900 overflow-hidden">
