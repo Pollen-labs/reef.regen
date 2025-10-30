@@ -34,6 +34,8 @@ export default function MapView({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
+  const pulseRafRef = useRef<number | null>(null);
+  const pulseStartRef = useRef<number>(0);
   // Keep latest points for when map loads later
   const pointsRef = useRef(points);
   useEffect(() => {
@@ -128,13 +130,27 @@ export default function MapView({
             paint: {
               "circle-radius": ["case", ["==", ["get", "id"], ""], 10, 6],
               "circle-color": "#FF7F5C",
-              "circle-stroke-width": 2,
-              "circle-stroke-color": [
-                "case",
-                ["==", ["get", "id"], ""],
-                "#FFFFFF",
-                "rgba(255, 127, 92, 0.4)",
-              ],
+              "circle-stroke-width": 1,
+              "circle-stroke-color": "#3C3D50", // vulcan-800
+            },
+          });
+        }
+
+        // Add pulsing selection ring layer (initially hidden via filter)
+        if (!map.getLayer("location-pulse")) {
+          map.addLayer({
+            id: "location-pulse",
+            type: "circle",
+            source: "locations",
+            // Initially no feature matches this ID
+            filter: ["==", ["get", "id"], ""],
+            paint: {
+              "circle-radius": 14, // ring radius around selected dot
+              "circle-color": "rgba(0,0,0,0)",
+              "circle-opacity": 0, // ensure fill invisible
+              "circle-stroke-color": "rgba(255,255,255,0.6)", // white 60%
+              "circle-stroke-width": 3,
+              "circle-stroke-opacity": 0.6,
             },
           });
         }
@@ -231,17 +247,63 @@ export default function MapView({
       10,
       6,
     ];
-    const strokeExpr = [
-      "case",
-      ["==", ["get", "id"], activeId || ""],
-      "#FFFFFF",
-      "rgba(255, 127, 92, 0.4)",
-    ];
 
     try {
       map.setPaintProperty("location-pins", "circle-radius", radiusExpr as any);
-      map.setPaintProperty("location-pins", "circle-stroke-color", strokeExpr as any);
+      // Ensure stroke remains vulcan-800, 1px
+      map.setPaintProperty("location-pins", "circle-stroke-color", "#3C3D50");
+      map.setPaintProperty("location-pins", "circle-stroke-width", 1 as any);
     } catch {}
+  }, [activeId]);
+
+  // Manage pulsing ring animation for the selected feature
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer("location-pulse")) return;
+
+    // Update filter to match the active feature
+    const idToShow = activeId || "";
+    try {
+      map.setFilter("location-pulse", ["==", ["get", "id"], idToShow]);
+    } catch {}
+
+    // Stop any previous animation
+    if (pulseRafRef.current) {
+      cancelAnimationFrame(pulseRafRef.current);
+      pulseRafRef.current = null;
+    }
+
+    if (!activeId) {
+      // Hide stroke if no active selection
+      try {
+        map.setPaintProperty("location-pulse", "circle-stroke-opacity", 0);
+      } catch {}
+      return;
+    }
+
+    pulseStartRef.current = performance.now();
+
+    const animate = (now: number) => {
+      const t = (now - pulseStartRef.current) / 1000; // seconds
+      // Opacity pulses between 0.3 and 0.6 (peak at 0.6)
+      const opacity = 0.45 + 0.15 * Math.sin(t * 2 * Math.PI * 1.2);
+      // Keep radius steady to meet spec; tweak slightly for subtle breathing
+      const radius = 14 + 0.5 * Math.sin(t * 2 * Math.PI * 1.2);
+      try {
+        map.setPaintProperty("location-pulse", "circle-stroke-opacity", Math.max(0.3, Math.min(0.6, opacity)));
+        map.setPaintProperty("location-pulse", "circle-radius", radius as any);
+      } catch {}
+      pulseRafRef.current = requestAnimationFrame(animate);
+    };
+
+    pulseRafRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (pulseRafRef.current) {
+        cancelAnimationFrame(pulseRafRef.current);
+        pulseRafRef.current = null;
+      }
+    };
   }, [activeId]);
 
   return (
