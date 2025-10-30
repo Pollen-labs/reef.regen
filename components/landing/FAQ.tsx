@@ -28,11 +28,14 @@ const faqs = [
 export default function FAQ() {
   return (
     <section className="bg-black text-white">
-      <div className="w-full max-w-[1120px] mx-auto px-6 md:px-10 pt-16 pb-20 flex flex-col items-center gap-8">
-        <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-orange/90 flex items-center justify-center -mb-2" aria-hidden>
-          <span className="sr-only">Coral</span>
-          <span className="block h-6 w-6 bg-white rounded" />
-        </div>
+      <div className="w-full max-w-[1060px] mx-auto px-6 md:px-10 pt-20 pb-20 flex flex-col items-center gap-8">
+        {/* Overlapping mascot from previous section */}
+        <img
+          src="/assets/Logo-face-left.svg"
+          alt=""
+          aria-hidden
+          className="w-40 md:w-48 -mt-30 md:-mt-40"
+        />
         <h3 className="hd-5 text-center text-white">
           Frequently Asked Questions
         </h3>

@@ -1,10 +1,10 @@
 export default function ExploreSection() {
   return (
     <section className="bg-vulcan-900 text-white">
-      <div className="mx-auto w-full max-w-[1120px] px-6 md:px-10 py-14">
-        <div className="rounded-3xl bg-vulcan-800 px-6 py-8 md:px-10 md:py-10 flex flex-col md:flex-row items-center gap-6">
+      <div className="mx-auto w-full max-w-[1120px] px-6 md:px-10 py-8 pb-32">
+        <div className="rounded-3xl bg-vulcan-800 px-6 py-12 md:px-10 md:py-12 flex flex-col md:flex-row items-center gap-6">
           <div className="flex-1 min-w-0">
-          <h3 className="hd-6 text-white">
+          <h3 className="hd-4 text-white">
             Discover coral restoration around the world
           </h3>
             <p className="mt-2 text-baseb text-vulcan-200">

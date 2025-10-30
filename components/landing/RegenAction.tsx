@@ -9,7 +9,7 @@ export default function RegenAction() {
 
   return (
     <section className="relative bg-vulcan-900 text-white">
-      <div className="w-full max-w-[1060px] mx-auto px-6 md:px-10 pt-16 md:pt-20 pb-10 md:pb-16 flex flex-col items-center gap-10">
+      <div className="w-full max-w-[1060px] mx-auto px-6 md:px-10 pt-24 md:pt-32 pb-16 md:pb-16 flex flex-col items-center gap-10">
         <div className="text-center max-w-[820px]">
           <h2 className="hd-3 text-vulcan-100">
             Your regen action deserves to be seen.
