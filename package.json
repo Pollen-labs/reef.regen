@@ -17,7 +17,7 @@
     "@web3auth/modal": "^10.3.0",
     "ethers": "^6.13.2",
     "maplibre-gl": "^3.6.2",
-    "next": "15.0.3",
+    "next": "16.0.2-canary.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "viem": "^2.17.0",
