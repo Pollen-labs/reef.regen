@@ -16,7 +16,9 @@ Run order
 - 009_v0_4_phase4_legacy_backfill.sql — Optional: backfill legacy `attestations` → new `attestation` + `site`.
 - 010_v0_4_phase5_cleanup.sql — Optional: drop legacy table and old enum after cutover.
 - 011_v0_4_taxa_identity.sql — Make `taxa_id` auto‑generated for CSV imports.
-- 013_v0_4_taxa_and_legacy_cleanup.sql — Cleanup: drop `taxa_staging` and legacy `coral_species`.
+ - 016_v0_4_trim_srs_from_location_payload.sql — Strip `srs` and sanitize payload (legacy).
+ - 017_v0_4_drop_location_payload.sql — Drop `site.location_payload`; construct JSON client-side.
+ - 013_v0_4_taxa_and_legacy_cleanup.sql — Cleanup: drop `taxa_staging` and legacy `coral_species`.
 
 Core tables (v0.4)
 - `site_type` (smallint PK): Outplant reef, Nursery, Lab/Hatchery, Staging/Holding, Other.
@@ -75,4 +77,3 @@ Notes
 - PostGIS is required (`create extension if not exists postgis;`).
 - Dates are UTC; `action_end_date` is optional.
 - For large map workloads, consider a materialized view of per‑site stats.
-

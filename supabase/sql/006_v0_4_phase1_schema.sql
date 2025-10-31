@@ -78,7 +78,6 @@ create table if not exists public.site (
   location_point geography(Point,4326) not null,
   lon numeric(9,6) not null,
   lat numeric(9,6) not null,
-  location_payload jsonb not null,
   depth_m numeric(6,2) check (depth_m is null or depth_m >= 0),
   surface_area_m2 numeric(12,2) check (surface_area_m2 is null or surface_area_m2 >= 0),
   created_at timestamptz not null default now(),

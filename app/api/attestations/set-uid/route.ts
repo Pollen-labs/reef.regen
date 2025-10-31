@@ -9,10 +9,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid attestation_id or uid" }, { status: 400 });
   }
   const { error } = await supabaseAdmin
-    .from("attestations")
-    .update({ uid: body.uid })
-    .eq("id", body.attestation_id);
+    .from("attestation")
+    .update({ eas_attestation_uid: body.uid })
+    .eq("attestation_id", body.attestation_id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
-

@@ -26,7 +26,14 @@ export function AttestationForm() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [values, setValues] = useState({
-    // DB fields
+    // EAS v0.4 fields (UI-sourced)
+    organizationName: "",
+    reefRegenActionsCsv: "", // legacy input; superseded by multi-select below
+    reefRegenActions: [] as string[],
+    siteName: "",
+    siteType: "",
+    selectedSiteId: "",
+    // DB fields (legacy)
     regenType: "other" as "transplantation" | "nursery" | "other",
     actionDate: (() => {
       const d = new Date();
@@ -42,6 +49,8 @@ export function AttestationForm() {
     speciesCsv: "",
     summary: "",
     contributorsCsv: "",
+    speciesSelected: [] as string[],
+    speciesQuery: "",
     fileCid: "",
     fileUrl: "",
 
@@ -53,6 +62,9 @@ export function AttestationForm() {
   });
 
   const publicClient = usePublicClient();
+  const [regenOptions, setRegenOptions] = useState<{ id: number; name: string }[]>([]);
+  const [sites, setSites] = useState<{ id: string; name: string; lon: number|string; lat: number|string; depthM: number|null; areaM2: number|null; siteType?: string }[]>([]);
+  const [speciesOptions, setSpeciesOptions] = useState<{ id: number; name: string; common: string|null; label: string }[]>([]);
 
   const canSubmit = useMemo(() => {
     // Require Embedded Wallet connection for signing & relaying
@@ -64,55 +76,73 @@ export function AttestationForm() {
     setDebugEvents((prev) => [line, ...prev].slice(0, 100));
   }
 
-  // Build EAS encoded data for the deployed schema (v0.3 includes fileCID)
-  const schemaString = "string regenType,string[] regenLocation,string regenDate,uint256 depthScaled,uint256 surfaceAreaScaled,string[] species,string summary,string[] contributors,string fileCID";
+  // Build EAS encoded data for the deployed schema (v0.4)
+  const LOCATION_TYPE = "coordinate-decimal/lon-lat" as const;
+  const SRS = "EPSG:4326" as const;
+  const schemaString = "string organizationName,string[] reefRegenAction,string actionDate,string siteName,string siteType,string[] location,string locationType,string srs,uint256 siteDepthM,uint256 siteAreaSqM,string actionSummary,string[] biodiversity,string[] contributors,string fileName,string ipfsCID";
   const encodedData = useMemo(() => {
     try {
       const encoder = new SchemaEncoder(schemaString);
-      const dateStr = values.actionDate
-        ? (() => { const [y,m,d] = values.actionDate.split("-"); return `${m}-${d}-${y}`; })()
-        : "";
-      const depthScaled = values.depth === "" ? 0n : BigInt(Math.round(Number(values.depth) * 100));
-      const areaScaled = values.surfaceArea === "" ? 0n : BigInt(Math.round(Number(values.surfaceArea) * 100));
-      const species = values.speciesCsv.split(",").map(s => s.trim()).filter(Boolean);
+      const actions = (values.reefRegenActions.length ? values.reefRegenActions : values.reefRegenActionsCsv.split(",").map(s => s.trim()).filter(Boolean));
+      const biodiversity = (values.speciesSelected.length
+        ? values.speciesSelected
+        : values.speciesCsv.split(",").map(s => s.trim()).filter(Boolean));
       const contributors = values.contributorsCsv.split(",").map(s => s.trim()).filter(Boolean);
-      const regenLocation = [values.lat, values.lng].filter(v => v !== "");
-      const fileCidNorm = values.fileCid || "";
+      const location = [values.lng, values.lat].filter(v => v !== ""); // [lon, lat]
+      const depthInt = values.depth === "" ? 0n : BigInt(Math.round(Number(values.depth)));
+      const areaInt = values.surfaceArea === "" ? 0n : BigInt(Math.round(Number(values.surfaceArea)));
+      const fileName = selectedFile?.name || "";
+      const ipfsCID = values.fileCid || "";
       return encoder.encodeData([
-        { name: "regenType", type: "string", value: values.regenType },
-        { name: "regenLocation", type: "string[]", value: regenLocation as any },
-        { name: "regenDate", type: "string", value: dateStr },
-        { name: "depthScaled", type: "uint256", value: depthScaled },
-        { name: "surfaceAreaScaled", type: "uint256", value: areaScaled },
-        { name: "species", type: "string[]", value: species as any },
-        { name: "summary", type: "string", value: values.summary },
+        { name: "organizationName", type: "string", value: values.organizationName },
+        { name: "reefRegenAction", type: "string[]", value: actions as any },
+        { name: "actionDate", type: "string", value: values.actionDate || "" },
+        { name: "siteName", type: "string", value: values.siteName },
+        { name: "siteType", type: "string", value: values.siteType },
+        { name: "location", type: "string[]", value: location as any },
+        { name: "locationType", type: "string", value: LOCATION_TYPE },
+        { name: "srs", type: "string", value: SRS },
+        { name: "siteDepthM", type: "uint256", value: depthInt },
+        { name: "siteAreaSqM", type: "uint256", value: areaInt },
+        { name: "actionSummary", type: "string", value: values.summary },
+        { name: "biodiversity", type: "string[]", value: biodiversity as any },
         { name: "contributors", type: "string[]", value: contributors as any },
-        { name: "fileCID", type: "string", value: fileCidNorm },
+        { name: "fileName", type: "string", value: fileName },
+        { name: "ipfsCID", type: "string", value: ipfsCID },
       ]);
     } catch {
       return "0x";
     }
-  }, [values.regenType, values.actionDate, values.lat, values.lng, values.depth, values.surfaceArea, values.speciesCsv, values.summary, values.contributorsCsv, values.fileCid]);
+  }, [values.organizationName, values.reefRegenActionsCsv, values.reefRegenActions, values.actionDate, values.siteName, values.siteType, values.lat, values.lng, values.depth, values.surfaceArea, values.speciesCsv, values.speciesSelected, values.summary, values.contributorsCsv, values.fileCid, selectedFile?.name]);
 
   function buildEncodedDataLocal(v: typeof values) {
     const encoder = new SchemaEncoder(schemaString);
-    const dateStr = v.actionDate ? (() => { const [y,m,d] = v.actionDate.split("-"); return `${m}-${d}-${y}`; })() : "";
-    const depthScaled = v.depth === "" ? 0n : BigInt(Math.round(Number(v.depth) * 100));
-    const areaScaled = v.surfaceArea === "" ? 0n : BigInt(Math.round(Number(v.surfaceArea) * 100));
-    const species = v.speciesCsv.split(",").map(s => s.trim()).filter(Boolean);
+    const actions = (v.reefRegenActions.length ? v.reefRegenActions : v.reefRegenActionsCsv.split(",").map(s => s.trim()).filter(Boolean));
+    const biodiversity = (v.speciesSelected.length
+      ? v.speciesSelected
+      : v.speciesCsv.split(",").map(s => s.trim()).filter(Boolean));
     const contributors = v.contributorsCsv.split(",").map(s => s.trim()).filter(Boolean);
-    const regenLocation = [v.lat, v.lng].filter(x => x !== "");
-    const fileCidNorm = v.fileCid || "";
+    const location = [v.lng, v.lat].filter(x => x !== ""); // [lon, lat]
+    const depthInt = v.depth === "" ? 0n : BigInt(Math.round(Number(v.depth)));
+    const areaInt = v.surfaceArea === "" ? 0n : BigInt(Math.round(Number(v.surfaceArea)));
+    const fileName = selectedFile?.name || "";
+    const ipfsCID = v.fileCid || "";
     return encoder.encodeData([
-      { name: "regenType", type: "string", value: v.regenType },
-      { name: "regenLocation", type: "string[]", value: regenLocation as any },
-      { name: "regenDate", type: "string", value: dateStr },
-      { name: "depthScaled", type: "uint256", value: depthScaled },
-      { name: "surfaceAreaScaled", type: "uint256", value: areaScaled },
-      { name: "species", type: "string[]", value: species as any },
-      { name: "summary", type: "string", value: v.summary },
+      { name: "organizationName", type: "string", value: v.organizationName },
+      { name: "reefRegenAction", type: "string[]", value: actions as any },
+      { name: "actionDate", type: "string", value: v.actionDate || "" },
+      { name: "siteName", type: "string", value: v.siteName },
+      { name: "siteType", type: "string", value: v.siteType },
+      { name: "location", type: "string[]", value: location as any },
+      { name: "locationType", type: "string", value: LOCATION_TYPE },
+      { name: "srs", type: "string", value: SRS },
+      { name: "siteDepthM", type: "uint256", value: depthInt },
+      { name: "siteAreaSqM", type: "uint256", value: areaInt },
+      { name: "actionSummary", type: "string", value: v.summary },
+      { name: "biodiversity", type: "string[]", value: biodiversity as any },
       { name: "contributors", type: "string[]", value: contributors as any },
-      { name: "fileCID", type: "string", value: fileCidNorm },
+      { name: "fileName", type: "string", value: fileName },
+      { name: "ipfsCID", type: "string", value: ipfsCID },
     ]);
   }
 
@@ -133,6 +163,101 @@ export function AttestationForm() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address]);
+
+  // Prefill organization name from profile handle if available
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!address || values.organizationName) return;
+        const res = await fetch(`/api/profiles/by-wallet?address=${address}`);
+        const json = await res.json();
+        if (!cancelled && res.ok && (json?.name || json?.orgName || json?.handle) && !values.organizationName) {
+          setValues((s) => ({ ...s, organizationName: (json.name || json.orgName || json.handle) as string }));
+        }
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address]);
+
+  // Load regen types options
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/regen-types`);
+        const json = await res.json();
+        if (!cancelled && res.ok) setRegenOptions((json.items || []) as any);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Load user's sites and populate dropdown; also set lat/lng when selection changes
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!address) return;
+        const res = await fetch(`/api/sites/by-wallet?address=${address}`);
+        const json = await res.json();
+        if (!cancelled && res.ok) setSites((json.items || []) as any);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [address]);
+
+  // Query taxa search options (debounced on speciesQuery)
+  useEffect(() => {
+    let cancelled = false;
+    const h = setTimeout(async () => {
+      try {
+        const q = values.speciesQuery.trim();
+        if (q.length < 2) { if (!cancelled) setSpeciesOptions([]); return; }
+        const res = await fetch(`/api/taxa/search?q=${encodeURIComponent(q)}&limit=20`);
+        const json = await res.json();
+        if (!cancelled && res.ok) setSpeciesOptions((json.items || []) as any);
+      } catch {}
+    }, 250);
+    return () => { cancelled = true; clearTimeout(h); };
+  }, [values.speciesQuery]);
+
+  function onSelectRegenOptions(e: React.ChangeEvent<HTMLSelectElement>) {
+    const selected = Array.from(e.target.selectedOptions).map((o) => o.value);
+    setValues((s) => ({ ...s, reefRegenActions: selected }));
+  }
+
+  function onSelectSite(e: React.ChangeEvent<HTMLSelectElement>) {
+    const id = e.target.value;
+    setValues((s) => ({ ...s, selectedSiteId: id }));
+    const site = sites.find((x) => x.id === id);
+    if (site) {
+      setValues((s) => ({
+        ...s,
+        siteName: site.name,
+        siteType: site.siteType || s.siteType,
+        // ensure string values for encoder
+        lat: String(site.lat ?? ""),
+        lng: String(site.lon ?? ""),
+        depth: site.depthM != null ? String(site.depthM) : s.depth,
+        surfaceArea: site.areaM2 != null ? String(site.areaM2) : s.surfaceArea,
+      }));
+    }
+  }
+
+  function addSpecies(name: string) {
+    setValues((s) => ({
+      ...s,
+      speciesSelected: s.speciesSelected.includes(name) ? s.speciesSelected : [...s.speciesSelected, name],
+      speciesQuery: "",
+    }));
+    setSpeciesOptions([]);
+  }
+
+  function removeSpecies(name: string) {
+    setValues((s) => ({ ...s, speciesSelected: s.speciesSelected.filter((n) => n !== name) }));
+  }
 
   // Fetch and display current chain nonce for attester
   useEffect(() => {
@@ -318,10 +443,11 @@ export function AttestationForm() {
           if (profileId) {
             const depthNum = values.depth === "" ? null : Number(values.depth);
             const areaNum = values.surfaceArea === "" ? null : Number(values.surfaceArea);
-            const species = values.speciesCsv
+            const speciesCsvArr = values.speciesCsv
               .split(",")
               .map((s) => s.trim())
               .filter((s) => s.length > 0);
+            const species = Array.from(new Set([...(values.speciesSelected || []), ...speciesCsvArr]));
             const contributor_name = values.contributorsCsv
               .split(",")
               .map((s) => s.trim())
@@ -331,22 +457,35 @@ export function AttestationForm() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 profile_id: profileId,
-                regen_type: values.regenType,
                 action_date: values.actionDate,
-                location_lat: latNum,
-                location_lng: lngNum,
-                depth: depthNum,
-                surface_area: areaNum,
-                species,
+                site_id: values.selectedSiteId || undefined,
                 summary: values.summary || null,
                 contributor_name,
                 file_cid: cidLocal || null,
                 file_gateway_url: urlLocal || null,
+                file_name: selectedFile?.name || null,
+                reef_regen_action_names: values.reefRegenActions,
+                species_names: Array.from(new Set([...(values.speciesSelected || []), ...species]))
               })
             });
             const crtJson = await crt.json();
             if (crt.ok && crtJson.attestationId) attestationId = crtJson.attestationId as string;
             addDebug(`Draft create ${crt.ok ? "ok" : "fail"}; attestationId=${attestationId || ""}`);
+            // Ensure IPFS fields persisted immediately on the draft row
+            if (attestationId) {
+              try {
+                const updates: any = { attestation_id: attestationId };
+                if (cidLocal) updates.file_cid = cidLocal;
+                if (urlLocal) updates.file_gateway_url = urlLocal;
+                if (selectedFile?.name) updates.file_name = selectedFile.name;
+                const resSet = await fetch("/api/attestations/set-file", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(updates),
+                });
+                addDebug(`Draft file set ${resSet.ok ? "ok" : "fail"}`);
+              } catch {}
+            }
           }
         }
       } catch {
@@ -410,16 +549,16 @@ export function AttestationForm() {
       }
 
       // Ensure file CID/URL are persisted in DB even if we didn't create a draft earlier
-      if (json.uid && (values.fileCid || values.fileUrl)) {
+      if (json.uid) {
         try {
+          const updates: any = { uid: json.uid as string };
+          if (values.fileCid) updates.file_cid = values.fileCid;
+          if (values.fileUrl) updates.file_gateway_url = values.fileUrl;
+          if (selectedFile?.name) updates.file_name = selectedFile.name;
           await fetch("/api/attestations/set-file", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              uid: json.uid as string,
-              file_cid: values.fileCid || null,
-              file_gateway_url: values.fileUrl || null,
-            }),
+            body: JSON.stringify(updates),
           });
           addDebug("DB updated with file CID/URL");
         } catch {}
@@ -438,14 +577,29 @@ export function AttestationForm() {
   return (
     <form onSubmit={onSubmit} className="grid gap-6">
       <fieldset className="border border-vulcan-300 rounded-lg p-6">
-        <legend className="body-lg font-semibold text-black px-2">Attestation Details (DB)</legend>
+        <legend className="body-lg font-semibold text-black px-2">Attestation Details</legend>
         <label className="block body-sm font-medium text-vulcan-700">
-          Regeneration Type
-          <select value={values.regenType} onChange={(e) => update("regenType", e.target.value)} className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500">
-            <option value="transplantation">transplantation</option>
-            <option value="nursery">nursery</option>
-            <option value="other">other</option>
+          Organization Name
+          <input
+            value={values.organizationName}
+            onChange={(e) => update("organizationName", e.target.value)}
+            placeholder="Your organization"
+            className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
+          />
+        </label>
+        <label className="block body-sm font-medium text-vulcan-700 mt-4">
+          Reef Regen Actions
+          <select
+            multiple
+            value={values.reefRegenActions}
+            onChange={onSelectRegenOptions}
+            className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500 h-32"
+          >
+            {regenOptions.map((o) => (
+              <option key={o.id} value={o.name}>{o.name}</option>
+            ))}
           </select>
+          <span className="body-xs text-vulcan-500">Hold Cmd/Ctrl to select multiple</span>
         </label>
         <label className="block body-sm font-medium text-vulcan-700 mt-4">
           Action Date
@@ -459,26 +613,37 @@ export function AttestationForm() {
         </label>
         <div className="grid grid-cols-2 gap-4 mt-4">
           <label className="block body-sm font-medium text-vulcan-700">
-            Latitude
-            <input
-              inputMode="decimal"
-              value={values.lat}
-              onChange={(e) => update("lat", e.target.value)}
-              placeholder="e.g. 25.0343"
-              required
+            Site
+            <select
+              value={values.selectedSiteId}
+              onChange={onSelectSite}
               className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
-            />
+            >
+              <option value="">Select a site…</option>
+              {sites.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </label>
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block body-sm font-medium text-vulcan-700">
+              Site Name
+              <input value={values.siteName} readOnly className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base bg-vulcan-50 text-vulcan-600" />
+            </label>
+            <label className="block body-sm font-medium text-vulcan-700">
+              Site Type
+              <input value={values.siteType} readOnly className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base bg-vulcan-50 text-vulcan-600" />
+            </label>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <label className="block body-sm font-medium text-vulcan-700">
+            Latitude
+            <input value={values.lat} readOnly className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base bg-vulcan-50 text-vulcan-600" />
           </label>
           <label className="block body-sm font-medium text-vulcan-700">
             Longitude
-            <input
-              inputMode="decimal"
-              value={values.lng}
-              onChange={(e) => update("lng", e.target.value)}
-              placeholder="e.g. -77.3963"
-              required
-              className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
-            />
+            <input value={values.lng} readOnly className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base bg-vulcan-50 text-vulcan-600" />
           </label>
         </div>
         <div className="grid grid-cols-2 gap-4 mt-4">
@@ -503,15 +668,46 @@ export function AttestationForm() {
             />
           </label>
         </div>
-        <label className="block body-sm font-medium text-vulcan-700 mt-4">
-          Species (comma separated)
+        <div className="grid gap-2 mt-4">
+          <label className="block body-sm font-medium text-vulcan-700">Biodiversity (search + select)</label>
+          <input
+            value={values.speciesQuery}
+            onChange={(e) => setValues((s) => ({ ...s, speciesQuery: e.target.value }))}
+            placeholder="Search taxa by scientific or common name…"
+            className="w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
+          />
+          {!!speciesOptions.length && (
+            <div className="border border-vulcan-200 rounded-md max-h-40 overflow-auto bg-white">
+              {speciesOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => addSpecies(opt.name)}
+                  className="w-full text-left px-3 py-2 hover:bg-vulcan-50 body-sm text-black"
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {!!values.speciesSelected.length && (
+            <div className="flex flex-wrap gap-2 mt-1">
+              {values.speciesSelected.map((n) => (
+                <span key={n} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-vulcan-100 text-vulcan-700 body-xs">
+                  {n}
+                  <button type="button" onClick={() => removeSpecies(n)} className="ml-1 text-vulcan-600 hover:text-black">×</button>
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="body-xs text-vulcan-500">Optional fallback: comma separated</div>
           <input
             value={values.speciesCsv}
             onChange={(e) => update("speciesCsv", e.target.value)}
             placeholder="Elkhorn coral, Brain coral"
-            className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
+            className="w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
           />
-        </label>
+        </div>
         <label className="block body-sm font-medium text-vulcan-700 mt-4">
           Summary
           <textarea
@@ -574,6 +770,16 @@ export function AttestationForm() {
           className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
         />
       </label>
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <label className="block body-sm font-medium text-vulcan-700">
+            Site Name
+            <input value={values.siteName} readOnly className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base bg-vulcan-50 text-vulcan-600" />
+          </label>
+          <label className="block body-sm font-medium text-vulcan-700">
+            Site Type
+            <input value={values.siteType} readOnly className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base bg-vulcan-50 text-vulcan-600" />
+          </label>
+        </div>
       <div className="mt-4">
         <p className="body-sm font-medium text-vulcan-700 mb-1">Encoded data (auto):</p>
         <pre className="whitespace-pre-wrap break-all bg-vulcan-50 p-3 rounded-lg body-xs text-vulcan-700 font-mono">
