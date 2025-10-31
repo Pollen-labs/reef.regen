@@ -19,47 +19,33 @@ export default function MapPage() {
   const [locationLoading, setLocationLoading] = useState(false);
 
   useEffect(() => {
-    // Fetch real attestation data from API
-    async function fetchAttestations() {
+    // Fetch sites from backend view (one feature per site)
+    async function fetchSites() {
       try {
         const res = await fetch("/api/attestations/public");
         const geojson = await res.json();
 
         if (geojson?.features) {
-          // Convert GeoJSON features to LocationPoint[]
-          // Group by location (lat/lng) and count attestations per location
-          const locationMap = new Map<string, LocationPoint>();
-
-          geojson.features.forEach((feature: any) => {
+          const pts: LocationPoint[] = geojson.features.map((feature: any) => {
             const [lng, lat] = feature.geometry.coordinates;
-            const locationKey = `${lat.toFixed(4)},${lng.toFixed(4)}`; // Group nearby points
-
-            const existing = locationMap.get(locationKey);
-            if (existing) {
-              // Increment count for this location
-              existing.attestationCount++;
-            } else {
-              // Create new location point
-              locationMap.set(locationKey, {
-                id: feature.properties.uid || locationKey,
-                name: feature.properties.orgName || "Unknown Location",
-                lat,
-                lng,
-                attestationCount: 1,
-              });
-            }
+            return {
+              id: feature.properties.uid, // site_id
+              name: feature.properties.orgName || "Unknown Site",
+              lat,
+              lng,
+              attestationCount: feature.properties.count ?? 0,
+            } as LocationPoint;
           });
-
-          setPoints(Array.from(locationMap.values()));
+          setPoints(pts);
         }
       } catch (error) {
-        console.error("Failed to fetch attestations:", error);
+        console.error("Failed to fetch sites for map:", error);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchAttestations();
+    fetchSites();
   }, []);
 
   // Fetch location details when a pin is selected
@@ -70,25 +56,11 @@ export default function MapPage() {
       return;
     }
 
-    // Find the point data for this location
-    const point = points.find((p) => p.id === activeLocationId);
-    if (!point) {
-      setSelectedLocation(null);
-      setLocationLoading(false);
-      return;
-    }
-
-    // Set loading state and fetch
+    // Fetch site detail by site_id
     setLocationLoading(true);
-
-    const pointLat = point.lat;
-    const pointLng = point.lng;
-
     async function fetchLocationDetails() {
       try {
-        const res = await fetch(
-          `/api/attestations/by-location?lat=${pointLat}&lng=${pointLng}`
-        );
+        const res = await fetch(`/api/sites/${activeLocationId}`);
         const data = await res.json();
 
         if (data.location) {
