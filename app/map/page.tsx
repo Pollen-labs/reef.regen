@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import MapView from "@/components/map/MapView";
 import LocationPane from "@/components/map/LocationPane";
 import type { LocationPoint, Location, Attestation } from "@/types/map";
+import AttestationDetailModal from "@/components/shared/AttestationDetailModal";
 
 /**
  * Map Page — Full-screen interactive map experience
@@ -17,6 +18,7 @@ export default function MapPage() {
   const [loading, setLoading] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [activeAtt, setActiveAtt] = useState<Attestation | null>(null);
 
   useEffect(() => {
     // Fetch sites from backend view (one feature per site)
@@ -93,9 +95,15 @@ export default function MapPage() {
     setSelectedLocation(null);
   };
 
-  const handleOpenAttestation = (attestation: Attestation) => {
-    // TODO: Phase 3B - Open AttestationDetailModal
-    console.log("Open attestation:", attestation);
+  const handleOpenAttestation = async (attestation: Attestation) => {
+    try {
+      const res = await fetch(`/api/attestations/${attestation.id}`);
+      const data = await res.json();
+      if (data.attestation) setActiveAtt(data.attestation as Attestation);
+      else setActiveAtt(attestation); // fallback to list item
+    } catch (e) {
+      setActiveAtt(attestation);
+    }
   };
 
   return (
@@ -123,7 +131,7 @@ export default function MapPage() {
         />
       )}
 
-      {/* AttestationDetailModal will be added in Phase 3B */}
+      <AttestationDetailModal attestation={activeAtt} onClose={() => setActiveAtt(null)} />
     </div>
   );
 }

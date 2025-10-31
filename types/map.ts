@@ -18,6 +18,10 @@ export type Location = LocationPoint & {
   actionsBreakdown: { label: string; count: number; color: string }[]; // donut
   species: string[];   // names
   attestations: Pick<Attestation, "id" | "title" | "submittedAt">[];
+  orgName?: string;
+  siteType?: string;
+  depthM?: number | null;
+  surfaceAreaM2?: number | null;
 };
 
 export type Attestation = {
@@ -25,11 +29,23 @@ export type Attestation = {
   title?: string;
   submittedAt: string;  // ISO
   actionDate?: string;  // ISO
+  actionEndDate?: string | null;
   actionTypes: string[];
   summary?: string;
   coralCount?: number;
   depth?: string;       // e.g., "5 meter"
   species: string[];
+  // Extended detail fields for modal
+  speciesWithCount?: { name: string; count: number | null }[];
+  totalCorals?: number | null;
+  speciesDiversity?: number | null;
+  orgName?: string;
+  siteName?: string;
+  siteType?: string;
+  lat?: number;
+  lng?: number;
+  depthM?: number | null;
+  surfaceAreaM2?: number | null;
   contributors?: string[];
   fileName?: string;
   fileUrl?: string;     // IPFS gateway URL

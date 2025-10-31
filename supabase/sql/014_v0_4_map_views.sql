@@ -42,8 +42,14 @@ language sql
 stable
 as $$
   with base as (
-    select s.site_id, s.site_name, s.lat, s.lon
-    from public.site s where s.site_id = site_uuid
+    select s.site_id, s.site_name, s.lat, s.lon,
+           s.depth_m, s.surface_area_m2,
+           stt.name as site_type_name,
+           p.org_name
+    from public.site s
+    join public.site_type stt on stt.site_type_id = s.site_type_id
+    join public.profiles p on p.id = s.profile_id
+    where s.site_id = site_uuid
   ),
   counts as (
     select count(a.attestation_id) as attestation_count
@@ -95,6 +101,10 @@ as $$
       'name', b.site_name,
       'lat', b.lat,
       'lng', b.lon,
+      'orgName', b.org_name,
+      'siteType', b.site_type_name,
+      'depthM', b.depth_m,
+      'surfaceAreaM2', b.surface_area_m2,
       'attestationCount', coalesce(c.attestation_count,0),
       'actionsBreakdown', a.actions_breakdown,
       'species', s.species_list,

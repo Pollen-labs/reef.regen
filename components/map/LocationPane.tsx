@@ -29,6 +29,8 @@ export default function LocationPane({
 
   const totalActions = location.actionsBreakdown.reduce((s, a) => s + a.count, 0);
   const hasSpecies = location.species && location.species.length > 0;
+  const depthStr = location.depthM != null ? `${location.depthM}m` : "-";
+  const areaStr = location.surfaceAreaM2 != null ? `${location.surfaceAreaM2}m²` : "-";
 
   return (
     <aside
@@ -38,21 +40,16 @@ export default function LocationPane({
     >
       <div className="flex flex-col gap-2">
         {/* Header Card */}
-        <section className="p-6 bg-vulcan-900 rounded-3xl flex flex-col gap-3">
-          <div>
-            <div className="text-lg font-light text-vulcan-400">
-              This location is claimed by
+        <section className="p-6 bg-vulcan-900 rounded-3xl flex flex-col gap-2">
+          <h2 className="text-[32px] leading-[36px] font-black text-white">
+            {location.name}
+          </h2>
+          {location.orgName && (
+            <div>
+              <div className="text-lg font-light text-vulcan-400">Organization</div>
+              <div className="text-xl font-bold">{location.orgName}</div>
             </div>
-            <h2 className="text-[32px] leading-[36px] font-black text-white">
-              {location.name}
-            </h2>
-          </div>
-          <div>
-            <div className="text-lg font-light text-vulcan-400">Coordinate</div>
-            <div className="text-xl font-bold">
-              {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
-            </div>
-          </div>
+          )}
         </section>
 
         {/* Regen actions Card */}
@@ -116,12 +113,25 @@ export default function LocationPane({
           </div>
         </section>
 
+        {/* Site details Card */}
+        <section className="p-6 bg-vulcan-900 rounded-3xl flex flex-col gap-4">
+          <h3 className="text-[32px] leading-[36px] font-black text-white">{location.siteType ?? '-'}</h3>
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <div className="text-lg text-vulcan-400 font-bold">Depth</div>
+              <div className="text-2xl font-black">{depthStr}</div>
+            </div>
+            <div>
+              <div className="text-lg text-vulcan-400 font-bold">Surface area</div>
+              <div className="text-2xl font-black">{areaStr}</div>
+            </div>
+          </div>
+        </section>
+
         {/* Attestations header */}
         <section className="p-6 bg-vulcan-900 rounded-t-3xl flex flex-col gap-4">
           <div>
-            <div className="text-[52px] leading-[52px] font-black">
-              {location.attestations.length}
-            </div>
+            <div className="text-[52px] leading-[52px] font-black">{location.attestationCount}</div>
             <div className="text-lg text-vulcan-400 font-bold">Attestations</div>
           </div>
         </section>
