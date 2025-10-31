@@ -1,5 +1,6 @@
 /* app/globals.css */
 @import 'framework7-icons/css/framework7-icons.css';
+@import 'maplibre-gl/dist/maplibre-gl.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

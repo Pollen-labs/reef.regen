@@ -7,13 +7,14 @@ import { useAttestationWizard } from "@/lib/wizard/attestationWizardStore";
 import { ProgressBar } from "@/components/wizard/ProgressBar";
 import { WizardFooter } from "@/components/wizard/WizardFooter";
 import { Step1Actions } from "@/components/wizard/Step1Actions";
+import { Step2DateSite } from "@/components/wizard/Step2DateSite";
 import { useUnsavedWarning } from "@/hooks/useUnsavedWarning";
 import { useLeaveGuard } from "@/hooks/useLeaveGuard";
 
 function StepContent() {
   const params = useParams<{ n: string }>();
   const router = useRouter();
-  const { currentStep, totalSteps, setPatch, reefRegenActions } = useAttestationWizard();
+  const { currentStep, totalSteps, setPatch, reefRegenActions, dateMode, actionDate, actionStart, actionEnd, siteId } = useAttestationWizard();
   const { confirm } = useLeaveGuard();
   const stepNum = useMemo(() => {
     const n = Number(params?.n);
@@ -56,6 +57,16 @@ function StepContent() {
   const isFirst = stepNum === 1;
   const isLast = stepNum === totalSteps;
 
+  const step2Valid = useMemo(() => {
+    if (dateMode === 'range') {
+      if (!actionStart || !actionEnd) return false;
+      if (actionStart > actionEnd) return false;
+    } else {
+      if (!actionDate) return false;
+    }
+    return !!siteId;
+  }, [dateMode, actionDate, actionStart, actionEnd, siteId]);
+
   return (
     <div className="w-full max-w-[960px] mx-auto py-4 px-4 md:px-2 pb-40">
       <ProgressBar />
@@ -69,7 +80,8 @@ function StepContent() {
             <Step1Actions />
           </div>
         )}
-        {stepNum !== 1 && (
+        {stepNum === 2 && <Step2DateSite />}
+        {stepNum > 2 && (
           <div className="text-white/70">Step {stepNum} content coming next.</div>
         )}
       </div>
@@ -78,8 +90,8 @@ function StepContent() {
         onBack={goBack}
         onNext={goNext}
         nextLabel={isLast ? "Sign & Submit" : "Next"}
-        nextDisabled={isFirst ? reefRegenActions.length === 0 : false}
-        centerLabel={`Step ${stepNum} of ${totalSteps} : ${stepNum === 1 ? "Regen actions" : ""}`}
+        nextDisabled={isFirst ? reefRegenActions.length === 0 : stepNum === 2 ? !step2Valid : false}
+        centerLabel={`Step ${stepNum} of ${totalSteps} : ${stepNum === 1 ? "Regen actions" : stepNum === 2 ? "When & Where" : ""}`}
       />
     </div>
   );

@@ -6,9 +6,15 @@ import { persist, createJSONStorage } from "zustand/middleware";
 export type WizardState = {
   organizationName: string;
   reefRegenActions: string[];
-  actionDate?: string;
+  // Step 2 dates
+  dateMode?: 'single' | 'range';
+  actionDate?: string;        // YYYY-MM-DD (single)
+  actionStart?: string;       // range start
+  actionEnd?: string;         // range end
+  // Step 2 site (denormalized for display + submit)
   siteId?: string; siteName?: string; siteType?: string;
-  lat?: string; lng?: string; depth?: string; area?: string;
+  siteDepthM?: number; siteAreaM2?: number;
+  siteCoords?: [number, number]; // [lon, lat]
   biodiversity: string[]; speciesCsv?: string;
   summary?: string; contributorsCsv?: string;
   fileCid?: string; fileUrl?: string; fileName?: string;
