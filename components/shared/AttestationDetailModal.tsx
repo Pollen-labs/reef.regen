@@ -1,6 +1,9 @@
 "use client";
 import type { Attestation } from "@/types/map";
 
+const EAS_EXPLORER_URL = process.env.NEXT_PUBLIC_EAS_EXPLORER_URL || 'https://optimism-sepolia.easscan.org';
+const IPFS_GATEWAY = process.env.NEXT_PUBLIC_IPFS_GATEWAY || 'https://ipfs.filebase.io';
+
 export default function AttestationDetailModal({ attestation, onClose }: {
   attestation: Attestation | null;
   onClose: () => void;
@@ -13,6 +16,13 @@ export default function AttestationDetailModal({ attestation, onClose }: {
   const speciesDiversity = attestation.speciesDiversity ?? (attestation.species?.length || 0);
   const totalCorals = attestation.totalCorals ?? null;
   const fileName = attestation.fileName || (attestation.fileUrl ? decodeURIComponent(attestation.fileUrl.split('/').pop() || '') : undefined);
+
+  // Construct IPFS URL from CID if available, otherwise use fileUrl
+  // Remove trailing slash from gateway URL if present
+  const gatewayBase = IPFS_GATEWAY.endsWith('/') ? IPFS_GATEWAY.slice(0, -1) : IPFS_GATEWAY;
+  const fileViewUrl = attestation.fileCid
+    ? `${gatewayBase}/ipfs/${attestation.fileCid}`
+    : attestation.fileUrl;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
       <div className="relative w-full max-w-3xl rounded-3xl bg-vulcan-900 text-white shadow-2xl outline outline-1 outline-vulcan-500 max-h-[85vh] flex flex-col overflow-hidden">
@@ -125,15 +135,15 @@ export default function AttestationDetailModal({ attestation, onClose }: {
           ) : null}
 
           {/* Media */}
-          {(fileName || attestation.fileUrl) && (
+          {(fileName || fileViewUrl) && (
             <div className="px-6 py-4 bg-vulcan-800 rounded-3xl">
               <div className="flex items-end justify-between">
                 <div>
                   <div className="text-vulcan-400 text-base">Additional media</div>
-                  <div className="text-vulcan-200 text-base font-bold">{fileName ?? attestation.fileUrl}</div>
+                  <div className="text-vulcan-200 text-base font-bold">{fileName ?? fileViewUrl}</div>
                 </div>
-                {attestation.fileUrl && (
-                  <a className="text-flamingo-200 text-base font-bold" href={attestation.fileUrl} target="_blank">View</a>
+                {fileViewUrl && (
+                  <a className="text-flamingo-200 text-base font-bold" href={fileViewUrl} target="_blank" rel="noopener noreferrer">View</a>
                 )}
               </div>
             </div>
@@ -147,7 +157,7 @@ export default function AttestationDetailModal({ attestation, onClose }: {
                   <div className="text-vulcan-400 text-base">Attestation UID</div>
                   <div className="text-vulcan-200 text-base font-bold break-all">{attestation.easUid}</div>
                 </div>
-                <a className="text-flamingo-200 text-base font-bold" href={`https://easscan.org/attestation/view/${attestation.easUid}`} target="_blank">View on EAS</a>
+                <a className="text-flamingo-200 text-base font-bold" href={`${EAS_EXPLORER_URL}/attestation/view/${attestation.easUid}`} target="_blank" rel="noopener noreferrer">View on EAS</a>
               </div>
             </div>
           )}

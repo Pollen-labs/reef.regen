@@ -48,7 +48,8 @@ export type Attestation = {
   surfaceAreaM2?: number | null;
   contributors?: string[];
   fileName?: string;
-  fileUrl?: string;     // IPFS gateway URL
+  fileCid?: string;     // IPFS CID from database
+  fileUrl?: string;     // IPFS gateway URL (deprecated, prefer constructing from fileCid)
   easUid?: string;      // on-chain UID
   locationId: string;
 };

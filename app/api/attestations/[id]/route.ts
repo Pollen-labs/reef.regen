@@ -9,7 +9,7 @@ export async function GET(_req: Request, ctx: { params: { id: string } }) {
   const { data, error } = await supabaseAdmin
     .from("attestation")
     .select(
-      "attestation_id, site_id, profile_id, created_at, action_start_date, action_end_date, summary, contributors, file_gateway_url, eas_attestation_uid"
+      "attestation_id, site_id, profile_id, created_at, action_start_date, action_end_date, summary, contributors, ipfs_cid, file_gateway_url, file_name, eas_attestation_uid"
     )
     .eq("attestation_id", id)
     .maybeSingle();
@@ -47,6 +47,13 @@ export async function GET(_req: Request, ctx: { params: { id: string } }) {
   const totalCorals = speciesWithCount.reduce((s: number, r: any) => s + (r.count || 0), 0);
   const speciesDiversity = speciesWithCount.filter((r) => !!r.name).length || ((agg?.species as any[])?.length ?? null);
 
+  const resolveFileName = (url?: string | null): string | undefined => {
+    if (!url) return undefined;
+    const noQuery = url.split('?')[0];
+    const last = noQuery.split('/').filter(Boolean).pop();
+    return last ? decodeURIComponent(last) : undefined;
+  };
+
   const att = {
     id: data.attestation_id,
     title: data.summary || undefined,
@@ -67,11 +74,12 @@ export async function GET(_req: Request, ctx: { params: { id: string } }) {
     depthM: site?.depth_m ?? null,
     surfaceAreaM2: site?.surface_area_m2 ?? null,
     contributors: (data.contributors as string[] | null) || undefined,
+    fileCid: (data.ipfs_cid as string | null) || undefined,
     fileUrl: (data.file_gateway_url as string | null) || undefined,
+    fileName: ((data as any).file_name as string | null) || resolveFileName(data.file_gateway_url as string | null),
     easUid: (data.eas_attestation_uid as string | null) || undefined,
     locationId: data.site_id as string,
   };
 
   return NextResponse.json({ attestation: att });
 }
-
