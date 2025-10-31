@@ -29,8 +29,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isMapPage = pathname === "/map";
   const isHomePage = pathname === "/";
   const isOnboarding = pathname?.startsWith("/profile/setup") || pathname?.startsWith("/profile/details");
+  const isSubmitFlow = pathname?.startsWith("/submit");
 
-  const rootTheme = isOnboarding ? "bg-black text-white" : "bg-white text-vulcan-900";
+  const rootTheme = (isOnboarding || isSubmitFlow) ? "bg-black text-white" : "bg-white text-vulcan-900";
 
   return (
     <div className={`min-h-dvh flex flex-col ${rootTheme}`}>

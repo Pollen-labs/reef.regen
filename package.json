@@ -22,7 +22,9 @@
     "react-dom": "^18.3.1",
     "viem": "^2.17.0",
     "wagmi": "^2.10.5",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zustand": "^4.5.2",
+    "framework7-icons": "^5.0.5"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",

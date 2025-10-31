@@ -5,6 +5,8 @@ import { ReactNode, useMemo, useState } from "react";
 import { Web3AuthProvider, type Web3AuthContextConfig } from "@web3auth/modal/react";
 import { WagmiProvider } from "@web3auth/modal/react/wagmi";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
+import { AttestationWizardProvider } from "@/lib/wizard/attestationWizardStore";
+import { LeaveGuardProvider } from "@/hooks/useLeaveGuard";
 
 export default function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -38,7 +40,13 @@ export default function Providers({ children }: { children: ReactNode }) {
   return (
     <Web3AuthProvider config={web3AuthConfig}>
       <QueryClientProvider client={queryClient}>
-        <WagmiProvider>{children}</WagmiProvider>
+        <WagmiProvider>
+          <AttestationWizardProvider>
+            <LeaveGuardProvider>
+              {children}
+            </LeaveGuardProvider>
+          </AttestationWizardProvider>
+        </WagmiProvider>
       </QueryClientProvider>
     </Web3AuthProvider>
   );
