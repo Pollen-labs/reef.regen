@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { useAttestationWizard } from "@/lib/wizard/attestationWizardStore";
+import { useRef } from "react";
 import { SiteModal } from "@/components/wizard/SiteModal";
 
 type SiteItem = {
@@ -25,12 +26,12 @@ function DateModeToggle() {
   };
   return (
     <div className="inline-flex rounded-2xl overflow-hidden outline outline-1 outline-vulcan-700">
-      <button onClick={() => setMode('single')} className={`px-5 py-2 flex items-center gap-2 ${dateMode==='single' ? 'bg-orange text-black font-bold' : 'bg-white/10 text-white'}`}>
-        {dateMode==='single' ? <i className="f7-icons text-lg">checkmark_alt_circle_fill</i> : <i className="f7-icons text-lg">circle</i>}
+      <button onClick={() => setMode('single')} className={`px-5 py-2 flex items-center gap-2 ${dateMode==='single' ? 'bg-orange text-white font-bold' : 'bg-vulcan-700/70 text-white'}`}>
+        <i className="f7-icons text-lg">{dateMode==='single' ? 'checkmark_alt_circle_fill' : 'circle'}</i>
         On a specific date
       </button>
-      <button onClick={() => setMode('range')} className={`px-5 py-2 flex items-center gap-2 ${dateMode==='range' ? 'bg-orange text-black font-bold' : 'bg-white/10 text-white'}`}>
-        {dateMode==='range' ? <i className="f7-icons text-lg">checkmark_alt_circle_fill</i> : <i className="f7-icons text-lg">circle</i>}
+      <button onClick={() => setMode('range')} className={`px-5 py-2 flex items-center gap-2 ${dateMode==='range' ? 'bg-orange text-white font-bold' : 'bg-vulcan-700/70 text-white'}`}>
+        <i className="f7-icons text-lg">{dateMode==='range' ? 'checkmark_alt_circle_fill' : 'circle'}</i>
         On a duration
       </button>
     </div>
@@ -39,16 +40,13 @@ function DateModeToggle() {
 
 function SingleDate() {
   const { actionDate, setPatch } = useAttestationWizard();
+  const ref = useRef<HTMLInputElement | null>(null);
   return (
     <div className="relative w-full max-w-[640px]">
-      <input
-        type="date"
-        className="w-full bg-vulcan-700/70 text-white placeholder-white/50 rounded-2xl px-4 py-3 pr-12 outline outline-1 outline-vulcan-600"
-        value={actionDate || ''}
-        onChange={(e) => setPatch({ actionDate: e.target.value })}
-        placeholder="Select date"
-      />
-      <i className="f7-icons absolute right-3 top-1/2 -translate-y-1/2 text-white/70">calendar</i>
+      <input ref={ref} type="date" className="rr-input pr-12" value={actionDate || ''} onChange={(e) => setPatch({ actionDate: e.target.value })} placeholder="mm/dd/yyyy" />
+      <button type="button" className="rr-input-icon" aria-label="Open date picker" onClick={() => (ref.current as any)?.showPicker?.() || ref.current?.focus()}>
+        <i className="f7-icons">calendar</i>
+      </button>
     </div>
   );
 }
@@ -56,16 +54,22 @@ function SingleDate() {
 function RangeDate() {
   const { actionStart, actionEnd, setPatch } = useAttestationWizard();
   const minEnd = actionStart || undefined;
+  const startRef = useRef<HTMLInputElement | null>(null);
+  const endRef = useRef<HTMLInputElement | null>(null);
   return (
     <div className="flex gap-3 items-center">
       <div className="relative w-full max-w-[320px]">
-        <input type="date" className="w-full bg-vulcan-700/70 text-white rounded-2xl px-4 py-3 pr-12 outline outline-1 outline-vulcan-600" value={actionStart || ''} onChange={(e) => setPatch({ actionStart: e.target.value })} />
-        <i className="f7-icons absolute right-3 top-1/2 -translate-y-1/2 text-white/70">calendar</i>
+        <input ref={startRef} type="date" className="rr-input pr-12" value={actionStart || ''} onChange={(e) => setPatch({ actionStart: e.target.value })} placeholder="Start" />
+        <button type="button" className="rr-input-icon" aria-label="Open start date picker" onClick={() => (startRef.current as any)?.showPicker?.() || startRef.current?.focus()}>
+          <i className="f7-icons">calendar</i>
+        </button>
       </div>
       <span className="text-white/60">~</span>
       <div className="relative w-full max-w-[320px]">
-        <input type="date" className="w-full bg-vulcan-700/70 text-white rounded-2xl px-4 py-3 pr-12 outline outline-1 outline-vulcan-600" value={actionEnd || ''} min={minEnd} onChange={(e) => setPatch({ actionEnd: e.target.value })} />
-        <i className="f7-icons absolute right-3 top-1/2 -translate-y-1/2 text-white/70">calendar</i>
+        <input ref={endRef} type="date" className="rr-input pr-12" value={actionEnd || ''} min={minEnd} onChange={(e) => setPatch({ actionEnd: e.target.value })} placeholder="End" />
+        <button type="button" className="rr-input-icon" aria-label="Open end date picker" onClick={() => (endRef.current as any)?.showPicker?.() || endRef.current?.focus()}>
+          <i className="f7-icons">calendar</i>
+        </button>
       </div>
     </div>
   );
@@ -134,44 +138,51 @@ export function Step2DateSite() {
         <div className="text-center text-white text-5xl md:text-7xl font-black leading-[1.04]">When & Where did this happen?</div>
       </div>
 
-      <section className="grid gap-4 items-start">
-        <h3 className="text-vulcan-300 text-2xl font-black">Action date</h3>
+      <section className="grid gap-4 items-center text-center">
+        <h3 className="text-vulcan-700 text-2xl font-black">Action date</h3>
         <DateModeToggle />
         {dateMode === 'single' ? <SingleDate /> : <RangeDate />}
       </section>
 
-      <section className="grid gap-4 items-start">
-        <h3 className="text-vulcan-300 text-2xl font-black">Site</h3>
+      <section className="grid gap-4 items-center text-center">
+        <h3 className="text-vulcan-700 text-2xl font-black">Site</h3>
         <p className="text-white/80">Select/add a the site where the regen action took place</p>
-        <button
-          className="relative w-full max-w-[640px] text-left bg-vulcan-700/70 text-white/80 rounded-2xl px-4 py-3 pr-12 outline outline-1 outline-vulcan-600"
-          onClick={() => setOpenCreate(true)}
-        >
-          Add a site
-          <i className="f7-icons absolute right-3 top-1/2 -translate-y-1/2 text-white/70">map</i>
-        </button>
         {loading ? (
           <div className="text-white/70">Loading sites…</div>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="w-full flex flex-col items-center gap-3">
             {sites.map((s) => {
               const selected = siteId === s.id;
               return (
-                <label key={s.id} className={`rounded-2xl p-4 flex gap-3 items-start cursor-pointer outline outline-1 ${selected ? 'bg-orange text-black outline-orange' : 'bg-white/10 text-white outline-white/10'}`}>
-                  <input type="radio" name="site" className="mt-1" checked={selected} onChange={() => onSelectSite(s)} />
-                  <div className="flex-1">
-                    <div className="font-bold text-lg">{s.name}</div>
-                    <div className={selected ? 'text-black/80' : 'text-white/70'}>{s.siteType || '—'}</div>
-                    <div className={selected ? 'text-black/80' : 'text-white/50'}>
-                      Depth: {s.depthM ?? '—'}m · Area: {s.areaM2 ?? '—'}m²
-                    </div>
+                <div
+                  key={s.id}
+                  role="button"
+                  tabIndex={0}
+                  className={`rr-option-card ${selected ? 'rr-option-card-selected' : 'rr-option-card-default'}`}
+                  onClick={() => onSelectSite(s)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelectSite(s); }}
+                >
+                  <i className="f7-icons text-2xl">{selected ? 'checkmark_alt_circle_fill' : 'circle'}</i>
+                  <div className="flex-1 text-left">
+                    <div className="font-bold">{s.name}</div>
+                    <div className={selected ? 'text-white/90' : 'text-white/70'}>{s.siteType || '—'}</div>
+                    <div className={selected ? 'text-white/90' : 'text-white/50'}>Depth: {s.depthM ?? '—'}m · Area: {s.areaM2 ?? '—'}m²</div>
                   </div>
-                  <button type="button" className="px-2 py-1 rounded-lg hover:bg-black/10" onClick={(e) => { e.preventDefault(); setEditSite(s); }}>
-                    <i className="f7-icons">pencil</i>
+                  <button type="button" className="px-1 py-1 rounded-full" onClick={(e) => { e.stopPropagation(); setEditSite(s); }} aria-label="Edit site">
+                    <span className={`inline-grid place-items-center w-8 h-8 rounded-full ${selected ? 'outline outline-2 outline-white' : 'outline outline-2 outline-white/70'}`}>
+                      <i className={`f7-icons ${selected ? 'text-white' : 'text-white/80'}`}>pencil</i>
+                    </span>
                   </button>
-                </label>
+                </div>
               );
             })}
+            <button
+              className="relative rr-input text-left max-w-[640px] text-white/80"
+              onClick={() => setOpenCreate(true)}
+            >
+              Add a site
+              <i className="f7-icons rr-input-icon">map</i>
+            </button>
           </div>
         )}
       </section>

@@ -58,14 +58,14 @@ export async function POST(req: Request) {
     .maybeSingle();
   if (gErr) return NextResponse.json({ error: gErr.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: "Create succeeded but row not found" }, { status: 500 });
+  const typeName = (data as any)?.site_type?.name as string | undefined;
   const res = {
     id: data.site_id as string,
     name: data.site_name as string,
-    type: (data.site_type?.name as string | undefined) || String(site_type_id),
+    type: typeName || String(site_type_id),
     depthM: (data.depth_m as number | null) ?? null,
     areaM2: (data.surface_area_m2 as number | null) ?? null,
     coords: [Number(data.lon), Number(data.lat)] as [number, number],
   };
   return NextResponse.json(res, { status: 201 });
 }
-

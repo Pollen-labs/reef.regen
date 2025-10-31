@@ -41,7 +41,31 @@
   .body-base{ @apply text-baseb;}
   .body-sm  { @apply text-smb;  }
   .body-xs  { @apply text-xsb;  }
+
+  /* Reef·Regen UI primitives */
+  .rr-input { @apply w-full bg-vulcan-700/70 text-white placeholder-white/50 rounded-lg px-4 py-3; }
+  .rr-select { @apply w-full appearance-none bg-vulcan-700/70 text-white rounded-2xl px-4 py-3 pr-10; }
+  .rr-input-icon { @apply absolute right-3 top-1/2 -translate-y-1/2 text-white/70; }
+  .rr-option-card { @apply w-full max-w-[640px] rounded-2xl p-4 flex items-start gap-3 cursor-pointer outline outline-1 transition-colors; }
+  .rr-option-card-default { @apply bg-white/10 text-white outline-white/10; }
+  .rr-option-card-selected { @apply bg-orange text-white outline-orange; }
 }
+
+/* Inputs: hide native date picker indicator so we only show our icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  display: none;
+}
+input[type="date"]::-ms-clear { display: none; }
+input[type="date"]::-ms-reveal { display: none; }
+
+/* Dropdown primitives */
+.rr-dropdown { @apply relative w-full max-w-[700px]; }
+.rr-dropdown-trigger { @apply rr-select pr-12; }
+.rr-dropdown-chevron { @apply absolute right-3 top-1/2 -translate-y-1/2 text-white/70 pointer-events-none; }
+.rr-dropdown-panel { @apply absolute z-50 mt-2 w-full max-h-[70vh] overflow-auto rounded-lg bg-vulcan-200 text-vulcan-950 shadow-xl; }
+.rr-dropdown-item { @apply block w-full text-left h-16 px-4 flex items-center text-2xl font-light leading-9 truncate; }
+.rr-dropdown-item-selected { @apply bg-orange text-white; }
 
 /* Custom scrollbar styles */
 .scrollbar-thin::-webkit-scrollbar {

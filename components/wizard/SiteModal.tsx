@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { MapCrosshairPicker } from "@/components/wizard/MapCrosshairPicker";
+import Dropdown, { type DropdownOption } from "@/components/ui/Dropdown";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 
 type SiteType = { code: number; label: string };
 type Site = {
@@ -121,65 +124,33 @@ export function SiteModal({ open, mode, initial, walletAddress, onClose, onSaved
         <div className="grid grid-cols-1 gap-4">
           <label className="grid gap-2">
             <span className="text-sm text-white/70">Name</span>
-            <input
-              className="bg-vulcan-700/70 rounded-2xl px-4 py-3 outline outline-1 outline-vulcan-600 placeholder-white/40"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter name here"
-              required
-            />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter name here" />
           </label>
           <label className="grid gap-2">
             <span className="text-sm text-white/70">Select the type of this site, this would help you build up the public profile</span>
-            <div className="relative">
-              <select
-                className="w-full appearance-none bg-vulcan-700/70 rounded-2xl px-4 py-3 pr-10 outline outline-1 outline-vulcan-600"
-                value={type as any}
-                onChange={(e) => setType(e.target.value)}
-                required
-              >
-                <option value="" disabled>Select site type</option>
-                {types.map((t) => (
-                  <option key={t.code} value={t.label}>{t.label}</option>
-                ))}
-              </select>
-              <i className="f7-icons absolute right-3 top-1/2 -translate-y-1/2 text-white/70">chevron_down</i>
-            </div>
+            <Dropdown
+              options={(types || []).map((t) => ({ label: t.label, value: t.label } as DropdownOption))}
+              value={type as any}
+              onChange={(val) => setType(val)}
+              placeholder="Select site type"
+            />
           </label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label className="grid gap-2">
               <span className="text-sm text-white/70">How deep is this site in meter</span>
-              <input
-                type="number"
-                min={0}
-                step="0.1"
-                className="bg-vulcan-700/70 rounded-2xl px-4 py-3 outline outline-1 outline-vulcan-600 placeholder-white/40"
-                value={depthM}
-                onChange={(e) => setDepthM(e.target.value === '' ? '' : Number(e.target.value))}
-                placeholder="Enter the depth"
-                required
-              />
+              <Input type="number" min={0} step="0.1" value={depthM as any} onChange={(e) => setDepthM(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Enter the depth" />
             </label>
             <label className="grid gap-2">
               <span className="text-sm text-white/70">The surface area in meter</span>
-              <input
-                type="number"
-                min={0}
-                step="0.1"
-                className="bg-vulcan-700/70 rounded-2xl px-4 py-3 outline outline-1 outline-vulcan-600 placeholder-white/40"
-                value={areaM2}
-                onChange={(e) => setAreaM2(e.target.value === '' ? '' : Number(e.target.value))}
-                placeholder="Enter the surface area"
-                required
-              />
+              <Input type="number" min={0} step="0.1" value={areaM2 as any} onChange={(e) => setAreaM2(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Enter the surface area" />
             </label>
           </div>
         </div>
 
         <div className="mt-6">
-          <button type="submit" disabled={!valid || saving} className="w-full h-12 rounded-2xl bg-orange text-black font-bold disabled:opacity-50">
+          <Button type="submit" disabled={!valid || saving} size="lg" fullWidth>
             {saving ? "Saving…" : "Save"}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

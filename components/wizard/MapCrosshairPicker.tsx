@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
+import Button from "@/components/ui/Button";
 
 type Props = {
   initial?: [number, number]; // [lon, lat]
@@ -89,7 +90,7 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
     <div className="relative">
       <div ref={containerRef} className="h-64 w-full rounded-2xl overflow-hidden bg-vulcan-800" />
       {/* Crosshair overlay */}
-      <div className="pointer-events-none absolute inset-0 grid place-items-center text-orange">
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-orange">
         <svg width="48" height="48" viewBox="0 0 48 48" aria-hidden>
           <circle cx="24" cy="24" r="3" fill="currentColor" />
           <path d="M24 4v10M24 34v10M4 24h10M34 24h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -100,16 +101,16 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
           {failed ? "Map failed to load. You can still pick your current center." : "Loading map…"}
         </div>
       )}
-      <div className="mt-3 text-sm text-white/80">
-        <code>{center[0]}, {center[1]}</code> <span className="ml-2">[lon, lat]</span>
-      </div>
-      {showPick && onPick && (
-        <div className="mt-4 flex justify-end">
-          <button type="button" className="px-4 py-2 rounded-xl bg-orange text-black font-bold" onClick={() => onPick(center)}>
-            Use this location
-          </button>
+      <div className="mt-3 text-sm text-white/80 flex items-center justify-between gap-3">
+        <div>
+          <code>{center[0]}, {center[1]}</code> <span className="ml-2">[lon, lat]</span>
         </div>
-      )}
+        {showPick && onPick && (
+          <Button variant="outline" size="md" onClick={() => onPick(center)}>
+            Use this location
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
