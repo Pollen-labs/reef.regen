@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import type { Route } from "next";
 import { useWeb3AuthConnect } from "@web3auth/modal/react";
 import { useAccount } from "wagmi";
 
@@ -22,6 +23,7 @@ import { useAccount } from "wagmi";
 export default function TopNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { connect: connectWeb3Auth, loading: web3authLoading } = useWeb3AuthConnect();
   const { isConnected, address } = useAccount();
   const [profileHandle, setProfileHandle] = useState<string | null>(null);
@@ -49,16 +51,19 @@ export default function TopNav() {
   }, [address, isConnected]);
 
   const handleSignIn = async () => {
-    if (!isConnected) {
-      try {
+    try {
+      if (!isConnected) {
         await connectWeb3Auth();
-      } catch (error) {
-        console.error("Failed to connect:", error);
       }
+      // After successful connect, go to onboarding setup step with return path
+      const ret = encodeURIComponent(pathname || "/");
+      router.push((`/profile/setup?redirect=${ret}`) as Route);
+    } catch (error) {
+      console.error("Failed to connect:", error);
     }
   };
 
-  const accountHref = profileHandle ? `/profile/${profileHandle}` : "/attest";
+  const accountHref = profileHandle ? `/profile/${profileHandle}` : "/profile/setup";
 
   return (
     <header className="sticky top-0 z-40 bg-black text-white">

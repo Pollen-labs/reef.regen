@@ -28,12 +28,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isMapPage = pathname === "/map";
   const isHomePage = pathname === "/";
+  const isOnboarding = pathname?.startsWith("/profile/setup") || pathname?.startsWith("/profile/details");
+
+  const rootTheme = isOnboarding ? "bg-black text-white" : "bg-white text-vulcan-900";
 
   return (
-    <div className="min-h-dvh flex flex-col bg-white text-vulcan-900">
+    <div className={`min-h-dvh flex flex-col ${rootTheme}`}>
       <TopNav />
       <main className="relative flex-1">
-        {isMapPage || isHomePage ? (
+        {isMapPage || isHomePage || isOnboarding ? (
           // Map page: full-bleed for absolute positioning
           children
         ) : (

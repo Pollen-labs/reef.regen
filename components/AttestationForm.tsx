@@ -578,15 +578,8 @@ export function AttestationForm() {
     <form onSubmit={onSubmit} className="grid gap-6">
       <fieldset className="border border-vulcan-300 rounded-lg p-6">
         <legend className="body-lg font-semibold text-black px-2">Attestation Details</legend>
-        <label className="block body-sm font-medium text-vulcan-700">
-          Organization Name
-          <input
-            value={values.organizationName}
-            onChange={(e) => update("organizationName", e.target.value)}
-            placeholder="Your organization"
-            className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
-          />
-        </label>
+        {/* Organization name is sourced from the user's profile (org_name) during onboarding.
+            We no longer show an editable field here to avoid duplication. */}
         <label className="block body-sm font-medium text-vulcan-700 mt-4">
           Reef Regen Actions
           <select

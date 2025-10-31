@@ -1,0 +1,120 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useAccount } from "wagmi";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { WalletConnect } from "@/components/WalletConnect";
+import type { Route } from "next";
+
+export default function ProfileSetupPage() {
+  const { address, isConnected } = useAccount();
+  const router = useRouter();
+  const search = useSearchParams();
+  const redirectTo = search.get("redirect") || "/";
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [orgName, setOrgName] = useState("");
+
+  // If connected and already has org_name, skip to intended destination
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!isConnected || !address) return;
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/profiles/by-wallet?address=${address}`);
+        const json = await res.json().catch(() => ({}));
+        if (!cancelled) {
+          const hasOrg = !!(json?.orgName && String(json.orgName).trim().length > 0);
+          const seed = (json?.orgName || json?.handle || "") as string;
+          if (seed) setOrgName(seed);
+          if (hasOrg) {
+            router.replace(redirectTo as Route);
+          }
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [address, isConnected, router, redirectTo]);
+
+  const canSave = useMemo(() => isConnected && !!address && orgName.trim().length > 0 && !saving, [isConnected, address, orgName, saving]);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSave || !address) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/profiles/upsert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wallet_address: address, org_name: orgName.trim() }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || `Save failed (${res.status})`);
+      const nextUrl = `/profile/details?redirect=${encodeURIComponent(redirectTo)}` as Route;
+      router.replace(nextUrl);
+    } catch (err: any) {
+      setError(err?.message || String(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      <div className="w-full max-w-screen-xl mx-auto px-6 lg:px-24 pt-16 pb-52">
+      <div className="max-w-[600px] mx-auto">
+        {!isConnected ? (
+          <div className="grid gap-4">
+            <h1 className="text-white text-4xl font-black">Welcome to Reef.Regen</h1>
+            <p className="text-white/70">Connect your embedded wallet to set your organization name.</p>
+            <WalletConnect />
+          </div>
+        ) : (
+          <form onSubmit={onSubmit} className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4">
+              <h1 className="text-white text-5xl md:text-7xl font-black leading-tight">Welcome to Reef.Regen</h1>
+              <p className="text-vulcan-400 text-xl md:text-2xl font-light leading-9">
+                We want to ensure your organization name is written correctly on the blockchain. Please enter the organization you represent (or your personal name).
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="org_name" className="text-vulcan-500 text-lg font-bold leading-6">
+                Organization name <span className="font-normal">(used on blockchain attestations)</span>
+              </label>
+              <input
+                id="org_name"
+                name="org_name"
+                value={orgName}
+                onChange={(e) => setOrgName(e.target.value)}
+                required
+                className="w-full p-4 bg-vulcan-700 rounded-lg text-white placeholder-vulcan-400 text-2xl font-light leading-9 focus:outline-none focus:ring-2 focus:ring-orange"
+                placeholder="Enter name here"
+                disabled={loading || saving}
+              />
+            </div>
+
+            <div className="flex gap-6">
+              <button
+                type="submit"
+                disabled={!canSave}
+                className="flex-1 px-6 py-2 bg-orange rounded-2xl text-white text-xl font-bold leading-8 disabled:opacity-50"
+              >
+                {saving ? "Saving…" : "Next"}
+              </button>
+            </div>
+            {error && <div className="text-red-300 text-sm">{error}</div>}
+          </form>
+        )}
+      </div>
+      </div>
+    </div>
+  );
+}
