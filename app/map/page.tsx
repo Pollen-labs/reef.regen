@@ -5,6 +5,7 @@ import MapView from "@/components/map/MapView";
 import LocationPane from "@/components/map/LocationPane";
 import type { LocationPoint, Location, Attestation } from "@/types/map";
 import AttestationDetailModal from "@/components/shared/AttestationDetailModal";
+import { classesForSiteType } from "@/lib/style/siteTypeColors";
 
 /**
  * Map Page — Full-screen interactive map experience
@@ -36,6 +37,8 @@ export default function MapPage() {
               lat,
               lng,
               attestationCount: feature.properties.count ?? 0,
+              siteType: feature.properties.siteType || null,
+              colorHex: feature.properties.colorHex || undefined,
             } as LocationPoint;
           });
           setPoints(pts);
@@ -117,7 +120,7 @@ export default function MapPage() {
 
       {/* LocationPane - with slide animation */}
       {locationLoading && (
-        <aside className="absolute left-0 top-0 z-10 h-full w-96 md:w-[420px] px-4 py-3.5 bg-vulcan-800/70 backdrop-blur-[3px] text-white overflow-y-auto animate-slide-in-left">
+        <aside className="absolute left-0 top-0 z-10 h-full w-96 md:w-[420px] px-4 py-3.5 bg-vulcan-800/70 backdrop-blur-[3px] text-white overflow-y-auto animate-slide-in-left scrollbar-thin">
           <div className="flex items-center justify-center h-full">
             <div className="text-xl">Loading location...</div>
           </div>

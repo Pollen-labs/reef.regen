@@ -2,20 +2,22 @@
 // Map by canonical name (case-insensitive) using seeds in supabase/sql/007_v0_4_phase2_seeds_template.sql
 
 export type ColorClasses = {
-  bg: string;
-  text: string;
+  bg: string;   // Tailwind bg-* class
+  text: string; // Tailwind text-* class
   ring?: string;
+  hex: string;  // Hex color for inline SVG (charts)
 };
 
 // Choose high-contrast light tints for dark backgrounds
 const LIGHT = {
-  flamingo: { bg: "bg-flamingo-300", text: "text-vulcan-950" },
-  ribbon: { bg: "bg-ribbon-300", text: "text-vulcan-950" },
-  aquamarine: { bg: "bg-aquamarine-300", text: "text-vulcan-950" },
-  sunflower: { bg: "bg-sunflower-300", text: "text-vulcan-950" },
-  violet: { bg: "bg-violet-300", text: "text-vulcan-950" },
-  magenta: { bg: "bg-magenta-300", text: "text-vulcan-950" },
-  gray: { bg: "bg-vulcan-200", text: "text-vulcan-950" },
+  // hex values mirror tailwind.config.ts extended palette 300-level tints
+  flamingo:   { bg: "bg-flamingo-300",   text: "text-vulcan-950", hex: "#F6A17B" },
+  ribbon:     { bg: "bg-ribbon-300",     text: "text-vulcan-950", hex: "#96B5FA" },
+  aquamarine: { bg: "bg-aquamarine-300", text: "text-vulcan-950", hex: "#59FCCE" },
+  sunflower:  { bg: "bg-sunflower-300",  text: "text-vulcan-950", hex: "#F4EA50" },
+  violet:     { bg: "bg-violet-300",     text: "text-vulcan-950", hex: "#DDB2FF" },
+  magenta:    { bg: "bg-magenta-300",    text: "text-vulcan-950", hex: "#FADAFD" },
+  gray:       { bg: "bg-vulcan-200",     text: "text-vulcan-950", hex: "#D6D6E1" },
 } satisfies Record<string, ColorClasses>;
 
 // Per-type mapping by name (lowercased key)
@@ -51,4 +53,3 @@ export function classesForRegen(name?: string, category?: string): ColorClasses 
   if (cat && REGEN_CATEGORY_COLORS[cat]) return REGEN_CATEGORY_COLORS[cat];
   return LIGHT.gray;
 }
-

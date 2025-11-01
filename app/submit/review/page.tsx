@@ -14,6 +14,7 @@ import { ethers } from "ethers";
 import Tag from "@/components/ui/Tag";
 import Button from "@/components/ui/Button";
 import { classesForRegen } from "@/lib/style/regenColors";
+import { classesForSiteType } from "@/lib/style/siteTypeColors";
 
 export default function ReviewPage() {
   const router = useRouter();
@@ -245,7 +246,7 @@ export default function ReviewPage() {
             <div>
               <div className="text-vulcan-300 text-base">Site type</div>
               <div className="text-vulcan-100 text-base font-bold">
-                {s.siteType ? <span className="site-type-badge">{s.siteType}</span> : '—'}
+                {s.siteType ? (() => { const c = classesForSiteType(s.siteType); return <Tag label={s.siteType} bgClass={c.bg} textClass={c.text} />; })() : '—'}
               </div>
             </div>
             <div><div className="text-vulcan-300 text-base">Location coordinate</div><div className="text-vulcan-100 text-base font-bold">{s.siteCoords ? `${Number(s.siteCoords[1]).toFixed(6)}, ${Number(s.siteCoords[0]).toFixed(6)}` : '—'}</div></div>

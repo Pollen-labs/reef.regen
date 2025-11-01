@@ -129,6 +129,7 @@ export default function MapView({
             source: "locations",
             paint: {
               "circle-radius": ["case", ["==", ["get", "id"], ""], 10, 6],
+              // Back to fixed brand orange for all pins
               "circle-color": "#FF7F5C",
               "circle-stroke-width": 1,
               "circle-stroke-color": "#3C3D50", // vulcan-800
@@ -167,6 +168,7 @@ export default function MapView({
                 id: point.id,
                 name: point.name,
                 attestationCount: point.attestationCount,
+                color: (point as any).colorHex || undefined,
               },
             })),
           } as const;
@@ -226,6 +228,7 @@ export default function MapView({
           id: point.id,
           name: point.name,
           attestationCount: point.attestationCount,
+          color: point.colorHex || undefined,
         },
       })),
     };
@@ -250,7 +253,7 @@ export default function MapView({
 
     try {
       map.setPaintProperty("location-pins", "circle-radius", radiusExpr as any);
-      // Ensure stroke remains vulcan-800, 1px
+      // Ensure stroke remains vulcan-800, 1px (color handled per-feature)
       map.setPaintProperty("location-pins", "circle-stroke-color", "#3C3D50");
       map.setPaintProperty("location-pins", "circle-stroke-width", 1 as any);
     } catch {}

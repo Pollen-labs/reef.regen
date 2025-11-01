@@ -34,9 +34,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const rootTheme = (isOnboarding || isSubmitFlow) ? "bg-black text-white" : "bg-white text-vulcan-900";
 
   return (
-    <div className={`min-h-dvh flex flex-col ${rootTheme}`}>
+    <div className={`min-h-dvh flex flex-col ${rootTheme} ${isMapPage ? 'overflow-hidden' : ''}`}>
       <TopNav />
-      <main className="relative flex-1">
+      <main className={`relative flex-1 ${isMapPage ? 'overflow-hidden' : ''}`}>
         {isMapPage || isHomePage || isOnboarding ? (
           // Map page: full-bleed for absolute positioning
           children

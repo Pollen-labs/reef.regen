@@ -6,6 +6,23 @@ export default {
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
     "./pages/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx,js}",
+  ],
+  // Ensure dynamic class names used via mappings are preserved in production
+  safelist: [
+    // bg tints used for regen type tags
+    "bg-flamingo-300",
+    "bg-ribbon-300",
+    "bg-aquamarine-300",
+    "bg-sunflower-300",
+    "bg-violet-300",
+    "bg-magenta-300",
+    "bg-vulcan-200",
+    // text colors used on tags
+    "text-vulcan-950",
+    "text-vulcan-900",
+    "text-black",
+    "text-white",
   ],
   darkMode: ["class"],
   theme: {

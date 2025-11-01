@@ -12,6 +12,8 @@ export type LocationPoint = {
   lat: number;
   lng: number;
   attestationCount: number; // for marker badge (optional)
+  siteType?: string | null;
+  colorHex?: string;        // site-type color for pin
 };
 
 export type Location = LocationPoint & {

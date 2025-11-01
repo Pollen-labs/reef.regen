@@ -682,7 +682,7 @@ export function AttestationForm() {
             className="w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
           />
           {!!speciesOptions.length && (
-            <div className="border border-vulcan-200 rounded-md max-h-40 overflow-auto bg-white">
+            <div className="border border-vulcan-200 rounded-md max-h-40 overflow-auto bg-white scrollbar-thin">
               {speciesOptions.map((opt) => (
                 <button
                   key={opt.id}
@@ -819,7 +819,7 @@ export function AttestationForm() {
             </div>
           )}
           <div className="text-vulcan-700 font-medium">Events:</div>
-          <pre className="whitespace-pre-wrap break-words bg-vulcan-50 p-3 rounded max-h-40 overflow-auto font-mono text-vulcan-600">
+          <pre className="whitespace-pre-wrap break-words bg-vulcan-50 p-3 rounded max-h-40 overflow-auto font-mono text-vulcan-600 scrollbar-thin">
             {debugEvents.join("\n") || "(no events yet)"}
           </pre>
         </div>

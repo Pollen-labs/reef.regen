@@ -1,6 +1,9 @@
 "use client";
 import type { Attestation, Location } from "@/types/map";
-import DonutChart from "./DonutChart";
+import DonutChart from "@/components/shared/DonutChart";
+import { classesForRegen } from "@/lib/style/regenColors";
+import { classesForSiteType } from "@/lib/style/siteTypeColors";
+import Tag from "@/components/ui/Tag";
 
 /**
  * LocationPane — Left drawer showing location details
@@ -28,13 +31,17 @@ export default function LocationPane({
   if (!location) return null;
 
   const totalActions = location.actionsBreakdown.reduce((s, a) => s + a.count, 0);
+  const chartData = location.actionsBreakdown.map((a) => {
+    const c = classesForRegen(a.label);
+    return { ...a, color: c.hex };
+  });
   const hasSpecies = location.species && location.species.length > 0;
   const depthStr = location.depthM != null ? `${location.depthM}m` : "-";
   const areaStr = location.surfaceAreaM2 != null ? `${location.surfaceAreaM2}m²` : "-";
 
   return (
     <aside
-      className="absolute left-0 top-0 z-10 h-full w-96 md:w-[420px] px-4 py-3.5 bg-vulcan-800/70 backdrop-blur-[3px] text-white overflow-y-auto transition-transform duration-300 ease-out scrollbar-thin scrollbar-thumb-vulcan-600 scrollbar-track-vulcan-800/50 hover:scrollbar-thumb-vulcan-500"
+      className="absolute left-0 top-0 z-10 h-full w-96 md:w-[420px] px-4 py-3.5 bg-black/70 backdrop-blur-[3px] text-white overflow-y-auto transition-transform duration-300 ease-out scrollbar-thin scrollbar-thumb-vulcan-600 scrollbar-track-vulcan-800/50 hover:scrollbar-thumb-vulcan-500"
       role="complementary"
       aria-label={`Location details for ${location.name}`}
     >
@@ -64,22 +71,22 @@ export default function LocationPane({
               </div>
             </div>
             {/* Donut chart */}
-            <DonutChart data={location.actionsBreakdown} size={96} strokeWidth={16} />
+            <DonutChart data={chartData} size={96} strokeWidth={24} />
           </div>
 
           <div className="flex flex-col gap-1">
-            {location.actionsBreakdown.map((a) => (
-              <div key={a.label} className="flex items-center justify-between">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span
-                    className="h-5 w-2.5 rounded"
-                    style={{ backgroundColor: a.color }}
-                  />
-                  <span className="text-lg font-light truncate">{a.label}</span>
+            {location.actionsBreakdown.map((a) => {
+              const c = classesForRegen(a.label);
+              return (
+                <div key={a.label} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`h-5 w-2.5 rounded ${c.bg}`} />
+                    <span className="text-lg font-light truncate">{a.label}</span>
+                  </div>
+                  <span className="text-lg font-bold">{a.count}</span>
                 </div>
-                <span className="text-lg font-bold">{a.count}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
@@ -116,16 +123,17 @@ export default function LocationPane({
         {/* Site details Card */}
         <section className="p-6 bg-vulcan-900 rounded-3xl flex flex-col gap-4">
           <h3 className="text-[32px] leading-[36px] font-black text-white">
-            {location.siteType ? <span className="site-type-badge">{location.siteType}</span> : '-'}
+            {location.siteType ? (() => { const c = classesForSiteType(location.siteType); return <Tag label={location.siteType} size="lg" className="text-h6" bgClass={c.bg} textClass={c.text} />; })() : '-'}
           </h3>
+          <div className="text-lg text-vulcan-400 font-bold">Site type</div>
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <div className="text-lg text-vulcan-400 font-bold">Depth</div>
               <div className="text-2xl font-black">{depthStr}</div>
+              <div className="text-lg text-vulcan-400 font-bold">Depth</div>
             </div>
             <div>
-              <div className="text-lg text-vulcan-400 font-bold">Surface area</div>
               <div className="text-2xl font-black">{areaStr}</div>
+              <div className="text-lg text-vulcan-400 font-bold">Surface area</div>
             </div>
           </div>
         </section>
