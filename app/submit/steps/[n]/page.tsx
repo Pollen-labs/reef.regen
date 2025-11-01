@@ -8,13 +8,14 @@ import { ProgressBar } from "@/components/wizard/ProgressBar";
 import { WizardFooter } from "@/components/wizard/WizardFooter";
 import { Step1Actions } from "@/components/wizard/Step1Actions";
 import { Step2DateSite } from "@/components/wizard/Step2DateSite";
+import { Step3SummaryFile } from "@/components/wizard/Step3SummaryFile";
 import { useUnsavedWarning } from "@/hooks/useUnsavedWarning";
 import { useLeaveGuard } from "@/hooks/useLeaveGuard";
 
 function StepContent() {
   const params = useParams<{ n: string }>();
   const router = useRouter();
-  const { currentStep, totalSteps, setPatch, reefRegenActions, dateMode, actionDate, actionStart, actionEnd, siteId } = useAttestationWizard();
+  const { currentStep, totalSteps, setPatch, reefRegenActions, dateMode, actionDate, actionStart, actionEnd, siteId, lastSavedAt } = useAttestationWizard();
   const { confirm } = useLeaveGuard();
   const stepNum = useMemo(() => {
     const n = Number(params?.n);
@@ -67,13 +68,29 @@ function StepContent() {
     return !!siteId;
   }, [dateMode, actionDate, actionStart, actionEnd, siteId]);
 
+  const savedLabel = useMemo(() => {
+    if (!lastSavedAt) return "";
+    const d = new Date(lastSavedAt);
+    const hhmm = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `Saved locally • ${hhmm}`;
+  }, [lastSavedAt]);
+
+  const stepTitle = useMemo(() => {
+    switch (stepNum) {
+      case 1: return "Regen actions";
+      case 2: return "When & Where";
+      case 3: return "Summary & Attachment";
+      default: return "";
+    }
+  }, [stepNum]);
+
   return (
     <div className="w-full max-w-[960px] mx-auto py-4 px-4 md:px-2 pb-40">
       <ProgressBar />
       <div className="py-4">
         {stepNum === 1 && (
           <div className="flex flex-col items-center gap-12">
-            <div className="w-full max-w-[728px] flex flex-col items-center gap-4">
+            <div className="w-full max-w-[960px] flex flex-col items-center gap-4">
               <div className="text-center text-white text-5xl md:text-7xl font-black leading-[1.04]">What regen action are we submitting today?</div>
               <div className="text-center text-vulcan-100 text-2xl font-light leading-9">You can select multiple actions that you have done</div>
             </div>
@@ -81,7 +98,8 @@ function StepContent() {
           </div>
         )}
         {stepNum === 2 && <Step2DateSite />}
-        {stepNum > 2 && (
+        {stepNum === 3 && <Step3SummaryFile />}
+        {stepNum > 3 && (
           <div className="text-white/70">Step {stepNum} content coming next.</div>
         )}
       </div>
@@ -91,7 +109,7 @@ function StepContent() {
         onNext={goNext}
         nextLabel={isLast ? "Sign & Submit" : "Next"}
         nextDisabled={isFirst ? reefRegenActions.length === 0 : stepNum === 2 ? !step2Valid : false}
-        centerLabel={`Step ${stepNum} of ${totalSteps} : ${stepNum === 1 ? "Regen actions" : stepNum === 2 ? "When & Where" : ""}`}
+        centerLabel={`Step ${stepNum} of ${totalSteps} : ${stepTitle}${savedLabel ? ` • ${savedLabel}` : ''}`}
       />
     </div>
   );

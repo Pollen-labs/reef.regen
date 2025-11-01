@@ -18,6 +18,9 @@ export type WizardState = {
   biodiversity: string[]; speciesCsv?: string;
   summary?: string; contributorsCsv?: string;
   fileCid?: string; fileUrl?: string; fileName?: string;
+  fileSize?: number | null; fileType?: string | null;
+  // Volatile (not persisted):
+  fileBlob?: File | null;
 
   // EAS
   schemaUid?: string; recipient?: string; deadline?: number;
@@ -53,7 +56,11 @@ export const useAttestationWizard = create<WizardState & WizardActions>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => s,
+      // Never persist the File object; keep only metadata
+      partialize: (s) => {
+        const { fileBlob, ...rest } = s as WizardState;
+        return rest as any;
+      },
     }
   )
 );

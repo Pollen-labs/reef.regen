@@ -120,7 +120,7 @@ export function Step2DateSite() {
 
   return (
     <div className="flex flex-col gap-12">
-      <div className="w-full max-w-[728px] mx-auto flex flex-col items-center gap-4">
+      <div className="w-full max-w-[960px] mx-auto flex flex-col items-center gap-4">
         <div className="text-center text-white text-5xl md:text-7xl font-black leading-[1.04]">When & Where did this happen?</div>
       </div>
 
