@@ -3,6 +3,12 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
+export type SpeciesEntry = {
+  taxonId: string;
+  scientificName: string;
+  count?: number | null;
+};
+
 export type WizardState = {
   organizationName: string;
   reefRegenActions: string[];
@@ -21,6 +27,8 @@ export type WizardState = {
   fileSize?: number | null; fileType?: string | null;
   // Volatile (not persisted):
   fileBlob?: File | null;
+  // Step 4 species
+  species?: SpeciesEntry[];
 
   // EAS
   schemaUid?: string; recipient?: string; deadline?: number;
@@ -44,6 +52,7 @@ export const WizardDefaults: WizardState = {
   currentStep: 1,
   totalSteps: 5,
   version: 1,
+  species: [],
 };
 
 export const useAttestationWizard = create<WizardState & WizardActions>()(

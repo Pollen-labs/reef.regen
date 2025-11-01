@@ -9,6 +9,7 @@ import { WizardFooter } from "@/components/wizard/WizardFooter";
 import { Step1Actions } from "@/components/wizard/Step1Actions";
 import { Step2DateSite } from "@/components/wizard/Step2DateSite";
 import { Step3SummaryFile } from "@/components/wizard/Step3SummaryFile";
+import { Step4Species } from "@/components/wizard/Step4Species";
 import { useUnsavedWarning } from "@/hooks/useUnsavedWarning";
 import { useLeaveGuard } from "@/hooks/useLeaveGuard";
 
@@ -80,6 +81,7 @@ function StepContent() {
       case 1: return "Regen actions";
       case 2: return "When & Where";
       case 3: return "Summary & Attachment";
+      case 4: return "Species";
       default: return "";
     }
   }, [stepNum]);
@@ -99,7 +101,8 @@ function StepContent() {
         )}
         {stepNum === 2 && <Step2DateSite />}
         {stepNum === 3 && <Step3SummaryFile />}
-        {stepNum > 3 && (
+        {stepNum === 4 && <Step4Species />}
+        {stepNum > 4 && (
           <div className="text-white/70">Step {stepNum} content coming next.</div>
         )}
       </div>
