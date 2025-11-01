@@ -116,7 +116,7 @@ export function SiteModal({ open, mode, initial, walletAddress, onClose, onSaved
         )}
         {mode === "edit" && initial?.coords && (
           <div className="mb-5">
-            <MapCrosshairPicker initial={initial.coords} interactive={false} zoom={18} showPick={false} />
+            <MapCrosshairPicker initial={initial.coords} interactive={false} zoom={4} showPick={false} />
             <div className="mt-2 text-white/70 text-sm">Location is fixed and cannot be changed.</div>
           </div>
         )}

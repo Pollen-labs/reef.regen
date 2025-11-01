@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 // GET /api/sites/:id → returns Location JSON from RPC get_site_detail
-export async function GET(_req: Request, ctx: { params: { id: string } }) {
-  const siteId = ctx.params.id;
+export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const { id: siteId } = await ctx.params;
   if (!siteId) return NextResponse.json({ error: "Missing site id" }, { status: 400 });
 
   const { data, error } = await supabaseAdmin.rpc("get_site_detail", {
@@ -18,8 +18,8 @@ export async function GET(_req: Request, ctx: { params: { id: string } }) {
 }
 
 // PATCH /api/sites/:id — update basic fields (no coordinate edits)
-export async function PATCH(req: Request, ctx: { params: { id: string } }) {
-  const siteId = ctx.params.id;
+export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const { id: siteId } = await ctx.params;
   if (!siteId) return NextResponse.json({ error: "Missing site id" }, { status: 400 });
   const body = (await req.json().catch(() => ({}))) as any;
   const name = (body.name || "").trim();

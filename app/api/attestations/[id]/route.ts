@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 // GET /api/attestations/:id → attestation detail (aligned to Attestation type)
-export async function GET(_req: Request, ctx: { params: { id: string } }) {
-  const id = ctx.params.id;
+export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const { id } = await ctx.params;
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
   const { data, error } = await supabaseAdmin
