@@ -29,6 +29,9 @@ export type WizardState = {
   fileBlob?: File | null;
   // Step 4 species
   species?: SpeciesEntry[];
+  // Step 5 contributors
+  contributors?: string[];
+  contributorsInput?: string;
 
   // EAS
   schemaUid?: string; recipient?: string; deadline?: number;
@@ -53,6 +56,7 @@ export const WizardDefaults: WizardState = {
   totalSteps: 5,
   version: 1,
   species: [],
+  contributors: [],
 };
 
 export const useAttestationWizard = create<WizardState & WizardActions>()(

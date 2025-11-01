@@ -10,6 +10,7 @@ import { Step1Actions } from "@/components/wizard/Step1Actions";
 import { Step2DateSite } from "@/components/wizard/Step2DateSite";
 import { Step3SummaryFile } from "@/components/wizard/Step3SummaryFile";
 import { Step4Species } from "@/components/wizard/Step4Species";
+import { Step5Contributors } from "@/components/wizard/Step5Contributors";
 import { useUnsavedWarning } from "@/hooks/useUnsavedWarning";
 import { useLeaveGuard } from "@/hooks/useLeaveGuard";
 
@@ -82,6 +83,7 @@ function StepContent() {
       case 2: return "When & Where";
       case 3: return "Summary & Attachment";
       case 4: return "Species";
+      case 5: return "Contributors";
       default: return "";
     }
   }, [stepNum]);
@@ -102,7 +104,8 @@ function StepContent() {
         {stepNum === 2 && <Step2DateSite />}
         {stepNum === 3 && <Step3SummaryFile />}
         {stepNum === 4 && <Step4Species />}
-        {stepNum > 4 && (
+        {stepNum === 5 && <Step5Contributors />}
+        {stepNum > 5 && (
           <div className="text-white/70">Step {stepNum} content coming next.</div>
         )}
       </div>
@@ -110,7 +113,7 @@ function StepContent() {
         backVisible={!isFirst}
         onBack={goBack}
         onNext={goNext}
-        nextLabel={isLast ? "Sign & Submit" : "Next"}
+        nextLabel={isLast ? (stepNum === totalSteps ? "Review" : "Next") : "Next"}
         nextDisabled={isFirst ? reefRegenActions.length === 0 : stepNum === 2 ? !step2Valid : false}
         centerLabel={`Step ${stepNum} of ${totalSteps} : ${stepTitle}${savedLabel ? ` • ${savedLabel}` : ''}`}
       />
