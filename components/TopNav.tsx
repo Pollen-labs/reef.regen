@@ -5,6 +5,7 @@ import type { Route } from "next";
 import { useWeb3AuthConnect } from "@web3auth/modal/react";
 import { useAccount } from "wagmi";
 import { useLeaveGuard } from "@/hooks/useLeaveGuard";
+import Button from "@/components/ui/Button";
 
 /**
  * TopNav — Global sticky navigation
@@ -100,10 +101,10 @@ export default function TopNav() {
           </a>
           <a
             className={`px-4 py-2 text-xl font-bold leading-8 hover:text-white/90 ${
-              pathname === "/attest" ? "text-orange" : ""
+              pathname?.startsWith("/submit") ? "text-orange" : ""
             }`}
-            href="/attest"
-            onClick={(e) => onNavClick(e, "/attest")}
+            href="/submit/steps/1"
+            onClick={(e) => onNavClick(e, "/submit/steps/1")}
           >
             Submit
           </a>
@@ -118,13 +119,15 @@ export default function TopNav() {
               Account
             </a>
           ) : (
-            <button
+            <Button
               onClick={handleSignIn}
               disabled={web3authLoading}
-              className="px-4 py-2 text-xl font-bold leading-8 rounded-2xl outline outline-4 outline-offset-[-4px] outline-orange hover:bg-white/5 disabled:opacity-50 disabled:cursor-wait"
+              variant="outline"
+              size="lg"
+              className="leading-8"
             >
               {web3authLoading ? "Connecting..." : "Sign in"}
-            </button>
+            </Button>
           )}
         </nav>
 
@@ -166,9 +169,9 @@ export default function TopNav() {
                 Map
               </a>
               <a
-                href="/attest"
+                href="/submit/steps/1"
                 className={`px-4 py-2 text-xl font-bold leading-8 ${
-                  pathname === "/attest" ? "text-orange" : ""
+                  pathname?.startsWith("/submit") ? "text-orange" : ""
                 }`}
               >
                 Submit
@@ -183,13 +186,15 @@ export default function TopNav() {
                   Account
                 </a>
               ) : (
-                <button
+                <Button
                   onClick={handleSignIn}
                   disabled={web3authLoading}
-                  className="mt-2 px-4 py-2 text-xl font-bold leading-8 rounded outline outline-4 outline-offset-[-4px] outline-orange disabled:opacity-50"
+                  variant="outline"
+                  size="md"
+                  className="mt-2 leading-8"
                 >
                   {web3authLoading ? "Connecting..." : "Sign in"}
-                </button>
+                </Button>
               )}
             </nav>
           </div>

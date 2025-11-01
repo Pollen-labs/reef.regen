@@ -30,7 +30,7 @@ export default function Hero() {
             Reef.Regen empowers communities, scientists, and organizations to document and verify coral restoration actions on the blockchain. Together, we’re building an open, transparent record of ocean impact.
           </p>
           <a
-            href="/attest"
+            href="/submit/steps/1"
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-orange px-8 py-2.5 font-bold leading-8 hover:opacity-95"
           >
             Create a regen attestation

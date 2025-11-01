@@ -49,6 +49,24 @@
   .rr-option-card { @apply w-full max-w-[600px] rounded-2xl p-4 flex items-start gap-3 cursor-pointer outline outline-1 transition-colors; }
   .rr-option-card-default { @apply bg-vulcan-200 text-black outline-vulcan-200 }
   .rr-option-card-selected { @apply bg-orange text-white outline-orange; }
+
+  /* Badges for consistent labeling */
+  .badge { @apply inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-bold; }
+  .badge-sm { @apply text-xs px-2 py-0.5 rounded-md; }
+  .badge-lg { @apply text-base px-4 py-2 rounded-xl; }
+  .site-type-badge { @apply badge bg-ribbon-300 text-vulcan-900; }
+  .regen-action-badge { @apply badge bg-orange text-black; }
+  
+  /* Number input: hide native spinner & provide custom stepper */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] { -moz-appearance: textfield; }
+  .rr-input-number { @apply pr-12; }
+  .rr-stepper { @apply absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-1; }
+  .rr-stepper-btn { @apply h-5 w-7 rounded-md bg-white/10 hover:bg-white/20 text-white grid place-items-center; }
 }
 
 /* Inputs: hide native date picker indicator so we only show our icon */

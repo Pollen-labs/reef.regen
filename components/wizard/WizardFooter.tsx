@@ -10,6 +10,8 @@ type Props = {
   centerLabel?: string;
 };
 
+import Button from "@/components/ui/Button";
+
 export function WizardFooter({
   backVisible = true,
   backDisabled,
@@ -24,28 +26,34 @@ export function WizardFooter({
       <div className="w-full max-w-[960px] mx-auto rounded-3xl backdrop-blur-md bg-vulcan-800/70 outline outline-1 outline-vulcan-700/70 px-4 md:px-6 py-6 flex items-center justify-between gap-3">
         <div className="w-40">
           {backVisible && (
-            <button
-              type="button"
-              disabled={backDisabled}
-              onClick={onBack}
-              className="w-40 px-6 py-2 rounded-2xl outline outline-4 outline-offset-[-4px] outline-vulcan-500 text-white disabled:opacity-50 hidden md:inline-flex items-center justify-center"
-            >
-              Back
-            </button>
+            <div className="hidden md:block">
+              <Button
+                type="button"
+                disabled={backDisabled}
+                onClick={onBack}
+                variant="outline"
+                size="md"
+                className="w-40"
+              >
+                Back
+              </Button>
+            </div>
           )}
         </div>
         <div className="text-vulcan-400 text-sm font-light leading-6 text-center flex-1">
           {centerLabel}
         </div>
         <div className="w-40 flex items-center justify-end">
-          <button
+          <Button
             type="button"
             disabled={nextDisabled}
             onClick={onNext}
-            className="w-40 px-6 py-2 bg-orange rounded-2xl text-white font-bold disabled:opacity-50"
+            variant="solid"
+            size="md"
+            className="w-40"
           >
             {nextLabel || "Next"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

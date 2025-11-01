@@ -15,7 +15,7 @@ export function LeaveWarningModal({ open, onStay, onLeave }: Props) {
         <div className="w-56 h-64 bg-flamingo-100 rounded-lg" />
         <div className="w-full flex flex-col items-center gap-2">
           <div className="text-white text-5xl font-black leading-[52px]">Hold on</div>
-          <div className="text-vulcan-100 text-2xl font-light leading-9">
+          <div className="text-vulcan-100 text-xl font-medium leading-9">
             Leaving the submission now will LOST all the data you entered.
             <br />Are you sure to leave?
           </div>
@@ -28,7 +28,7 @@ export function LeaveWarningModal({ open, onStay, onLeave }: Props) {
             Back to edit
           </button>
           <button
-            className="w-full px-6 py-2 rounded-2xl outline outline-4 outline-offset-[-4px] outline-orange text-white text-xl font-bold leading-8"
+            className="w-full px-6 py-2 rounded-2xl outline outline-4 outline-offset-[-4px] outline-vulcan-500 text-white text-xl font-bold leading-8"
             onClick={onLeave}
           >
             Leave

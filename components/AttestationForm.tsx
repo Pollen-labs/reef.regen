@@ -1,4 +1,16 @@
 "use client";
+/**
+ * NOTE: Legacy Attestation Form (POC)
+ *
+ * This is our original, proof‑of‑concept attestation form used during early development
+ * to debug the delegated EAS flow end‑to‑end. We intentionally keep this file for
+ * historical context and troubleshooting. Do not remove.
+ *
+ * Why it stays:
+ * - Serves as a reference implementation for signing + relaying delegated attestations
+ * - Useful for isolating issues in the production wizard flow
+ * - Documents lessons learned in development
+ */
 
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";

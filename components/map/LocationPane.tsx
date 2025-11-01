@@ -115,7 +115,9 @@ export default function LocationPane({
 
         {/* Site details Card */}
         <section className="p-6 bg-vulcan-900 rounded-3xl flex flex-col gap-4">
-          <h3 className="text-[32px] leading-[36px] font-black text-white">{location.siteType ?? '-'}</h3>
+          <h3 className="text-[32px] leading-[36px] font-black text-white">
+            {location.siteType ? <span className="site-type-badge">{location.siteType}</span> : '-'}
+          </h3>
           <div className="grid grid-cols-2 gap-6">
             <div>
               <div className="text-lg text-vulcan-400 font-bold">Depth</div>

@@ -11,6 +11,9 @@ import { EAS_GET_NONCE_ABI } from "@/lib/eas";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { useWeb3Auth } from "@web3auth/modal/react";
 import { ethers } from "ethers";
+import Tag from "@/components/ui/Tag";
+import Button from "@/components/ui/Button";
+import { classesForRegen } from "@/lib/style/regenColors";
 
 export default function ReviewPage() {
   const router = useRouter();
@@ -224,9 +227,10 @@ export default function ReviewPage() {
           <div className="text-vulcan-300 text-base mb-4">Regen action(s)</div>
           <button aria-label="Edit actions" onClick={() => goEdit(1)} className="absolute right-3 top-3 text-white/70 hover:text-white"><i className="f7-icons">pencil_circle</i></button>
           <div className="flex flex-wrap gap-2">
-            {(s.reefRegenActions || []).map((a) => (
-              <span key={a} className="px-3 py-1 rounded-2xl bg-orange text-black font-bold">{a}</span>
-            ))}
+            {(s.reefRegenActions || []).map((a) => {
+              const c = classesForRegen(a);
+              return <Tag key={a} label={a} size="md" bgClass={c.bg} textClass={c.text} />;
+            })}
             {(!s.reefRegenActions || s.reefRegenActions.length === 0) && <div className="text-white/60">—</div>}
           </div>
         </section>
@@ -238,7 +242,12 @@ export default function ReviewPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-white/90">
             <div><div className="text-vulcan-300 text-base">Date</div><div className="text-vulcan-100 text-base font-bold">{dateText || '—'}</div></div>
             <div><div className="text-vulcan-300 text-base">Site name</div><div className="text-vulcan-100 text-base font-bold">{s.siteName || '—'}</div></div>
-            <div><div className="text-vulcan-300 text-base">Site type</div><div className="text-vulcan-100 text-base font-bold">{s.siteType || '—'}</div></div>
+            <div>
+              <div className="text-vulcan-300 text-base">Site type</div>
+              <div className="text-vulcan-100 text-base font-bold">
+                {s.siteType ? <span className="site-type-badge">{s.siteType}</span> : '—'}
+              </div>
+            </div>
             <div><div className="text-vulcan-300 text-base">Location coordinate</div><div className="text-vulcan-100 text-base font-bold">{s.siteCoords ? `${Number(s.siteCoords[1]).toFixed(6)}, ${Number(s.siteCoords[0]).toFixed(6)}` : '—'}</div></div>
             <div><div className="text-vulcan-300 text-base">Depth / Surface area</div><div className="text-vulcan-100 text-base font-bold">{s.siteDepthM ?? '—'} m / {s.siteAreaM2 ?? '—'} m²</div></div>
           </div>
@@ -258,9 +267,7 @@ export default function ReviewPage() {
           <button aria-label="Edit species" onClick={() => goEdit(4)} className="absolute right-3 top-3 text-white/70 hover:text-white"><i className="f7-icons">pencil_circle</i></button>
           <div className="flex flex-wrap gap-2">
             {(s.species || []).map((sp) => (
-              <span key={sp.taxonId} className="px-3 py-1 rounded-2xl bg-ribbon-300 text-vulcan-950 font-semibold">
-                {sp.scientificName}{sp.count != null ? ` ${sp.count}` : ''}
-              </span>
+              <Tag key={sp.taxonId} label={`${sp.scientificName}${sp.count != null ? ` ${sp.count}` : ''}`} size="md" bgClass="bg-ribbon-300" textClass="text-vulcan-950" />
             ))}
             {(!s.species || s.species.length === 0) && <div className="text-white/60">—</div>}
           </div>
@@ -299,12 +306,14 @@ export default function ReviewPage() {
       {/* Footer */}
       <div className="sticky bottom-2 left-0 right-0 pt-0 md:pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="w-full max-w-[960px] mx-auto rounded-3xl backdrop-blur-md bg-vulcan-800/70 outline outline-1 outline-vulcan-700/70 px-4 md:px-6 py-6 flex items-center justify-between gap-3">
-          <div className="w-40">
-            <button type="button" onClick={() => router.replace('/submit/steps/5')} className="w-40 px-6 py-2 rounded-2xl outline outline-4 outline-offset-[-4px] outline-vulcan-500 text-white hidden md:inline-flex items-center justify-center">Back</button>
+          <div className="w-40 hidden md:block">
+            <Button variant="outline" size="md" onClick={() => router.replace('/submit/steps/5')} className="w-40">Back</Button>
           </div>
           <div className="text-vulcan-400 text-sm font-light leading-6 text-center flex-1">Review & Submit</div>
           <div className="w-40 flex items-center justify-end">
-            <button type="button" disabled={s.submitting} onClick={handleSubmit} className="w-40 px-6 py-2 bg-orange rounded-2xl text-white font-bold disabled:opacity-50">{s.submitting ? 'Submitting…' : 'Looks good, submit'}</button>
+            <Button type="button" disabled={s.submitting} onClick={handleSubmit} variant="solid" size="md" className="w-40">
+              {s.submitting ? 'Submitting…' : 'Looks good, submit'}
+            </Button>
           </div>
         </div>
       </div>
