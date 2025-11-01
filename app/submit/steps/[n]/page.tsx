@@ -47,6 +47,11 @@ function StepContent() {
   }, [currentStep, stepNum, setPatch]);
 
   const goNext = () => {
+    // If we are on the last step, go to review screen
+    if (stepNum >= totalSteps) {
+      router.replace(`/submit/review`);
+      return;
+    }
     const next = Math.min(totalSteps, stepNum + 1);
     setPatch({ currentStep: next });
     router.replace(`/submit/steps/${next}`);

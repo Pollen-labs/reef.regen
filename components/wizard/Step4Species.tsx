@@ -177,14 +177,14 @@ export function Step4Species() {
         </div>
 
         {/* Table header */}
-        <div className="grid grid-cols-[1fr_200px_48px] gap-3 items-center mt-4">
+        <div className="grid grid-cols-[1fr_200px_48px] gap-1 items-center mt-4">
         <div className="rr-input bg-vulcan-700/70 text-white/80 font-semibold text-left min-h-[48px] flex items-center">Species name</div>
           <div className="rr-input bg-vulcan-700/70 text-white/80 font-semibold text-left min-h-[48px] flex items-center">Counts <span className="text-sm text-white/50 pl-1"> (Optional)</span></div>
           <div className="rr-input bg-vulcan-700/70 min-h-[48px]" aria-hidden="true" />
         </div>
 
         {/* Rows */}
-        <div className="flex flex-col gap-2 pb-12">
+        <div className="flex flex-col gap-1 pb-12">
           {species.length === 0 && (
             <div className="text-white/60 text-sm mt-2">Add a species using the search above</div>
           )}

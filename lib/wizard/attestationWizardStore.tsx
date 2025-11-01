@@ -32,6 +32,11 @@ export type WizardState = {
   // Step 5 contributors
   contributors?: string[];
   contributorsInput?: string;
+  // Review / submit
+  internalId?: string;
+  submitting?: boolean;
+  submitPhase?: 'idle' | 'upload' | 'sign' | 'relay' | 'done' | 'failed';
+  submitError?: string | null;
 
   // EAS
   schemaUid?: string; recipient?: string; deadline?: number;
@@ -57,6 +62,9 @@ export const WizardDefaults: WizardState = {
   version: 1,
   species: [],
   contributors: [],
+  submitting: false,
+  submitPhase: 'idle',
+  submitError: null,
 };
 
 export const useAttestationWizard = create<WizardState & WizardActions>()(

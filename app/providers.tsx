@@ -21,7 +21,7 @@ export default function Providers({ children }: { children: ReactNode }) {
         {
           chainNamespace: CHAIN_NAMESPACES.EIP155,
           chainId: "0xAA37DC", // 11155420 OP Sepolia (hex)
-          rpcTarget: "https://optimism-sepolia.blockpi.network/v1/rpc/public",
+          rpcTarget: process.env.NEXT_PUBLIC_RPC_URL || "https://optimism-sepolia.blockpi.network/v1/rpc/public",
           displayName: "OP Sepolia",
           ticker: "ETH",
           tickerName: "Ethereum",
