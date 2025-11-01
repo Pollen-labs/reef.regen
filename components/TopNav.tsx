@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { Route } from "next";
 import { useWeb3AuthConnect } from "@web3auth/modal/react";
 import { useAccount } from "wagmi";
+import { useLeaveGuard } from "@/hooks/useLeaveGuard";
 
 /**
  * TopNav — Global sticky navigation
@@ -24,6 +25,7 @@ export default function TopNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { confirm, shouldBlock } = useLeaveGuard();
   const { connect: connectWeb3Auth, loading: web3authLoading } = useWeb3AuthConnect();
   const { isConnected, address } = useAccount();
   const [profileHandle, setProfileHandle] = useState<string | null>(null);
@@ -65,6 +67,13 @@ export default function TopNav() {
 
   const accountHref = profileHandle ? `/profile/${profileHandle}` : "/profile/setup";
 
+  function onNavClick(e: React.MouseEvent, href: string) {
+    if (pathname?.startsWith("/submit") && shouldBlock) {
+      e.preventDefault();
+      confirm(() => router.push(href as Route));
+    }
+  }
+
   return (
     <header className="sticky top-0 z-40 bg-black text-white">
       <div className="w-full max-w-[1440px] mx-auto px-8 py-6 flex justify-between items-end">
@@ -85,6 +94,7 @@ export default function TopNav() {
               pathname === "/map" ? "text-orange" : ""
             }`}
             href="/map"
+            onClick={(e) => onNavClick(e, "/map")}
           >
             Map
           </a>
@@ -93,6 +103,7 @@ export default function TopNav() {
               pathname === "/attest" ? "text-orange" : ""
             }`}
             href="/attest"
+            onClick={(e) => onNavClick(e, "/attest")}
           >
             Submit
           </a>
@@ -102,6 +113,7 @@ export default function TopNav() {
                 pathname.startsWith("/profile") ? "text-orange" : ""
               }`}
               href={accountHref}
+              onClick={(e) => onNavClick(e, accountHref)}
             >
               Account
             </a>

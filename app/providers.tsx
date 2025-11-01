@@ -5,6 +5,8 @@ import { ReactNode, useMemo, useState } from "react";
 import { Web3AuthProvider, type Web3AuthContextConfig } from "@web3auth/modal/react";
 import { WagmiProvider } from "@web3auth/modal/react/wagmi";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
+import { AttestationWizardProvider } from "@/lib/wizard/attestationWizardStore";
+import { LeaveGuardProvider } from "@/hooks/useLeaveGuard";
 
 export default function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -19,7 +21,7 @@ export default function Providers({ children }: { children: ReactNode }) {
         {
           chainNamespace: CHAIN_NAMESPACES.EIP155,
           chainId: "0xAA37DC", // 11155420 OP Sepolia (hex)
-          rpcTarget: "https://optimism-sepolia.blockpi.network/v1/rpc/public",
+          rpcTarget: process.env.NEXT_PUBLIC_RPC_URL || "https://optimism-sepolia.blockpi.network/v1/rpc/public",
           displayName: "OP Sepolia",
           ticker: "ETH",
           tickerName: "Ethereum",
@@ -38,7 +40,13 @@ export default function Providers({ children }: { children: ReactNode }) {
   return (
     <Web3AuthProvider config={web3AuthConfig}>
       <QueryClientProvider client={queryClient}>
-        <WagmiProvider>{children}</WagmiProvider>
+        <WagmiProvider>
+          <AttestationWizardProvider>
+            <LeaveGuardProvider>
+              {children}
+            </LeaveGuardProvider>
+          </AttestationWizardProvider>
+        </WagmiProvider>
       </QueryClientProvider>
     </Web3AuthProvider>
   );

@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 
 type Props = {
   afterSave?: () => void;
@@ -85,27 +87,15 @@ export function OnboardingPrompt({ afterSave }: Props) {
         </div>
         <label className="grid gap-2">
           <span className="text-white/80 text-sm font-semibold">Organization name</span>
-          <input
-            className="w-full rounded-lg bg-black/40 text-white placeholder-white/40 px-3 py-2 outline-none focus:ring-2 focus:ring-orange"
-            value={orgName}
-            onChange={(e) => setOrgName(e.target.value)}
-            placeholder="e.g., Coral Guardians"
-            disabled={loading || saving}
-            required
-          />
+          <Input value={orgName} onChange={(e) => setOrgName(e.target.value)} placeholder="e.g., Coral Guardians" disabled={loading || saving} />
         </label>
         <div className="flex gap-3 pt-1">
-          <button
-            type="submit"
-            disabled={!canSave}
-            className="px-4 py-2 rounded-lg bg-orange text-black font-bold disabled:opacity-50"
-          >
+          <Button type="submit" disabled={!canSave}>
             {saving ? "Saving…" : "Save"}
-          </button>
+          </Button>
           {error && <div className="text-red-300 text-sm">{error}</div>}
         </div>
       </div>
     </form>
   );
 }
-
