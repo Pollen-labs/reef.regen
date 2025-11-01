@@ -34,7 +34,7 @@ export function WizardFooter({
             </button>
           )}
         </div>
-        <div className="text-vulcan-400 text-base font-light leading-6 text-center flex-1">
+        <div className="text-vulcan-400 text-sm font-light leading-6 text-center flex-1">
           {centerLabel}
         </div>
         <div className="w-40 flex items-center justify-end">

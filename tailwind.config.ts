@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss'
+import defaultTheme from 'tailwindcss/defaultTheme'
 
 export default {
   content: [
@@ -8,6 +9,11 @@ export default {
   ],
   darkMode: ["class"],
   theme: {
+    // Override base to 18px with 1.4 line-height; keep Tailwind defaults for others
+    fontSize: {
+      ...defaultTheme.fontSize,
+      base: ['18px', { lineHeight: '1.4' }],
+    },
     extend: {
       fontFamily: {
         // Outfit everywhere by default (we'll set body in @layer base)
@@ -24,7 +30,7 @@ export default {
         "hd": "1.04",
         "body": "1.4",
       },
-      // Font sizes that match your scale
+      // Additional font sizes that match your scale
       fontSize: {
         // Headings
         "h1": ["118px", { lineHeight: "1.04", letterSpacing: "-0.02em" }],
@@ -34,11 +40,11 @@ export default {
         "h5": ["38px",  { lineHeight: "1.04", letterSpacing: "-0.02em" }],
         "h6": ["28px",  { lineHeight: "1.04", letterSpacing: "-0.02em" }],
 
-        // Body text (140% line-height)
+        // Body text tokens (140% line-height)
         "2xlb": ["26px", { lineHeight: "1.4" }],
         "xlb":  ["24px", { lineHeight: "1.4" }],
         "lgb":  ["22px", { lineHeight: "1.4" }],
-        "baseb":["18px", { lineHeight: "1.4" }],
+        "baseb":["18px", { lineHeight: "1.4" }], // explicit token; base is also 18px now
         "smb":  ["16px", { lineHeight: "1.4" }],
         "xsb":  ["14px", { lineHeight: "1.4" }],
       },
@@ -96,4 +102,3 @@ export default {
   },
   plugins: [],
 } satisfies Config
-

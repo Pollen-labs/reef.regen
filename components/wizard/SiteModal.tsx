@@ -44,10 +44,10 @@ export function SiteModal({ open, mode, initial, walletAddress, onClose, onSaved
   }, [open]);
 
   const valid = useMemo(() => {
-    const hasBasic = name.trim().length > 0 && String(type).length > 0 && depthM !== '' && areaM2 !== '';
-    if (mode === "create") return hasBasic && !!coords;
+    const hasBasic = name.trim().length > 0 && String(type).length > 0;
+    if (mode === "create") return hasBasic && !!coords; // depth/area optional
     return hasBasic; // edit: coords read-only
-  }, [name, type, depthM, areaM2, coords, mode]);
+  }, [name, type, coords, mode]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -63,8 +63,8 @@ export function SiteModal({ open, mode, initial, walletAddress, onClose, onSaved
             wallet_address: walletAddress,
             name: name.trim(),
             type,
-            depth_m: Number(depthM),
-            area_m2: Number(areaM2),
+            depth_m: depthM === '' ? null : Number(depthM),
+            area_m2: areaM2 === '' ? null : Number(areaM2),
             location: coords,
           }),
         });
@@ -79,13 +79,13 @@ export function SiteModal({ open, mode, initial, walletAddress, onClose, onSaved
           body: JSON.stringify({
             name: name.trim(),
             type,
-            depth_m: Number(depthM),
-            area_m2: Number(areaM2),
+            depth_m: depthM === '' ? null : Number(depthM),
+            area_m2: areaM2 === '' ? null : Number(areaM2),
           }),
         });
         const json = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(json?.error || `Update failed (${res.status})`);
-        onSaved({ id: initial!.id!, name: name.trim(), type, depthM: Number(depthM), areaM2: Number(areaM2), coords: initial?.coords });
+        onSaved({ id: initial!.id!, name: name.trim(), type, depthM: depthM === '' ? null as any : Number(depthM), areaM2: areaM2 === '' ? null as any : Number(areaM2), coords: initial?.coords });
         onClose();
       }
     } finally {
@@ -123,11 +123,11 @@ export function SiteModal({ open, mode, initial, walletAddress, onClose, onSaved
 
         <div className="grid grid-cols-1 gap-4">
           <label className="grid gap-2">
-            <span className="text-sm text-white/70">Name</span>
+            <span className="text-base text-white/70">Name</span>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter name here" />
           </label>
           <label className="grid gap-2">
-            <span className="text-sm text-white/70">Select the type of this site, this would help you build up the public profile</span>
+            <span className="text-base text-white/70">Select the type of this site, this would help you build up the public profile</span>
             <Dropdown
               options={(types || []).map((t) => ({ label: t.label, value: t.label } as DropdownOption))}
               value={type as any}
@@ -137,11 +137,11 @@ export function SiteModal({ open, mode, initial, walletAddress, onClose, onSaved
           </label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label className="grid gap-2">
-              <span className="text-sm text-white/70">How deep is this site in meter</span>
+              <span className="text-base text-white/70">How deep is this site in meter</span>
               <Input type="number" min={0} step="0.1" value={depthM as any} onChange={(e) => setDepthM(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Enter the depth" />
             </label>
             <label className="grid gap-2">
-              <span className="text-sm text-white/70">The surface area in meter</span>
+              <span className="text-base text-white/70">The surface area in meter</span>
               <Input type="number" min={0} step="0.1" value={areaM2 as any} onChange={(e) => setAreaM2(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Enter the surface area" />
             </label>
           </div>

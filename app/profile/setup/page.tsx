@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { WalletConnect } from "@/components/WalletConnect";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 import type { Route } from "next";
 
 export default function ProfileSetupPage() {
@@ -89,26 +91,11 @@ export default function ProfileSetupPage() {
               <label htmlFor="org_name" className="text-vulcan-500 text-lg font-bold leading-6">
                 Organization name <span className="font-normal">(used on blockchain attestations)</span>
               </label>
-              <input
-                id="org_name"
-                name="org_name"
-                value={orgName}
-                onChange={(e) => setOrgName(e.target.value)}
-                required
-                className="w-full p-4 bg-vulcan-700 rounded-lg text-white placeholder-vulcan-400 text-2xl font-light leading-9 focus:outline-none focus:ring-2 focus:ring-orange"
-                placeholder="Enter name here"
-                disabled={loading || saving}
-              />
+              <Input id="org_name" name="org_name" value={orgName} onChange={(e) => setOrgName(e.target.value)} required placeholder="Enter name here" disabled={loading || saving} />
             </div>
 
             <div className="flex gap-6">
-              <button
-                type="submit"
-                disabled={!canSave}
-                className="flex-1 px-6 py-2 bg-orange rounded-2xl text-white text-xl font-bold leading-8 disabled:opacity-50"
-              >
-                {saving ? "Saving…" : "Next"}
-              </button>
+              <Button type="submit" disabled={!canSave} className="flex-1" size="lg">{saving ? "Saving…" : "Next"}</Button>
             </div>
             {error && <div className="text-red-300 text-sm">{error}</div>}
           </form>

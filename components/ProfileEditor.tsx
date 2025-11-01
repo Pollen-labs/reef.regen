@@ -2,6 +2,8 @@
 
 import { useAccount } from "wagmi";
 import { useEffect, useMemo, useState } from "react";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 import { useRouter } from "next/navigation";
 
 type Props = {
@@ -65,40 +67,30 @@ export function ProfileEditor({ walletAddress, orgName, website, description }: 
   if (!canEdit) return null;
 
   return (
-    <form onSubmit={onSave} style={{ display: "grid", gap: 12, border: "1px solid #eee", padding: 12 }}>
-      <h3>Edit Profile</h3>
-      <label>
-        Organization Name
-        <input
-          value={values.org_name}
-          onChange={(e) => setValues((s) => ({ ...s, org_name: e.target.value }))}
-          placeholder="Organization or researcher name"
-          required
-          style={{ width: "100%" }}
-        />
+    <form onSubmit={onSave} className="w-full max-w-[720px] mx-auto grid gap-4 border border-white/10 rounded-xl p-6 bg-white/5 text-white">
+      <h3 className="text-xl font-bold">Edit Profile</h3>
+      <label className="grid gap-2">
+        <span className="text-sm text-white/70">Organization Name</span>
+        <Input value={values.org_name} onChange={(e) => setValues((s) => ({ ...s, org_name: e.target.value }))} placeholder="Organization or researcher name" required />
       </label>
-      <label>
-        Website
-        <input
-          value={values.website}
-          onChange={(e) => setValues((s) => ({ ...s, website: e.target.value }))}
-          placeholder="https://example.org"
-          style={{ width: "100%" }}
-        />
+      <label className="grid gap-2">
+        <span className="text-sm text-white/70">Website</span>
+        <Input value={values.website} onChange={(e) => setValues((s) => ({ ...s, website: e.target.value }))} placeholder="https://example.org" />
       </label>
-      <label>
-        Description
+      <label className="grid gap-2">
+        <span className="text-sm text-white/70">Description</span>
         <textarea
+          className="rr-input min-h-[120px]"
           value={values.description}
           onChange={(e) => setValues((s) => ({ ...s, description: e.target.value }))}
           rows={3}
           placeholder="Brief description"
-          style={{ width: "100%" }}
         />
       </label>
-      <button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</button>
-      {message && <div>{message}</div>}
+      <div className="pt-2">
+        <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
+      </div>
+      {message && <div className="text-white/80">{message}</div>}
     </form>
   );
 }
-
