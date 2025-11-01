@@ -77,15 +77,19 @@ export default function ReviewPage() {
         }
       }
 
-      // 1) Upload file if any
-      if (s.fileBlob && !s.fileCid) {
+      // 1) Upload file if any (track locally to avoid stale state reads)
+      let cidLocal = s.fileCid || "";
+      let urlLocal = s.fileUrl || "";
+      if (s.fileBlob && !cidLocal) {
         const form = new FormData();
         form.append("file", s.fileBlob);
         if (s.fileName) form.append("name", s.fileName);
         const res = await fetch('/api/upload/ipfs', { method: 'POST', body: form });
         const json = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(json.error || `Upload failed (${res.status})`);
-        s.setPatch({ fileCid: json.cid as string, fileUrl: json.url as string });
+        cidLocal = String(json.cid || "");
+        urlLocal = String(json.url || "");
+        s.setPatch({ fileCid: cidLocal, fileUrl: urlLocal });
       }
 
       // 2) Preflight EAS address + build encoded data
@@ -118,7 +122,7 @@ export default function ReviewPage() {
         { name: 'biodiversity', type: 'string[]', value: ((s.species || []).map(x => x.scientificName) as any) },
         { name: 'contributors', type: 'string[]', value: ((s.contributors || []) as any) },
         { name: 'fileName', type: 'string', value: s.fileName || '' },
-        { name: 'ipfsCID', type: 'string', value: s.fileCid || '' },
+        { name: 'ipfsCID', type: 'string', value: cidLocal || '' },
       ]) as `0x${string}`;
 
       // 3) Use EAS SDK with an ethers Signer (mirrors AttestationForm)
@@ -190,7 +194,7 @@ export default function ReviewPage() {
         eas_uid: easUID,
         internal_id: s.internalId || null,
       };
-      if (s.fileCid && s.fileUrl) finalizeBody.file = { cid: s.fileCid, gateway_url: s.fileUrl, name: s.fileName };
+      if (cidLocal && urlLocal) finalizeBody.file = { cid: cidLocal, gateway_url: urlLocal, name: s.fileName };
       const resF = await fetch('/api/attestations/finalize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(finalizeBody) });
       const jF = await resF.json().catch(() => ({}));
       if (!resF.ok) throw new Error(jF?.error || `Finalize failed (${resF.status})`);
@@ -244,7 +248,7 @@ export default function ReviewPage() {
         <section className="rounded-2xl bg-vulcan-800/60 outline outline-1 outline-vulcan-700/70 p-4 relative">
           <div className="text-vulcan-300 text-base mb-4">Summary & Attachment</div>
           <button aria-label="Edit summary" onClick={() => goEdit(3)} className="absolute right-3 top-3 text-white/70 hover:text-white"><i className="f7-icons">pencil_circle</i></button>
-          <div className="text-white/90 whitespace-pre-wrap">{s.summary || '—'}</div>
+          <div className="text-white/90 whitespace-pre-wrap text-base font-bold pb-2">{s.summary || '—'}</div>
           <div className="text-white/60 mt-2">Attachment: <span className="text-white/90">{s.fileName || '—'}</span></div>
         </section>
 

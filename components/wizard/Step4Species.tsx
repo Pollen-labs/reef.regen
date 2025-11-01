@@ -177,7 +177,7 @@ export function Step4Species() {
         </div>
 
         {/* Table header */}
-        <div className="grid grid-cols-[1fr_200px_48px] gap-1 items-center mt-4">
+        <div className="grid grid-cols-[1fr_200px_48px] gap-1 items-center mt-1">
         <div className="rr-input bg-vulcan-700/70 text-white/80 font-semibold text-left min-h-[48px] flex items-center">Species name</div>
           <div className="rr-input bg-vulcan-700/70 text-white/80 font-semibold text-left min-h-[48px] flex items-center">Counts <span className="text-sm text-white/50 pl-1"> (Optional)</span></div>
           <div className="rr-input bg-vulcan-700/70 min-h-[48px]" aria-hidden="true" />
@@ -189,7 +189,7 @@ export function Step4Species() {
             <div className="text-white/60 text-sm mt-2">Add a species using the search above</div>
           )}
           {species.map((s) => (
-            <div key={s.taxonId} id={`species-row-${s.taxonId}`} className="grid grid-cols-[1fr_200px_48px] gap-3 items-center">
+            <div key={s.taxonId} id={`species-row-${s.taxonId}`} className="grid grid-cols-[1fr_200px_48px] gap-1 items-center">
               <div className="rr-input bg-ribbon-300 text-vulcan-950 font-semibold truncate text-left" title={s.scientificName}>{s.scientificName}</div>
               <Input
                 id={`species-count-${s.taxonId}`}

@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
+import { usePathname } from "next/navigation";
 import { hasUnsavedWork, useAttestationWizard } from "@/lib/wizard/attestationWizardStore";
 import { LeaveWarningModal } from "@/components/wizard/LeaveWarningModal";
 
@@ -13,9 +14,12 @@ const GuardCtx = createContext<Ctx | null>(null);
 
 export function LeaveGuardProvider({ children }: { children: React.ReactNode }) {
   const [pending, setPending] = useState<null | (() => void)>(null);
-  // subscribe to wizard state to detect edits
-  useAttestationWizard();
-  const shouldBlock = useMemo(() => hasUnsavedWork(), []); // hasUnsavedWork reads directly from store
+  // Subscribe to wizard state; recompute block condition on every render
+  const snapshot = useAttestationWizard();
+  const pathname = usePathname();
+  const p = pathname || "";
+  const inWizardSteps = p.startsWith("/submit/steps/") || p === "/submit/review";
+  const shouldBlock = inWizardSteps && hasUnsavedWork(snapshot);
 
   const confirm = useCallback((fn: () => void) => {
     if (shouldBlock) {
@@ -45,4 +49,3 @@ export function useLeaveGuard() {
   if (!ctx) throw new Error("useLeaveGuard must be used within LeaveGuardProvider");
   return ctx;
 }
-

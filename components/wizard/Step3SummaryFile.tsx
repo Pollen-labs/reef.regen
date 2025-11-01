@@ -49,6 +49,9 @@ export function Step3SummaryFile() {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type || null,
+      // Clear any previous upload outputs so submit re-uploads the new file
+      fileCid: undefined,
+      fileUrl: undefined,
     });
   };
 
@@ -58,7 +61,7 @@ export function Step3SummaryFile() {
   };
 
   const onRemove = () => {
-    setPatch({ fileBlob: null, fileName: undefined, fileSize: null, fileType: null });
+    setPatch({ fileBlob: null, fileName: undefined, fileSize: null, fileType: null, fileCid: undefined, fileUrl: undefined });
     setError(null);
     if (inputRef.current) inputRef.current.value = "";
   };

@@ -2,13 +2,22 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import IdentifierBar from "@/components/ui/IdentifierBar";
+import { useEffect } from "react";
+import { useAttestationWizard } from "@/lib/wizard/attestationWizardStore";
 
 export default function SubmitSuccessPage() {
   const params = useSearchParams();
   const router = useRouter();
+  const wizard = useAttestationWizard();
   const uid = params.get("uid") || "";
   const base = process.env.NEXT_PUBLIC_EAS_EXPLORER_URL || "https://optimism-sepolia.easscan.org";
   const attUrl = uid ? `${base.replace(/\/$/, "")}/attestation/view/${uid}` : base;
+
+  // Extra safety: clear any leftover wizard state on success
+  useEffect(() => {
+    try { wizard.reset(); } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="w-full max-w-[1100px] mx-auto py-10 px-6 md:px-8">
