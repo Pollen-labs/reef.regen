@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 
 type Site = { id: string; name: string; type?: string; coords: [number, number] };
 
-export default function StaticSiteMap({ sites, height = 320 }: { sites: Site[]; height?: number }) {
+export default function StaticSiteMap({ sites, height = 320, className }: { sites: Site[]; height?: number; className?: string }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
 
@@ -85,7 +85,8 @@ export default function StaticSiteMap({ sites, height = 320 }: { sites: Site[]; 
     fitToSites(map, fc);
   }, [sites]);
 
-  return <div ref={containerRef} className="w-full rounded-3xl overflow-hidden" style={{ height }} />;
+  const cls = className || "w-full rounded-3xl overflow-hidden";
+  return <div ref={containerRef} className={cls} style={{ height, minHeight: height }} />;
 }
 
 function toFeatureCollection(sites: Site[]) {

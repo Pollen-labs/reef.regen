@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
-type ActionsBreakdown = { name: string; count: number }[];
+type ActionsBreakdown = { name: string; count: number; category?: string }[];
+type CategoryBreakdown = { name: string; count: number }[];
 type SiteTypeBreakdown = { name: string; count: number }[];
 
 async function getProfileByHandle(handle: string) {
@@ -32,7 +33,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
       .select("regen_type:regen_type_id(regen_type_id,name), attestation!inner(profile_id)")
       .eq("attestation.profile_id", profileId),
     // All possible actions (for zero fill)
-    supabaseAdmin.from("regen_type").select("regen_type_id,name").order("name", { ascending: true }),
+    supabaseAdmin.from("regen_type").select("regen_type_id,name,category").order("name", { ascending: true }),
     // Distinct species scientific names via attestation link
     supabaseAdmin
       .from("attestation_taxa")
@@ -47,7 +48,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
   if (speciesRows.error) return NextResponse.json({ error: speciesRows.error.message }, { status: 500 });
 
   const sites = (sitesRows.data || []) as any[];
-  const allActions = (regenTypesRows.data || []) as { regen_type_id: number; name: string }[];
+  const allActions = (regenTypesRows.data || []) as { regen_type_id: number; name: string; category: string }[];
 
   // Actions breakdown: count by regen_type_id then map to full list (zero fill)
   const usedCounts = new Map<number, number>();
@@ -56,7 +57,24 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
     if (!rt) continue;
     usedCounts.set(rt.regen_type_id, (usedCounts.get(rt.regen_type_id) || 0) + 1);
   }
-  const actions_breakdown: ActionsBreakdown = allActions.map((rt) => ({ name: rt.name, count: usedCounts.get(rt.regen_type_id) || 0 }));
+  const actions_breakdown: ActionsBreakdown = allActions.map((rt) => ({ name: rt.name, count: usedCounts.get(rt.regen_type_id) || 0, category: rt.category }));
+
+  // Aggregate by category for legend display
+  const catMap = new Map<string, number>();
+  for (const rt of allActions) {
+    const inc = usedCounts.get(rt.regen_type_id) || 0;
+    const key = rt.category;
+    catMap.set(key, (catMap.get(key) || 0) + inc);
+  }
+  const order = [
+    'Asexual Propagation',
+    'Sexual Propagation',
+    'Substratum Enhancement',
+  ];
+  const actions_category_breakdown: CategoryBreakdown = Array.from(catMap.entries())
+    .filter(([_n, c]) => (c || 0) > 0)
+    .sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]))
+    .map(([name, count]) => ({ name, count }));
 
   // Site types donut and Sites total
   const siteTypeCounts = new Map<string, number>();
@@ -132,6 +150,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
       attestations_total: attTotal.count || 0,
     },
     actions_breakdown,
+    actions_category_breakdown,
     site_types_breakdown,
     sites: sitesPayload,
     species,
@@ -140,4 +159,3 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
 
   return NextResponse.json(payload);
 }
-
