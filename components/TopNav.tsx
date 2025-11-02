@@ -116,7 +116,7 @@ export default function TopNav() {
               href={accountHref}
               onClick={(e) => onNavClick(e, accountHref)}
             >
-              Account
+              Profile
             </a>
           ) : (
             <Button
