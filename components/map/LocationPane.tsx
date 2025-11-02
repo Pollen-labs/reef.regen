@@ -1,6 +1,6 @@
 "use client";
 import type { Attestation, Location } from "@/types/map";
-import DonutChart from "@/components/shared/DonutChart";
+import DonutChartJS from "@/components/shared/charts/DonutChartJS";
 import { classesForRegen } from "@/lib/style/regenColors";
 // Site type styled as text (no chip)
 import Tag from "@/components/ui/Tag";
@@ -71,8 +71,10 @@ export default function LocationPane({
                 Regen actions
               </div>
             </div>
-            {/* Donut chart */}
-            <DonutChart data={chartData} size={96} strokeWidth={24} />
+            {/* Donut chart (Chart.js) */}
+            <div className="w-32">
+              <DonutChartJS data={chartData as any} tooltipMode="count" height={120} />
+            </div>
           </div>
 
           <div className="flex flex-col gap-1 mt-2">
