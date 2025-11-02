@@ -3,7 +3,17 @@ import { useEffect, useRef } from "react";
 
 type Site = { id: string; name: string; type?: string; coords: [number, number] };
 
-export default function StaticSiteMap({ sites, height = 320, className }: { sites: Site[]; height?: number; className?: string }) {
+export default function StaticSiteMap({
+  sites,
+  height = 320,
+  className,
+  onSiteClick,
+}: {
+  sites: Site[];
+  height?: number;
+  className?: string;
+  onSiteClick?: (siteId: string) => void;
+}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
 
@@ -28,7 +38,7 @@ export default function StaticSiteMap({ sites, height = 320, className }: { site
         style: "/map/styles/dark_matter.json",
         center: [0, 15],
         zoom: 1.6,
-        interactive: false,
+        interactive: !!onSiteClick,
         attributionControl: false,
         transformRequest: (u: any) => {
           const url = typeof u === "string" ? u : (u?.url as string | undefined) || "";
@@ -69,6 +79,21 @@ export default function StaticSiteMap({ sites, height = 320, className }: { site
         const fc = toFeatureCollection(sites);
         (map.getSource("sites") as any)?.setData(fc);
         fitToSites(map, fc);
+
+        // Click behavior when handler provided
+        if (onSiteClick) {
+          map.on("click", "site-points", (e: any) => {
+            const f = e?.features?.[0];
+            const id = f?.properties?.id as string | undefined;
+            if (id) onSiteClick(id);
+          });
+          map.on("mouseenter", "site-points", () => {
+            map.getCanvas().style.cursor = "pointer";
+          });
+          map.on("mouseleave", "site-points", () => {
+            map.getCanvas().style.cursor = "";
+          });
+        }
       });
     })();
     return () => {

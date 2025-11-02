@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Route } from "next";
@@ -12,7 +12,6 @@ export default function ProfileDetailsPage() {
   const search = useSearchParams();
   const redirectTo = search.get("redirect") || "/";
 
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [values, setValues] = useState({ description: "", website: "" });
@@ -24,27 +23,6 @@ export default function ProfileDetailsPage() {
     if (v.startsWith("//")) return `https:${v}`; // protocol-relative
     return `https://${v}`; // default to https
   }
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (!isConnected || !address) return;
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/profiles/by-wallet?address=${address}`);
-        const json = await res.json().catch(() => ({}));
-        if (!cancelled && res.ok) {
-          // No description/website returned by this endpoint today; keep as-is for now.
-          // This step is optional; we present empty fields for user to fill.
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [address, isConnected]);
 
   const canSave = useMemo(() => isConnected && !!address && !saving, [isConnected, address, saving]);
 
@@ -108,7 +86,7 @@ export default function ProfileDetailsPage() {
                 placeholder="Tell us about your organization’s work..."
                 value={values.description}
                 onChange={(e) => setValues((s) => ({ ...s, description: e.target.value }))}
-                disabled={loading || saving}
+                disabled={saving}
               />
             </div>
 
@@ -123,7 +101,7 @@ export default function ProfileDetailsPage() {
                 value={values.website}
                 onChange={(e) => setValues((s) => ({ ...s, website: e.target.value }))}
                 onBlur={(e) => setValues((s) => ({ ...s, website: normalizeUrl(e.target.value) }))}
-                disabled={loading || saving}
+                disabled={saving}
               />
             </div>
 

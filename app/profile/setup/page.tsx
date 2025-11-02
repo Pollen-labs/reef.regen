@@ -74,24 +74,29 @@ export default function ProfileSetupPage() {
       <div className="max-w-[600px] mx-auto">
         {!isConnected ? (
           <div className="grid gap-4">
-            <h1 className="text-white text-4xl font-black">Welcome to Reef.Regen</h1>
-            <p className="text-white/70">Connect your embedded wallet to set your organization name.</p>
+            <h1 className="text-white text-5xl md:text-7xl font-black leading-tight">Welcome to
+                <br className="hidden md:block" /> Reef.Regen
+              </h1>
+            <p className="text-vulcan-400 text-xl md:text-2xl font-light leading-9">Sign in to set up your profile.</p>
             <WalletConnect />
           </div>
         ) : (
           <form onSubmit={onSubmit} className="flex flex-col gap-6">
             <div className="flex flex-col gap-4">
-              <h1 className="text-white text-5xl md:text-7xl font-black leading-tight">Welcome to Reef.Regen</h1>
+              <h1 className="text-white text-5xl md:text-7xl font-black leading-tight">Welcome to
+                <br className="hidden md:block" /> Reef.Regen
+              </h1>
               <p className="text-vulcan-400 text-xl md:text-2xl font-light leading-9">
-                We want to ensure your organization name is written correctly on the blockchain. Please enter the organization you represent (or your personal name).
+                We want to be sure your organization or personal name is written correctly on the blockchain.
+                Please enter the organization you represent — or simply your name.
               </p>
             </div>
 
             <div className="flex flex-col gap-2">
               <label htmlFor="org_name" className="text-vulcan-500 text-lg font-bold leading-6">
-                Organization name <span className="font-normal">(used on blockchain attestations)</span>
+                Org/Profile name <span className="font-normal">(we will use this for the attestation on blockchain)</span>
               </label>
-              <Input id="org_name" name="org_name" value={orgName} onChange={(e) => setOrgName(e.target.value)} required placeholder="Enter name here" disabled={loading || saving} />
+              <Input id="org_name" name="org_name" size="lg" value={orgName} onChange={(e) => setOrgName(e.target.value)} required placeholder="Enter name here" disabled={loading || saving} />
             </div>
 
             <div className="flex gap-6">

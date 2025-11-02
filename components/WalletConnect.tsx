@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useWeb3AuthConnect, useWeb3AuthDisconnect, useWeb3AuthUser } from "@web3auth/modal/react";
+import Button from "@/components/ui/Button";
 
 export function WalletConnect() {
   const { address, isConnected } = useAccount();
@@ -61,23 +62,12 @@ export function WalletConnect() {
   };
 
   return (
-    <div style={{ display: "grid", gap: 8 }}>
-      <button
-        onClick={onConnectWeb3Auth}
-        disabled={web3AuthLoading || web3authLoadingHook}
-        style={{
-          background: "#0364ff",
-          color: "white",
-          border: "none",
-          padding: "10px 16px",
-          borderRadius: "6px",
-          cursor: web3AuthLoading ? "wait" : "pointer"
-        }}
-      >
-        {web3AuthLoading || web3authLoadingHook ? "Connecting…" : "Connect Embedded Wallet"}
-      </button>
+    <div className="grid gap-2">
+      <Button onClick={onConnectWeb3Auth} disabled={web3AuthLoading || web3authLoadingHook} size="lg" variant="solid">
+        {web3AuthLoading || web3authLoadingHook ? "Connecting…" : "Sign in"}
+      </Button>
       {(web3AuthError || web3authError) && (
-        <div style={{ color: "#b00", fontSize: "12px" }}>{friendly((web3AuthError || web3authError?.message) || null)}</div>
+        <div className="text-red-300 text-sm">{friendly((web3AuthError || (web3authError as any)?.message) || null)}</div>
       )}
     </div>
   );
