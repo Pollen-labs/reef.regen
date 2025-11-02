@@ -3,6 +3,7 @@ import type { Attestation, Location } from "@/types/map";
 import DonutChart from "@/components/shared/DonutChart";
 import { classesForRegen } from "@/lib/style/regenColors";
 // Site type styled as text (no chip)
+import Tag from "@/components/ui/Tag";
 
 /**
  * LocationPane — Left drawer showing location details
@@ -40,7 +41,7 @@ export default function LocationPane({
 
   return (
     <aside
-      className="absolute left-0 top-0 z-10 h-full w-96 md:w-[420px] px-4 py-3.5 bg-black/70 backdrop-blur-[3px] text-white overflow-y-auto transition-transform duration-300 ease-out scrollbar-thin scrollbar-thumb-vulcan-600 scrollbar-track-vulcan-800/50 hover:scrollbar-thumb-vulcan-500"
+      className="absolute left-0 top-0 z-10 h-full w-96 md:w-[420px] px-4 py-3.5 bg-black/70 backdrop-blur-[8px] text-white overflow-y-auto transition-transform duration-300 ease-out scrollbar-thin scrollbar-thumb-vulcan-600 scrollbar-track-vulcan-800/50 hover:scrollbar-thumb-vulcan-500"
       role="complementary"
       aria-label={`Location details for ${location.name}`}
     >
@@ -102,12 +103,7 @@ export default function LocationPane({
           <div className="flex flex-wrap gap-2">
             {hasSpecies ? (
               location.species.map((s) => (
-                <span
-                  key={s}
-                  className="h-8 px-3 py-1 rounded-lg bg-ribbon-300 inline-flex items-center"
-                >
-                  <span className="text-lg font-bold text-vulcan-900">{s}</span>
-                </span>
+                <Tag key={s} label={s} size="md" bgClass="bg-ribbon-300" textClass="text-vulcan-950" />
               ))
             ) : (
               <span className="h-8 px-3 py-1 rounded-lg bg-gray-200 inline-flex items-center">
@@ -158,11 +154,7 @@ export default function LocationPane({
                   }`}
                 >
                   <span className="text-lg font-light text-vulcan-300">
-                    {new Date(a.submittedAt).toLocaleDateString(undefined, {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    {require("@/lib/format/date").formatDateShort(a.submittedAt)}
                   </span>
                   <span className="h-5 w-5 grid place-items-center text-flamingo-200">
                     <i className="f7-icons text-2xl">ellipsis</i>

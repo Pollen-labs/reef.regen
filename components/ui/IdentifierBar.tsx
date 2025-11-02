@@ -39,7 +39,7 @@ export default function IdentifierBar({ label, value, actionLabel = "View", onAc
   }
 
   return (
-    <div className={`w-full rounded-2xl bg-vulcan-700/70 outline outline-1 outline-vulcan-700 px-4 md:px-6 py-3 flex items-center gap-3 ${className || ''}`}>
+    <div className={`w-full rounded-2xl bg-vulcan-700 outline outline-1 outline-vulcan-700 px-2 md:px-4 py-3 flex items-center gap-2 ${className || ''}`}>
       <div className="flex-1 min-w-0">
         <div className="text-vulcan-300 text-sm">{label}</div>
         <div className="text-white text-base font-bold truncate" title={value}>{display || '—'}</div>
@@ -49,7 +49,7 @@ export default function IdentifierBar({ label, value, actionLabel = "View", onAc
           type="button"
           aria-label="Copy identifier"
           onClick={handleCopy}
-          className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white"
+          className="p-2 rounded-xl bg-vulcan-700 hover:bg-vulcan-600 text-flamingo-200"
           title={copied ? 'Copied' : 'Copy'}
         >
           <i className="f7-icons text-base">{copied ? 'checkmark_alt' : 'doc_on_doc'}</i>
@@ -58,7 +58,7 @@ export default function IdentifierBar({ label, value, actionLabel = "View", onAc
       <button
         type="button"
         onClick={onAction}
-        className="px-4 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold inline-flex items-center gap-2"
+        className="px-4 py-2 rounded-2xl bg-vulcan-700 hover:bg-vulcan-600 text-flamingo-200 font-bold gap-2"
       >
         {actionLabel}
         {external && <i className="f7-icons text-base">arrow_up_right</i>}
