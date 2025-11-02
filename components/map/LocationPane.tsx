@@ -4,6 +4,7 @@ import DonutChart from "@/components/shared/DonutChart";
 import { classesForRegen } from "@/lib/style/regenColors";
 // Site type styled as text (no chip)
 import Tag from "@/components/ui/Tag";
+import { formatDateShort } from "@/lib/format/date";
 
 /**
  * LocationPane — Left drawer showing location details
@@ -133,37 +134,32 @@ export default function LocationPane({
           </div>
         </section>
 
-        {/* Attestations header */}
-        <section className="p-6 bg-vulcan-900 rounded-t-3xl flex flex-col gap-1">
-          <div>
+        {/* Attestations block (header + rows merged) */}
+        <section className="bg-vulcan-900 rounded-3xl overflow-hidden">
+          <div className="p-6">
             <div className="text-h4 font-black">{location.attestationCount}</div>
             <div className="text-lg text-vulcan-400 font-bold">Attestations</div>
           </div>
+          <ul>
+            {[...location.attestations]
+              .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+              .map((a) => (
+                <li key={a.id} className="border-t border-vulcan-700/60">
+                  <button
+                    onClick={() => onOpenAttestation(a as Attestation)}
+                    className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-vulcan-700/80"
+                  >
+                    <span className="text-lg font-light text-vulcan-300">
+                      {formatDateShort(a.submittedAt)}
+                    </span>
+                    <span className="h-5 w-5 grid place-items-center text-flamingo-200">
+                      <i className="f7-icons text-2xl">ellipsis</i>
+                    </span>
+                  </button>
+                </li>
+              ))}
+          </ul>
         </section>
-
-        {/* Attestation rows */}
-        <ul className="overflow-hidden rounded-b-3xl">
-          {location.attestations.map((a, idx) => {
-            const isLast = idx === location.attestations.length - 1;
-            return (
-              <li key={a.id}>
-                <button
-                  onClick={() => onOpenAttestation(a as Attestation)}
-                  className={`w-full px-5 py-4 flex items-center justify-between text-left bg-vulcan-900 hover:bg-vulcan-700/80 ${
-                    isLast ? "rounded-b-3xl" : ""
-                  }`}
-                >
-                  <span className="text-lg font-light text-vulcan-300">
-                    {require("@/lib/format/date").formatDateShort(a.submittedAt)}
-                  </span>
-                  <span className="h-5 w-5 grid place-items-center text-flamingo-200">
-                    <i className="f7-icons text-2xl">ellipsis</i>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
       </div>
 
       {/* Decorative vertical bar at far right of pane */}

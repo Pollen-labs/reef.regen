@@ -81,7 +81,14 @@ export async function POST(req: NextRequest) {
     .insert(insert)
     .select("attestation_id")
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    const code = (error as any)?.code || '';
+    const msg = (error as any)?.message || '';
+    if (code === '23505' && msg.includes('attestation_internal_ident_unique')) {
+      return NextResponse.json({ error: 'Internal ID already used for this account. Choose another.' }, { status: 409 });
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   const attestationId = inserted.attestation_id as string;
 
   // 1) Attach regen actions by name → ids

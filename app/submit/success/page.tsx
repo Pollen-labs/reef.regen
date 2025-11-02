@@ -20,7 +20,7 @@ export default function SubmitSuccessPage() {
   }, []);
 
   return (
-    <div className="w-full max-w-[1100px] mx-auto py-10 px-6 md:px-8">
+    <div className="w-full max-w-[1100px] mx-auto py-24 px-6 md:px-8">
       <div className="grid grid-cols-1 md:grid-cols-[520px_1fr] gap-8 items-center">
         {/* Image placeholder */}
         <div className="rounded-3xl bg-vulcan-600/40 aspect-[4/3] md:h-[380px] md:aspect-auto" />

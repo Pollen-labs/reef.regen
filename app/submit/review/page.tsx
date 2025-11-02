@@ -9,6 +9,7 @@ import { env } from "@/lib/env";
 import { SchemaEncoder, ZERO_BYTES32, NO_EXPIRATION, EAS } from "@ethereum-attestation-service/eas-sdk";
 import { EAS_GET_NONCE_ABI } from "@/lib/eas";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
+import { formatDateRangeShort } from "@/lib/format/date";
 import { useWeb3Auth } from "@web3auth/modal/react";
 import { ethers } from "ethers";
 import Tag from "@/components/ui/Tag";
@@ -26,12 +27,23 @@ export default function ReviewPage() {
   const { provider: embeddedProvider } = useWeb3Auth();
 
   const dateText = useMemo(() => {
-    if (s.dateMode === 'range') {
-      if (s.actionStart && s.actionEnd) return `${s.actionStart} ~ ${s.actionEnd}`;
-      return "";
-    }
-    return s.actionDate || "";
+    if (s.dateMode === 'range') return formatDateRangeShort(s.actionStart, s.actionEnd);
+    return formatDateRangeShort(s.actionDate, null);
   }, [s.dateMode, s.actionDate, s.actionStart, s.actionEnd]);
+
+  const [internalExists, setInternalExists] = useState(false);
+  useEffect(() => {
+    let active = true;
+    const id = setTimeout(async () => {
+      if (!s.internalId || !address) { if (active) setInternalExists(false); return; }
+      try {
+        const res = await fetch(`/api/attestations/check-internal?address=${address}&value=${encodeURIComponent(s.internalId)}`);
+        const json = await res.json().catch(() => ({}));
+        if (active) setInternalExists(!!json.exists);
+      } catch { if (active) setInternalExists(false); }
+    }, 300);
+    return () => { active = false; clearTimeout(id); };
+  }, [s.internalId, address]);
 
   const goEdit = (step: number) => router.replace(`/submit/steps/${step}`);
 
@@ -56,6 +68,10 @@ export default function ReviewPage() {
     // basic guards
     if (!isConnected || !address || !walletClient) {
       setLocalError("Connect your wallet to submit.");
+      return;
+    }
+    if (internalExists) {
+      setLocalError("Internal ID already used for this account. Choose another.");
       return;
     }
     if (!publicClient) {
@@ -216,18 +232,18 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className="w-full max-w-[960px] mx-auto py-6 px-4 md:px-2 pb-40">
-      <div className="w-full max-w-[728px] flex flex-col items-center gap-3 mx-auto mb-6">
+    <div className="w-full max-w-[9600px] mx-auto py-6 px-4 md:px-2 pb-40">
+      <div className="w-full max-w-[800px] flex flex-col items-center gap-3 mx-auto mb-6">
         <div className="text-center text-white text-5xl md:text-7xl font-black leading-[1.04]">Review your submission</div>
-        <div className="text-center text-vulcan-100 text-2xl font-light leading-9">Please review carefully; submission is permanent on-chain.</div>
+        <div className="text-center text-vulcan-100 text-2xl font-light leading-9">Please review your submission throughly as it is about to be submitted to the blockchain and will be permanent and uneditable by nature.</div>
       </div>
 
       <div className="flex flex-col gap-2 max-w-[600px] mx-auto">
         {/* Actions */}
-        <section className="rounded-2xl bg-vulcan-800/60 outline outline-1 outline-vulcan-700/70 p-4 relative">
+        <section className="rounded-2xl bg-vulcan-800/60 outline outline-1 outline-vulcan-700/70 p-4 relative py-6">
           <div className="text-vulcan-300 text-base mb-4">Regen action(s)</div>
           <button aria-label="Edit actions" onClick={() => goEdit(1)} className="absolute right-3 top-3 text-white/70 hover:text-white"><i className="f7-icons">pencil_circle</i></button>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1">
             {(s.reefRegenActions || []).map((a) => {
               const c = classesForRegen(a);
               return <Tag key={a} label={a} size="md" bgClass={c.bg} textClass={c.text} />;
@@ -236,37 +252,63 @@ export default function ReviewPage() {
           </div>
         </section>
 
-        {/* Date & Site */}
-        <section className="rounded-2xl bg-vulcan-800/60 outline outline-1 outline-vulcan-700/70 p-4 relative">
-          <div className="text-vulcan-300 text-base mb-4">Action date</div>
+        {/* Date & Site — Row1: Date; Row2: Site | Type; Row3: Location | Depth/Area */}
+        <section className="rounded-2xl bg-vulcan-800/60 outline outline-1 outline-vulcan-700/70 p-4 relative py-6">
           <button aria-label="Edit date & site" onClick={() => goEdit(2)} className="absolute right-3 top-3 text-white/70 hover:text-white"><i className="f7-icons">pencil_circle</i></button>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-white/90">
-            <div><div className="text-vulcan-300 text-base">Date</div><div className="text-vulcan-100 text-base font-bold">{dateText || '—'}</div></div>
-            <div><div className="text-vulcan-300 text-base">Site name</div><div className="text-vulcan-100 text-base font-bold">{s.siteName || '—'}</div></div>
+
+          {/* Row 1: Action date (full width) */}
+          <div className="mb-4">
+            <div className="text-vulcan-300 text-base mb-1">Action date</div>
+            <div className="text-white text-xl font-black">{dateText || '—'}</div>
+          </div>
+
+          {/* Row 2: Site name | Site type */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-white/90 mb-2">
             <div>
-              <div className="text-vulcan-300 text-base">Site type</div>
-              <div className="text-vulcan-100 text-base font-bold">
-                {s.siteType ? (() => { const c = classesForSiteType(s.siteType); return <Tag label={s.siteType} bgClass={c.bg} textClass={c.text} />; })() : '—'}
+              <div className="text-vulcan-300 text-base mb-1">At site</div>
+              <div className="text-white text-xl font-black">{s.siteName || '—'}</div>
+            </div>
+            <div>
+              <div className="text-vulcan-300 text-base mb-1">Site type</div>
+              <div className="text-white text-xl font-black">
+                {s.siteType ? s.siteType : '—'}
               </div>
             </div>
-            <div><div className="text-vulcan-300 text-base">Location coordinate</div><div className="text-vulcan-100 text-base font-bold">{s.siteCoords ? `${Number(s.siteCoords[1]).toFixed(6)}, ${Number(s.siteCoords[0]).toFixed(6)}` : '—'}</div></div>
-            <div><div className="text-vulcan-300 text-base">Depth / Surface area</div><div className="text-vulcan-100 text-base font-bold">{s.siteDepthM ?? '—'} m / {s.siteAreaM2 ?? '—'} m²</div></div>
+          </div>
+
+          {/* Row 3: Location | Depth / Surface area */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-white/90">
+            <div>
+              <div className="text-vulcan-300 text-base mb-1">Location</div>
+              <div className="text-white text-xl font-black">{s.siteCoords ? `${Number(s.siteCoords[1]).toFixed(6)}, ${Number(s.siteCoords[0]).toFixed(6)}` : '—'}</div>
+            </div>
+            <div>
+              <div className="text-vulcan-300 text-base mb-1">Depth / Surface area</div>
+              <div className="text-white text-xl font-black">{s.siteDepthM ?? '—'} m / {s.siteAreaM2 ?? '—'} m²</div>
+            </div>
           </div>
         </section>
 
-        {/* Summary & file */}
-        <section className="rounded-2xl bg-vulcan-800/60 outline outline-1 outline-vulcan-700/70 p-4 relative">
-          <div className="text-vulcan-300 text-base mb-4">Summary & Attachment</div>
+        {/* Summary & Attachment */}
+        <section className="rounded-2xl bg-vulcan-800/60 outline outline-1 outline-vulcan-700/70 p-4 relative py-6">
           <button aria-label="Edit summary" onClick={() => goEdit(3)} className="absolute right-3 top-3 text-white/70 hover:text-white"><i className="f7-icons">pencil_circle</i></button>
-          <div className="text-white/90 whitespace-pre-wrap text-base font-bold pb-2">{s.summary || '—'}</div>
-          <div className="text-white/60 mt-2">Attachment: <span className="text-white/90">{s.fileName || '—'}</span></div>
+          <div className="space-y-8">
+            <div>
+              <div className="text-vulcan-300 text-base mb-1">Summary</div>
+              <div className="text-white/90 whitespace-pre-wrap text-lg font-bold">{s.summary || '—'}</div>
+            </div>
+            <div>
+              <div className="text-vulcan-300 text-base mb-1">Attachment</div>
+              <div className="text-white/90 text-base font-bold">{s.fileName || '—'}</div>
+            </div>
+          </div>
         </section>
 
         {/* Species */}
-        <section className="rounded-2xl bg-vulcan-800/60 outline outline-1 outline-vulcan-700/70 p-4 relative">
-          <div className="text-vulcan-300 text-base mb-4">Coral Species</div>
+        <section className="rounded-2xl bg-vulcan-800/60 outline outline-1 outline-vulcan-700/70 p-4 relative py-6">
+          <div className="text-vulcan-300 text-base mb-2">Coral Species</div>
           <button aria-label="Edit species" onClick={() => goEdit(4)} className="absolute right-3 top-3 text-white/70 hover:text-white"><i className="f7-icons">pencil_circle</i></button>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1">
             {(s.species || []).map((sp) => (
               <Tag key={sp.taxonId} label={`${sp.scientificName}${sp.count != null ? ` ${sp.count}` : ''}`} size="md" bgClass="bg-ribbon-300" textClass="text-vulcan-950" />
             ))}
@@ -275,23 +317,23 @@ export default function ReviewPage() {
         </section>
 
         {/* Contributors */}
-        <section className="rounded-2xl bg-vulcan-800/60 outline outline-1 outline-vulcan-700/70 p-4 relative">
-          <div className="text-vulcan-300 text-base mb-4">Contributors</div>
+        <section className="rounded-2xl bg-vulcan-800/60 outline outline-1 outline-vulcan-700/70 p-4 relative py-6">
+          <div className="text-vulcan-300 text-base mb-2">Contributors</div>
           <button aria-label="Edit contributors" onClick={() => goEdit(5)} className="absolute right-3 top-3 text-white/70 hover:text-white"><i className="f7-icons">pencil_circle</i></button>
-          <div className="text-vulcan-100 text-base font-bold">{(s.contributors || []).join(", ") || '—'}</div>
+          <div className="text-vulcan-100 text-lg font-bold">{(s.contributors || []).join(", ") || '—'}</div>
         </section>
 
         {/* Submitting as */}
-        <section className="rounded-2xl bg-vulcan-800/60 outline outline-1 outline-vulcan-700/70 p-4">
+        <section className="rounded-2xl bg-vulcan-800/60 outline outline-1 outline-vulcan-700/70 p-4 py-6">
           <div className="text-vulcan-300 text-base mb-2">You are submitting this attestation as</div>
-          <div className="text-white text-2xl font-black">{s.organizationName || '—'}</div>
+          <div className="text-white text-xl font-black">{s.organizationName || '—'}</div>
         </section>
 
         {/* Internal ID */}
         <section className="rounded-2xl bg-transparent p-4 text-center">
           <div className="text-vulcan-700 text-2xl font-black mb-2">Internal ID</div>
-          <div className="text-white/80 max-w-[680px] mx-auto mb-4">For your convenience we’ve included this field to facilitate the matching to your internal documentation. You can for example include a project or spreadsheet/database row identifier.</div>
-          <div className="max-w-[600px] mx-auto">
+          <div className="text-white/80 max-w-[800px] text-base mx-auto mb-4">For your convenience we’ve included this field to facilitate the matching to your internal documentation. You can for example include a project or spreadsheet/database row identifier.</div>
+          <div className="max-w-[800px] mx-auto">
             <Input
               value={s.internalId || ''}
               onChange={(e) => {
@@ -300,6 +342,9 @@ export default function ReviewPage() {
               }}
               placeholder="CORAL-113"
             />
+            {internalExists && (
+              <div className="mt-2 text-flamingo-300 text-sm">This internal ID is already used for your account.</div>
+            )}
           </div>
         </section>
       </div>
@@ -311,9 +356,9 @@ export default function ReviewPage() {
             <Button variant="outline" size="md" onClick={() => router.replace('/submit/steps/5')} className="w-40">Back</Button>
           </div>
           <div className="text-vulcan-400 text-sm font-light leading-6 text-center flex-1">Review & Submit</div>
-          <div className="w-40 flex items-center justify-end">
+          <div className="w-60 flex items-center justify-end">
             <Button type="button" disabled={s.submitting} onClick={handleSubmit} variant="solid" size="md" className="w-40">
-              {s.submitting ? 'Submitting…' : 'Looks good, submit'}
+              {s.submitting ? 'Submitting…' : 'Confirm submission'}
             </Button>
           </div>
         </div>
