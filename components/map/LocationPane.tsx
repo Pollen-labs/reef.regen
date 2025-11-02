@@ -2,8 +2,7 @@
 import type { Attestation, Location } from "@/types/map";
 import DonutChart from "@/components/shared/DonutChart";
 import { classesForRegen } from "@/lib/style/regenColors";
-import { classesForSiteType } from "@/lib/style/siteTypeColors";
-import Tag from "@/components/ui/Tag";
+// Site type styled as text (no chip)
 
 /**
  * LocationPane — Left drawer showing location details
@@ -48,13 +47,13 @@ export default function LocationPane({
       <div className="flex flex-col gap-2">
         {/* Header Card */}
         <section className="p-6 bg-vulcan-900 rounded-3xl flex flex-col gap-2">
-          <h2 className="text-[32px] leading-[36px] font-black text-white">
+          <h2 className="text-h4 font-black text-white">
             {location.name}
           </h2>
           {location.orgName && (
             <div>
               <div className="text-lg font-light text-vulcan-400">Organization</div>
-              <div className="text-xl font-bold">{location.orgName}</div>
+              <div className="text-2xl font-bold">{location.orgName}</div>
             </div>
           )}
         </section>
@@ -63,7 +62,7 @@ export default function LocationPane({
         <section className="p-6 bg-vulcan-900 rounded-3xl flex flex-col gap-4">
           <div className="flex items-start justify-between gap-4">
             <div className="w-40">
-              <div className="text-[52px] leading-[52px] font-black">
+              <div className="text-h4 font-black">
                 {totalActions}
               </div>
               <div className="text-lg text-vulcan-400 font-bold">
@@ -93,7 +92,7 @@ export default function LocationPane({
         {/* Species diversity Card */}
         <section className="p-6 bg-vulcan-900 rounded-3xl flex flex-col gap-4">
           <div>
-            <div className="text-[52px] leading-[52px] font-black">
+            <div className="text-h4 font-black">
               {hasSpecies ? location.species.length : 0}
             </div>
             <div className="text-lg text-vulcan-400 font-bold">
@@ -121,9 +120,9 @@ export default function LocationPane({
         </section>
 
         {/* Site details Card */}
-        <section className="p-6 bg-vulcan-900 rounded-3xl flex flex-col gap-4">
-          <h3 className="text-[32px] leading-[36px] font-black text-white">
-            {location.siteType ? (() => { const c = classesForSiteType(location.siteType); return <Tag label={location.siteType} size="lg" className="text-h6" bgClass={c.bg} textClass={c.text} />; })() : '-'}
+        <section className="p-6 bg-vulcan-900 rounded-3xl flex flex-col gap-2">
+          <h3 className="text-h5 font-black text-white">
+            {location.siteType || '-'}
           </h3>
           <div className="text-lg text-vulcan-400 font-bold">Site type</div>
           <div className="grid grid-cols-2 gap-6">
@@ -139,9 +138,9 @@ export default function LocationPane({
         </section>
 
         {/* Attestations header */}
-        <section className="p-6 bg-vulcan-900 rounded-t-3xl flex flex-col gap-4">
+        <section className="p-6 bg-vulcan-900 rounded-t-3xl flex flex-col gap-1">
           <div>
-            <div className="text-[52px] leading-[52px] font-black">{location.attestationCount}</div>
+            <div className="text-h4 font-black">{location.attestationCount}</div>
             <div className="text-lg text-vulcan-400 font-bold">Attestations</div>
           </div>
         </section>
@@ -165,8 +164,8 @@ export default function LocationPane({
                       day: "numeric",
                     })}
                   </span>
-                  <span className="h-5 w-5 relative">
-                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 block h-[3.35px] w-4 bg-flamingo-200" />
+                  <span className="h-5 w-5 grid place-items-center text-flamingo-200">
+                    <i className="f7-icons text-2xl">ellipsis</i>
                   </span>
                 </button>
               </li>

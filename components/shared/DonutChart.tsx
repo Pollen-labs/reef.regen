@@ -21,6 +21,7 @@ export default function DonutChart({
   const total = Math.max(1, data.reduce((sum, item) => sum + item.count, 0));
 
   let currentOffset = 0;
+  const gapPx = 1; // small separator to avoid anti-aliasing overlaps
 
   return (
     <div className={className} style={{ position: 'relative', width: size, height: size }}>
@@ -37,6 +38,7 @@ export default function DonutChart({
         {data.map((item, index) => {
           const percentage = (item.count / total) * 100;
           const segmentLength = (percentage / 100) * circumference;
+          const seg = Math.max(0, segmentLength - gapPx);
           const offset = currentOffset;
           currentOffset += segmentLength;
 
@@ -49,8 +51,9 @@ export default function DonutChart({
               fill="none"
               stroke={item.color}
               strokeWidth={strokeWidth}
-              strokeDasharray={`${segmentLength} ${circumference - segmentLength}`}
+              strokeDasharray={`${seg} ${circumference - seg}`}
               strokeDashoffset={-offset}
+              strokeLinecap="butt"
               shapeRendering="geometricPrecision"
               className="transition-all duration-300 cursor-pointer"
               onClick={() => onSegmentClick?.(item, index)}
