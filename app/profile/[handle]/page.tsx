@@ -147,7 +147,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-6">
             {isOwner && (
               <a
-                href="/profile/details"
+                href="/profile/setting"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-white/5"
                 title="Edit profile"
                 aria-label="Edit profile"

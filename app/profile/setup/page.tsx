@@ -59,7 +59,7 @@ export default function ProfileSetupPage() {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || `Save failed (${res.status})`);
-      const nextUrl = `/profile/details?redirect=${encodeURIComponent(redirectTo)}` as Route;
+      const nextUrl = `/profile/setting?redirect=${encodeURIComponent(redirectTo)}` as Route;
       router.replace(nextUrl);
     } catch (err: any) {
       setError(err?.message || String(err));
