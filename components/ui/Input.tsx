@@ -4,7 +4,7 @@ import { forwardRef } from "react";
 
 type Size = "sm" | "md" | "lg";
 
-type Props = React.InputHTMLAttributes<HTMLInputElement> & {
+type Props = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> & {
   leftIcon?: string; // f7 icon name
   rightIcon?: string; // f7 icon name
   onLeftIconClick?: () => void;
@@ -48,4 +48,3 @@ const Input = forwardRef<HTMLInputElement, Props>(function Input(
 });
 
 export default Input;
-

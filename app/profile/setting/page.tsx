@@ -218,23 +218,23 @@ export default function ProfileSettingPage() {
         ) : (
           <div className="w-full max-w-[600px] mx-auto">
             {/* Basic Information */}
-            <h2 className="text-5xl md:text-7xl font-black mb-6">Basic information</h2>
+            <h2 className="text-h4 font-black mb-6">Basic information</h2>
             <form onSubmit={onSave} className="grid gap-4">
               <label className="grid gap-2">
-                <span className="text-sm text-vulcan-400">Organization name</span>
+                <span className="text-base font-bold text-vulcan-400">Organization name</span>
                 <Input value={orgName} onChange={(e) => setOrgName(e.target.value)} placeholder="Enter organization name" required />
               </label>
               <label className="grid gap-2">
-                <span className="text-sm text-vulcan-400">Description</span>
+                <span className="text-base font-bold text-vulcan-400">Description</span>
                 <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={6} placeholder="Tell us about your organization (max 500 chars)" maxLength={500} />
               </label>
               <label className="grid gap-2">
-                <span className="text-sm text-vulcan-400">Website</span>
+                <span className="text-base font-bold text-vulcan-400">Website</span>
                 <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://example.org" />
                 {!websiteValid && <span className="text-xs text-red-300">Website must start with http:// or https://</span>}
               </label>
               <label className="grid gap-2">
-                <span className="text-sm text-vulcan-400">Handle</span>
+                <span className="text-base font-bold text-vulcan-400">Handle</span>
                 <Input value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="reef-123" />
                 {handleMsg && (
                   <span className={`text-xs ${handleOk ? 'text-green-300' : 'text-red-300'}`}>{handleMsg}</span>
@@ -248,8 +248,7 @@ export default function ProfileSettingPage() {
             </form>
 
             {/* Sites */}
-            <h2 className="text-4xl font-black mt-12 mb-3">Sites</h2>
-            <div className="text-vulcan-400 text-sm mb-3">Your owned restoration sites</div>
+            <h2 className="text-h4 font-black mt-16 mb-3">Sites</h2>
             <div className="grid gap-3">
               {sites.map((s) => (
                 <div
@@ -288,7 +287,7 @@ export default function ProfileSettingPage() {
             </div>
 
             {/* Security */}
-            <h2 className="text-4xl font-black mt-12 mb-3">Security</h2>
+            <h2 className="text-h4 font-black mt-16 mb-3">Security</h2>
             <div className="grid gap-4">
               <label className="grid gap-2">
                 <span className="text-sm text-vulcan-400">Wallet address</span>
