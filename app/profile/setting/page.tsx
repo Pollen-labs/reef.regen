@@ -179,8 +179,12 @@ export default function ProfileSettingPage() {
   }
 
   function truncate(addr?: string) {
-    return addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : "";
+    return addr ? `${addr.slice(0, 6)}...${addr.slice(-5)}` : "";
   }
+
+  const displayAddress = useMemo(() => {
+    return (isConnected && address) ? address : (profile?.wallet_address || "");
+  }, [isConnected, address, profile?.wallet_address]);
 
   async function onLogout() {
     try {
@@ -292,7 +296,7 @@ export default function ProfileSettingPage() {
             <div className="grid gap-4 mb-12">
               <label className="grid gap-2">
                 <span className="text-sm text-vulcan-400">Wallet address</span>
-                <Input value={truncate(profile?.wallet_address)} readOnly disabled className="flex-1" />
+                <Input value={truncate(displayAddress)} readOnly disabled className="flex-1" />
               </label>
               <div>
                 <ExportPrivateKeyButton label="Export private key" />

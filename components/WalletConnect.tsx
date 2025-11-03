@@ -35,7 +35,7 @@ export function WalletConnect() {
     }
     return (
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <span>Connected: {address?.slice(0, 6)}...{address?.slice(-4)}</span>
+        <span>Connected: {address?.slice(0, 6)}...{address?.slice(-5)}</span>
         <button onClick={async () => { await disconnectWeb3Auth(); disconnect(); }}>
           Disconnect
         </button>
