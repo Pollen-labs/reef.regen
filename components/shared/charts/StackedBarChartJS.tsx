@@ -24,6 +24,12 @@ type Props = {
   className?: string;
   showLegend?: boolean; // render simple legend below the bar
   legendInside?: boolean; // place legend inside the fixed-height area
+  legendHeight?: number; // px reserved when legendInside=true
+  legendFontSize?: number; // px font size for legend text
+  legendLineHeight?: number; // px line-height for legend text
+  legendGap?: number; // px gap between legend items
+  legendItemGap?: number; // px gap inside legend item (dot/text/value)
+  legendIconSize?: number; // px square size for the colored dot
 };
 
 export default function StackedBarChartJS({
@@ -36,6 +42,12 @@ export default function StackedBarChartJS({
   className,
   showLegend = true,
   legendInside = true,
+  legendHeight = 24,
+  legendFontSize = 12,
+  legendLineHeight = 16,
+  legendGap = 12,
+  legendItemGap = 6,
+  legendIconSize = 10,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -115,7 +127,7 @@ export default function StackedBarChartJS({
     layout: { padding },
   };
 
-  const legendH = showLegend && legendInside ? 22 : 0; // px reserved for legend inside
+  const legendH = showLegend && legendInside ? legendHeight : 0; // px reserved for legend inside
 
   return (
     <div ref={containerRef} className={[className || "", "w-full relative"].join(" ")} style={{ height }}>
@@ -124,20 +136,26 @@ export default function StackedBarChartJS({
       </div>
       {showLegend && (
         legendInside ? (
-          <div className="absolute left-0 right-0 bottom-1 flex flex-wrap items-center gap-3 text-xs">
+          <div
+            className="absolute left-0 right-0 flex flex-wrap items-center"
+            style={{ bottom: 4, gap: legendGap, fontSize: legendFontSize, lineHeight: `${legendLineHeight}px` }}
+          >
             {segments.map((s) => (
-              <div key={s.label} className="inline-flex items-center gap-1.5">
-                <span className="inline-block h-2.5 w-2.5 rounded" style={{ background: s.color }} />
-                <span className="text-white/90 text-sm">{s.label}</span>
+              <div key={s.label} className="inline-flex items-center" style={{ gap: legendItemGap }}>
+                <span className="inline-block rounded" style={{ background: s.color, width: legendIconSize, height: legendIconSize }} />
+                <span className="text-white/90">{s.label}</span>
                 <span className="text-white font-bold">{s.value}</span>
               </div>
             ))}
           </div>
         ) : (
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+          <div
+            className="flex flex-wrap items-center"
+            style={{ marginTop: 12, gap: legendGap, fontSize: legendFontSize + 2, lineHeight: `${legendLineHeight}px` }}
+          >
             {segments.map((s) => (
-              <div key={s.label} className="inline-flex items-center gap-2">
-                <span className="inline-block h-3 w-3 rounded" style={{ background: s.color }} />
+              <div key={s.label} className="inline-flex items-center" style={{ gap: legendItemGap + 2 }}>
+                <span className="inline-block rounded" style={{ background: s.color, width: legendIconSize + 2, height: legendIconSize + 2 }} />
                 <span className="text-white/90">{s.label}</span>
                 <span className="text-white font-bold">{s.value}</span>
               </div>
