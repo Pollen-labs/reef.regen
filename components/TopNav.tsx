@@ -1,9 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { Route } from "next";
-import { useWeb3AuthConnect } from "@web3auth/modal/react";
-import { useAccount } from "wagmi";
+import { useWeb3AuthConnect, useWeb3AuthDisconnect } from "@web3auth/modal/react";
+import { useAccount, useDisconnect } from "wagmi";
 import { useLeaveGuard } from "@/hooks/useLeaveGuard";
 import Button from "@/components/ui/Button";
 
@@ -28,8 +28,28 @@ export default function TopNav() {
   const router = useRouter();
   const { confirm, shouldBlock } = useLeaveGuard();
   const { connect: connectWeb3Auth, loading: web3authLoading } = useWeb3AuthConnect();
+  const { disconnect: disconnectWeb3Auth } = useWeb3AuthDisconnect();
   const { isConnected, address } = useAccount();
+  const { disconnect } = useDisconnect();
   const [profileHandle, setProfileHandle] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // Close dropdown on outside click / ESC
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!menuOpen) return;
+      const t = e.target as Node | null;
+      if (menuRef.current && t && !menuRef.current.contains(t)) setMenuOpen(false);
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setMenuOpen(false); }
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [menuOpen]);
 
   // Fetch user's profile handle when connected
   useEffect(() => {
@@ -109,15 +129,54 @@ export default function TopNav() {
             Submit
           </a>
           {isConnected ? (
-            <a
-              className={`px-4 py-2 text-xl font-bold leading-8 hover:text-white/90 ${
-                pathname.startsWith("/profile") ? "text-orange" : ""
-              }`}
-              href={accountHref}
-              onClick={(e) => onNavClick(e, accountHref)}
-            >
-              Profile
-            </a>
+            <div className="relative" ref={menuRef}>
+              <button
+                className={`inline-flex items-center gap-1.5 px-3 py-2 text-xl font-bold leading-8 rounded-xl hover:bg-white/10 ${pathname.startsWith("/profile") ? "text-orange" : ""}`}
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+              >
+                <span>Profile</span>
+                <i className="f7-icons text-base">arrowtriangle_down_fill</i>
+              </button>
+              
+              {menuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 mt-2 w-52 rounded-2xl bg-black/95 outline outline-1 outline-white/10 shadow-xl overflow-hidden"
+                >
+                 <a
+                    role="menuitem"
+                    className="block px-4 py-2 text-white text-lg font-bold hover:bg-white/10"
+                    href={accountHref}
+                    onClick={(e) => onNavClick(e, accountHref)}
+                  >
+                    View profile
+                  </a>
+                 <a
+                    role="menuitem"
+                    className="block px-4 py-2 text-white text-lg font-bold hover:bg-white/10"
+                    href="/profile/setting"
+                    onClick={(e) => onNavClick(e, "/profile/setting")}
+                  >
+                    Settings
+                  </a>
+                 <button
+                    role="menuitem"
+                    className="w-full text-left px-4 py-2 text-white text-lg font-bold hover:bg-white/10"
+                    onClick={async () => {
+                      try { await disconnectWeb3Auth(); } catch {}
+                      disconnect();
+                      setMenuOpen(false);
+                      try { localStorage.clear(); } catch {}
+                      if (typeof window !== 'undefined') window.location.href = "/";
+                    }}
+                  >
+                    Log out
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <Button
               onClick={handleSignIn}
