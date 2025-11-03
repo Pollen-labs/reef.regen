@@ -7,7 +7,8 @@ import { WagmiProvider } from "@web3auth/modal/react/wagmi";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
 import { AttestationWizardProvider } from "@/lib/wizard/attestationWizardStore";
 import { LeaveGuardProvider } from "@/hooks/useLeaveGuard";
-import { useWeb3Auth } from "@web3auth/modal/react";
+import { useWeb3Auth, useWeb3AuthUser } from "@web3auth/modal/react";
+import { useAccount } from "wagmi";
 import { env } from "@/lib/env";
 
 export default function Providers({ children }: { children: ReactNode }) {
@@ -50,6 +51,7 @@ export default function Providers({ children }: { children: ReactNode }) {
               {process.env.NEXT_PUBLIC_AUTO_SWITCH_ON_CONNECT !== 'false' && (
                 <EnsureEmbeddedChain />
               )}
+              <ProfileEmailSync />
               {children}
             </LeaveGuardProvider>
           </AttestationWizardProvider>
@@ -100,5 +102,28 @@ function EnsureEmbeddedChain() {
     })();
     return () => { cancelled = true; };
   }, [provider, isConnected]);
+  return null;
+}
+
+function ProfileEmailSync() {
+  const { userInfo } = useWeb3AuthUser();
+  const { address, isConnected } = useAccount();
+  const sentRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isConnected || !address) return;
+    const key = `${address.toLowerCase()}|${userInfo?.email || ''}`;
+    if (!userInfo?.email || sentRef.current === key) return;
+    sentRef.current = key;
+    (async () => {
+      try {
+        await fetch("/api/profiles/upsert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet_address: address, email: userInfo.email }),
+        });
+      } catch {}
+    })();
+  }, [isConnected, address, userInfo?.email]);
   return null;
 }

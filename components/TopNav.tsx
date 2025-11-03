@@ -122,7 +122,7 @@ export default function TopNav() {
             <Button
               onClick={handleSignIn}
               disabled={web3authLoading}
-              variant="outline"
+              variant="outlineOrange"
               size="lg"
               className="leading-8"
             >
