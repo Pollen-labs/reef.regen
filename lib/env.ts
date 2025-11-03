@@ -9,4 +9,7 @@ export const env = {
   blockExplorerAddressPrefix:
     process.env.NEXT_PUBLIC_BLOCK_EXPLORER_ADDRESS_PREFIX ||
     "https://sepolia-optimism.etherscan.io/address/",
+  easExplorerAddressPrefix:
+    process.env.NEXT_PUBLIC_EAS_EXPLORER_ADDRESS_PREFIX ||
+    "https://sepolia-optimism.easscan.org/address/",
 };

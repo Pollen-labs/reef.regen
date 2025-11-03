@@ -9,6 +9,8 @@ import { classesForRegen } from "@/lib/style/regenColors";
 import StackedBarChartJS from "@/components/shared/charts/StackedBarChartJS";
 import { useAccount } from "wagmi";
 import { useParams } from "next/navigation";
+import { ethers } from "ethers";
+import { env } from "@/lib/env";
 
 type Api = {
   profile: { id: string; profile_name: string | null; description: string | null; website: string | null; wallet_address: string; handle: string };
@@ -129,7 +131,9 @@ export default function ProfilePage() {
       const res = await fetch(`/api/attestations/${id}`);
       const json = await res.json();
       if (res.ok) {
-        setActiveAtt(json.attestation);
+        const internalId = internalById[id] || null;
+        const att = internalId ? { ...json.attestation, internalId } : json.attestation;
+        setActiveAtt(att);
         setModalOpen(true);
       }
     } catch {}
@@ -166,20 +170,60 @@ export default function ProfilePage() {
         <div className="w-full max-w-96 flex flex-col gap-6">
           <h1 className="text-orange text-5xl md:text-7xl font-black leading-tight">{p.profile_name || p.handle}</h1>
           <div className="flex flex-col gap-1">
-            <div className="text-vulcan-400 text-lg font-light">About</div>
+            <div className="text-vulcan-400 text-base font-bold">About</div>
             <div className="text-vulcan-100 text-lg font-light whitespace-pre-line">{p.description || ""}</div>
           </div>
           <div className="flex flex-col gap-1">
-            <div className="text-vulcan-400 text-lg font-light">Website</div>
+            <div className="text-vulcan-400 text-base font-bold">Website</div>
             {p.website ? (
-              <a href={p.website} target="_blank" rel="noreferrer" className="text-vulcan-100 text-lg font-bold break-all">{p.website}</a>
+              <div className="flex items-center gap-1">
+                <a
+                  href={p.website}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-vulcan-100 text-lg font-bold break-all"
+                >
+                  {p.website}
+                </a>
+                <a
+                  href={p.website}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/10"
+                  aria-label="Open website"
+                  title="Open website"
+                >
+                  <i className="f7-icons text-xl">arrow_up_right</i>
+                </a>
+              </div>
             ) : (
               <div className="text-vulcan-500 text-lg">—</div>
             )}
           </div>
           <div className="flex flex-col gap-1">
-            <div className="text-vulcan-400 text-lg font-light">Wallet address</div>
-            <div className="text-vulcan-100 text-lg font-bold font-mono">{truncateWallet(p.wallet_address)}</div>
+            <div className="text-vulcan-400 text-base font-bold">Wallet address</div>
+            {(() => {
+              let cs = p.wallet_address || "";
+              try { if (cs) cs = ethers.getAddress(cs); } catch {}
+              const short = truncateWallet(cs);
+              const href = cs ? `${env.easExplorerAddressPrefix}${cs}` : "#";
+              return (
+                <div className="flex items-center gap-1">
+                  <div className="text-vulcan-100 text-lg font-bold font-mono" title={cs}>{short}</div>
+                  {cs && (
+                    <a
+                      href={href}
+                      target="_blank" rel="noreferrer"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/10"
+                      aria-label="Open address on EAS explorer"
+                      title="Open on EAS explorer"
+                    >
+                      <i className="f7-icons text-xl">arrow_up_right</i>
+                    </a>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
