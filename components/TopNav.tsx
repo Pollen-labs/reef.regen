@@ -97,6 +97,14 @@ export default function TopNav() {
 
   return (
     <header className="sticky top-0 z-40 bg-black text-white">
+      {/* Global announcement bar */}
+      <div className="w-full bg-orange text-white h-6">
+        <div className="w-full max-w-[1440px] mx-auto px-8 h-full flex items-center justify-center">
+          <p className="text-xsb whitespace-nowrap overflow-x-auto text-center">
+            This is a preview release, all attestation will be posted on testnet, please help us to test this app and let us know any bug or issues. - update on Nov 3,2025
+          </p>
+        </div>
+      </div>
       <div className="w-full max-w-[1440px] mx-auto px-8 py-6 flex justify-between items-end">
         {/* Left: Logo + Wordmark */}
         <a href="/" className="flex items-center gap-1">

@@ -17,7 +17,7 @@ export default function Footer() {
   return (
     <footer className="bg-vulcan-800 flex flex-col gap-8">
       {/* Top bar */}
-      <div className="w-full max-w-[1440px] mx-auto px-6 pt-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+      <div className="w-full max-w-[1440px] mx-auto px-6 pt-20 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="flex flex-col md:flex-row items-start md:items-end gap-4">
           <a href="/">
             <img
@@ -26,7 +26,11 @@ export default function Footer() {
               className="h-32 w-auto"
             />
           </a>
-          <p className="max-w-[518px] text-base leading-6 font-light text-vulcan-200">
+          <p className="max-w-[640px] text-base leading-6 font-light text-vulcan-200">
+          
+          <span className="block text-2xl font-black tracking-hd text-white mb-2">
+            Built for transparent, verifiable ocean restoration.
+          </span>
             Reef.Regen is a collaboration between{" "}
             <a
               href="https://pollenlabs.org/"
@@ -47,7 +51,17 @@ export default function Footer() {
             </a>
             .
             <br />
-            Built for transparent, verifiable ocean restoration.
+            Supported by {" "}
+            <a
+              href="https://community.optimism.io/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold hover:text-orange transition-colors"
+            >
+              Optimism collective
+            </a>
+            .
+           
           </p>
         </div>
 
@@ -84,12 +98,12 @@ export default function Footer() {
       </div>
 
       {/* Bottom decorative block row - repeating coral pattern */}
-      <div className="w-full overflow-hidden pb-0">
+      <div className="w-full overflow-hidden pb-4">
         <img
           src="/assets/img-logo-repeat-footer.svg"
           alt=""
           aria-hidden="true"
-          className="w-full h-60 object-cover object-center"
+          className="w-full h-80 object-cover object-center"
         />
       </div>
     </footer>
