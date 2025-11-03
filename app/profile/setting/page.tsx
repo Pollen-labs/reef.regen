@@ -219,7 +219,7 @@ export default function ProfileSettingPage() {
         </div>
       </nav>
 
-      <div className="w-full max-w-[1440px] mx-auto px-6 lg:px-24 py-6">
+      <div className="w-full max-w-[1440px] mx-auto px-6 lg:px-24 py-6 mb-12">
 
         {loading ? (
           <div>Loading…</div>
@@ -263,14 +263,9 @@ export default function ProfileSettingPage() {
               {sites.map((s) => (
                 <div
                   key={s.id}
-                  role="button"
-                  tabIndex={0}
-                  className="rr-option-card rr-option-card-default"
-                  onClick={() => setEditSite(s)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setEditSite(s); }}
-                  aria-label={`Edit site ${s.name}`}
+                  className="rr-option-card rr-option-card-default cursor-default"
+                  aria-label={`Site ${s.name}`}
                 >
-                  <i className="f7-icons text-2xl">circle</i>
                   <div className="flex-1 text-left">
                     <div className="text-xl font-bold">{s.name}</div>
                     <div className="text-black/70">Site type: {s.siteType || '—'}</div>
@@ -297,7 +292,7 @@ export default function ProfileSettingPage() {
             </div>
 
             {/* Wallet & Security */}
-            <h2 className="text-h4 font-black mt-16 mb-3">Wallet & Security</h2>
+            <h2 className="text-h4 font-black mt-16 mb-3">Wallet</h2>
             <div className="grid gap-4 mb-12">
               <IdentifierBar
                 label="Wallet address"
@@ -314,9 +309,13 @@ export default function ProfileSettingPage() {
               <div>
                 <Button type="button" variant="outline"  onClick={() => setRevealOpen(true)}>Reveal private key</Button>
               </div>
-              <div className="mt-8">
+              
+            </div>
+
+            { /* session */ }
+            <h4 className="text-h6 font-black mt-16 mb-3">Connection</h4>
+            <div className="mt-2">
                 <Button type="button" variant="outlineOrange" size="lg" onClick={onLogout}>Log out</Button>
-              </div>
             </div>
           </div>
         )}
