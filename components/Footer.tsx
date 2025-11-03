@@ -36,7 +36,7 @@ export default function Footer() {
               href="https://pollenlabs.org/"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-bold hover:text-orange transition-colors"
+              className="font-bold text-white hover:text-white/80 transition-colors"
             >
               Pollen Labs
             </a>{" "}
@@ -45,7 +45,7 @@ export default function Footer() {
               href="https://mesoreefdao.org/"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-bold hover:text-orange transition-colors"
+              className="font-bold text-white hover:text-white/80 transition-colors"
             >
               MesoReef DAO
             </a>
@@ -56,7 +56,7 @@ export default function Footer() {
               href="https://community.optimism.io/"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-bold hover:text-orange transition-colors"
+              className="font-bold text-white hover:text-white/80 transition-colors"
             >
               Optimism collective
             </a>

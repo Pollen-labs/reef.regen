@@ -358,7 +358,7 @@ export default function ReviewPage() {
           <div className="text-vulcan-400 text-sm font-light leading-6 text-center flex-1">Review & Submit</div>
           <div className="w-60 flex items-center justify-end">
             <Button type="button" disabled={s.submitting} onClick={handleSubmit} variant="solid" size="md" className="w-40">
-              {s.submitting ? 'Submitting…' : 'Confirm submission'}
+              {s.submitting ? 'Submitting…' : 'Submit'}
             </Button>
           </div>
         </div>

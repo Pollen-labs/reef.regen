@@ -40,16 +40,16 @@ export function SignInRequired({ returnTo = "/submit/steps/1" }: Props) {
         <br className="hidden md:block" />
         continue
       </h1>
-      <p className="text-white/70 text-base md:text-lg max-w-[680px] mx-auto mb-8">
-        The submit process would take about 5 mins to complete, there are 10 fields to be entered.
-        You can take a look of <a href="#" className="font-semibold underline">our sample</a> on blockchain here.
+      <p className="text-white/70 text-base md:text-lg max-w-[560px] mx-auto mb-8">
+        The submit process would take about 5 mins to complete.
+        You can take a look of <a href="https://optimism-sepolia.easscan.org/attestation/view/0xec4dc40f440f6c30a86d5be9a1c28d43633260c4f1f3334c97997970a2dc6698" target="_blank" rel="noopener noreferrer" className="font-semibold text-white hover:text-white/80 transition-colors">our sample</a> on blockchain here.
       </p>
       <div className="flex items-center justify-center">
         <button
           type="button"
           onClick={onSignIn}
           disabled={loading || connecting}
-          className="px-6 py-3 rounded-2xl bg-orange text-black font-bold disabled:opacity-60"
+          className="px-6 py-3 rounded-2xl bg-orange text-white font-bold disabled:opacity-60 text-xl"
         >
           {loading || connecting ? "Connecting…" : "Sign in now"}
         </button>

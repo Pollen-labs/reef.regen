@@ -23,6 +23,10 @@ const faqs = [
     q: "Is Reef.Regen free to use?",
     a: "Yes. All transactions are gasless; you don’t pay any blockchain fees.",
   },
+  {
+    q: "Why does the logo look like fries?",
+    a: "Our logo is actually inspired by the Red Sea Finger coral (Alcyonium glomeratum), a vibrant soft coral with branching, finger like shapes. Its playful form reminded us of something familiar and friendly, like a bunch of fries shared among friends. That’s exactly the feeling we want Reef.Regen to evoke: an open, welcoming space where people can hang out, share their coral restoration work, and learn from one another. Just like sharing fries, it’s casual, joyful, and all about coming together for a shared purpose.",
+  },
 ];
 
 export default function FAQ() {

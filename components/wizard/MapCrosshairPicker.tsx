@@ -15,7 +15,10 @@ type Props = {
 export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, showPick = true }: Props) {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [center, setCenter] = useState<[number, number]>(initial ?? [100, 10]);
+  // Capture starting values once so subsequent prop changes don't re-center or re-zoom the map.
+  const [startCenter] = useState<[number, number]>(initial ?? [100, 10]);
+  const [startZoom] = useState<number>(zoom ?? (initial ? 9 : 3));
+  const [center, setCenter] = useState<[number, number]>(startCenter);
   const [loading, setLoading] = useState<boolean>(true);
   const [failed, setFailed] = useState<boolean>(false);
 
@@ -32,8 +35,8 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
         map = new maplibregl.Map({
           container: containerRef.current!,
           style,
-          center: initial || [100, 10],
-          zoom: zoom ?? (initial ? 9 : 3),
+          center: startCenter,
+          zoom: startZoom,
           pitch: 0,
           bearing: 0,
           dragRotate: false,
@@ -47,8 +50,8 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
           map = new maplibregl.Map({
             container: containerRef.current!,
             style: "https://demotiles.maplibre.org/style.json",
-          center: initial || [100, 10],
-          zoom: zoom ?? (initial ? 9 : 3),
+            center: startCenter,
+            zoom: startZoom,
             pitch: 0,
             bearing: 0,
             dragRotate: false,
@@ -84,7 +87,7 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
     };
     init();
     return () => { if (map) map.remove(); };
-  }, [initial]);
+  }, []);
 
   return (
     <div className="relative">
@@ -106,7 +109,15 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
           <code>{center[0]}, {center[1]}</code> <span className="ml-2">[lon, lat]</span>
         </div>
         {showPick && onPick && (
-          <Button variant="outline" size="md" onClick={() => onPick(center)}>
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() => {
+              const c = mapRef.current?.getCenter();
+              const coords: [number, number] = c ? [Number(c.lng.toFixed(6)), Number(c.lat.toFixed(6))] : center;
+              onPick(coords);
+            }}
+          >
             Use this location
           </Button>
         )}

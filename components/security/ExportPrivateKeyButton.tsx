@@ -19,7 +19,7 @@ export default function ExportPrivateKeyButton({ label }: { label?: string }) {
     origin: string;
     chainId?: string | number | null;
     address?: string | null;
-    methods: Array<{ method: string; ok: boolean; value?: string; errorCode?: any; errorMessage?: string }>;
+    methods: Array<{ method: string; ok: boolean; value?: string; errorCode?: any; errorMessage?: string; raw?: string }>;
   }>(null);
 
   async function tryProgrammableExport(prov: any): Promise<string> {
@@ -92,7 +92,7 @@ export default function ExportPrivateKeyButton({ label }: { label?: string }) {
         const view = ok
           ? (s.startsWith('0x') ? `${s.slice(0, 6)}…${s.slice(-4)}` : `${s.slice(0, 3)}…${s.slice(-4)} (no 0x)`)
           : (rawStr ? "(non-hex)" : "");
-        results.push({ method: m, ok, value: view, errorCode: undefined, errorMessage: undefined });
+        results.push({ method: m, ok, value: view, errorCode: undefined, errorMessage: undefined, raw });
       } catch (e: any) {
         // eslint-disable-next-line no-console
         console.error(`[ExportKey][diag] ${m} error`, e);

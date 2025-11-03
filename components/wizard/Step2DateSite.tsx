@@ -182,8 +182,18 @@ export function Step2DateSite() {
           initial={{ id: editSite.id, name: editSite.name, type: editSite.siteType || '', depthM: editSite.depthM || 0, areaM2: editSite.areaM2 || 0, coords: (editSite.lon!=null&&editSite.lat!=null)? [Number(editSite.lon), Number(editSite.lat)] : undefined }}
           onClose={() => setEditSite(null)}
           onSaved={(s) => {
-            setSites((prev) => prev.map((p) => (p.id === s.id ? { ...p, name: s.name, siteType: String(s.type), depthM: s.depthM, areaM2: s.areaM2 } : p)));
-            if (siteId === s.id) onSelectSite({ ...editSite!, name: s.name, siteType: String(s.type), depthM: s.depthM, areaM2: s.areaM2 });
+            const typeStr = (s as any).type != null ? String((s as any).type) : "";
+            setSites((prev) => prev.map((p) => {
+              if (p.id !== s.id) return p;
+              const patch: Partial<SiteItem> = { name: s.name, depthM: s.depthM, areaM2: s.areaM2 };
+              if (typeStr.trim().length > 0) (patch as any).siteType = typeStr;
+              return { ...p, ...patch };
+            }));
+            if (siteId === s.id) {
+              const next: SiteItem = { ...editSite!, name: s.name, depthM: s.depthM, areaM2: s.areaM2 } as SiteItem;
+              if (typeStr.trim().length > 0) (next as any).siteType = typeStr;
+              onSelectSite(next);
+            }
           }}
         />
       )}

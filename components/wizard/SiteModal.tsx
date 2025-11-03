@@ -45,9 +45,11 @@ export function SiteModal({ open, mode, initial, walletAddress, onClose, onSaved
   }, [open]);
 
   const valid = useMemo(() => {
-    const hasBasic = name.trim().length > 0 && String(type).length > 0;
-    if (mode === "create") return hasBasic && !!coords; // depth/area optional
-    return hasBasic; // edit: coords read-only
+    const hasName = name.trim().length > 0;
+    const hasType = String(type).length > 0;
+    if (mode === "create") return hasName && hasType && !!coords; // depth/area optional
+    // In edit, allow saving without changing type; API preserves existing when omitted
+    return hasName; 
   }, [name, type, coords, mode]);
 
   async function onSubmit(e: React.FormEvent) {
@@ -79,7 +81,8 @@ export function SiteModal({ open, mode, initial, walletAddress, onClose, onSaved
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: name.trim(),
-            type,
+            // Only send type if user selected one; otherwise preserve existing
+            ...(String(type).length > 0 ? { type } : {}),
             depth_m: depthM === '' ? null : Number(depthM),
             area_m2: areaM2 === '' ? null : Number(areaM2),
           }),
@@ -96,11 +99,11 @@ export function SiteModal({ open, mode, initial, walletAddress, onClose, onSaved
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
       <form
         onSubmit={onSubmit}
-        className="relative z-10 w-[760px] max-w-[95vw] rounded-[28px] bg-vulcan-900 outline outline-1 outline-vulcan-200 p-6 md:p-8 text-white"
+        className="relative z-10 w-[760px] max-w-[95vw] rounded-[28px] bg-vulcan-900 outline outline-1 outline-vulcan-600 p-6 md:p-8 text-white"
       >
         <div className="flex items-start justify-between mb-4">
           <div>

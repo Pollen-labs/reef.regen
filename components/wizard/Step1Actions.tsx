@@ -72,38 +72,75 @@ export function Step1Actions() {
           <div className="w-full max-w-[600px] flex flex-col items-center gap-4">
             <div className="text-vulcan-700 text-3xl text-center font-black leading-9 tracking-tight">{group.title}</div>
           </div>
-          <div className="self-stretch grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-            {group.items.map((opt) => {
-              const isSelected = reefRegenActions.includes(opt.name);
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => toggle(opt.name)}
-                  className={
-                    "text-left relative p-6 rounded-3xl inline-flex flex-col justify-start items-start gap-1 min-h-[9rem] shadow transition-colors " +
-                    (isSelected ? "bg-orange text-white" : "bg-vulcan-200 text-black")
-                  }
-                >
-                  <div className="pt-2 inline-flex justify-start items-start gap-4 w-full">
-                    <div className="flex-1 text-3xl font-black leading-9 tracking-tight">
-                      {opt.name}
-                    </div>
-                    <div className="w-6 h-6 relative">
-                      <i className={"f7-icons text-2xl absolute -top-2 right-0 " + (isSelected ? "text-white" : "text-black/60")}>
-                        {isSelected ? "checkmark_alt_circle_fill" : "circle"}
-                      </i>
-                    </div>
+          {(() => {
+            const count = group.items.length;
+            // Choose balanced rows for large screens (lg), avoiding lonely last items.
+            const map: Record<number, number[]> = {
+              1: [1], 2: [2], 3: [3], 4: [2, 2], 5: [2, 3], 6: [3, 3],
+              7: [3, 4], 8: [4, 4], 9: [3, 3, 3], 10: [3, 3, 4], 11: [3, 4, 4], 12: [4, 4, 4],
+            };
+            const rows = map[count] || (() => {
+              const r: number[] = [];
+              let n = count;
+              while (n > 0) {
+                if (n % 3 === 1 && n >= 4) { r.push(4); n -= 4; }
+                else { const take = Math.min(3, n); r.push(take); n -= take; }
+              }
+              return r;
+            })();
+
+            const chunks: typeof group.items[] = [];
+            let idx = 0;
+            for (const c of rows) {
+              chunks.push(group.items.slice(idx, idx + c));
+              idx += c;
+            }
+
+            const rowClass = (c: number) => {
+              const lg = c === 1 ? "lg:grid-cols-1" : c === 2 ? "lg:grid-cols-2" : c === 3 ? "lg:grid-cols-3" : "lg:grid-cols-4";
+              const md = c >= 2 ? "md:grid-cols-2" : "md:grid-cols-1";
+              return `grid gap-2 grid-cols-1 ${md} ${lg}`;
+            };
+
+            return (
+              <div className="self-stretch flex flex-col gap-2 w-full">
+                {chunks.map((row, i) => (
+                  <div key={i} className={rowClass(row.length)}>
+                    {row.map((opt) => {
+                      const isSelected = reefRegenActions.includes(opt.name);
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => toggle(opt.name)}
+                          className={
+                            "text-left relative p-6 rounded-3xl inline-flex flex-col justify-start items-start gap-1 min-h-[9rem] shadow transition-colors " +
+                            (isSelected ? "bg-orange text-white" : "bg-vulcan-200 text-black")
+                          }
+                        >
+                          <div className="pt-2 inline-flex justify-start items-start gap-4 w-full">
+                            <div className="flex-1 text-3xl font-black leading-9 tracking-tight">
+                              {opt.name}
+                            </div>
+                            <div className="w-6 h-6 relative">
+                              <i className={"f7-icons text-2xl absolute -top-2 right-0 " + (isSelected ? "text-white" : "text-black/60")}>
+                                {isSelected ? "checkmark_alt_circle_fill" : "circle"}
+                              </i>
+                            </div>
+                          </div>
+                          {opt.description && (
+                            <div className={"text-base font-light leading-6 " + (isSelected ? "text-white" : "text-black/80")}>
+                              {opt.description}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
-                  {opt.description && (
-                    <div className={"text-base font-light leading-6 " + (isSelected ? "text-white" : "text-black/80")}> 
-                      {opt.description}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       ))}
     </div>
