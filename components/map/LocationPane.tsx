@@ -1,6 +1,6 @@
 "use client";
 import type { Attestation, Location } from "@/types/map";
-import DonutChart from "@/components/shared/DonutChart";
+import DonutChartJS from "@/components/shared/charts/DonutChartJS";
 import { classesForRegen } from "@/lib/style/regenColors";
 // Site type styled as text (no chip)
 import Tag from "@/components/ui/Tag";
@@ -71,20 +71,22 @@ export default function LocationPane({
                 Regen actions
               </div>
             </div>
-            {/* Donut chart */}
-            <DonutChart data={chartData} size={96} strokeWidth={24} />
+            {/* Donut chart (Chart.js) */}
+            <div className="w-32">
+              <DonutChartJS data={chartData as any} tooltipMode="count" height={120} />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 mt-2">
             {location.actionsBreakdown.map((a) => {
               const c = classesForRegen(a.label);
               return (
                 <div key={a.label} className="flex items-center justify-between">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className={`h-5 w-2.5 rounded ${c.bg}`} />
-                    <span className="text-lg font-light truncate">{a.label}</span>
+                    <span className={`h-5 w-2 rounded ${c.bg}`} />
+                    <span className="text-base font-light truncate">{a.label}</span>
                   </div>
-                  <span className="text-lg font-bold">{a.count}</span>
+                  <span className="text-base font-bold">{a.count}</span>
                 </div>
               );
             })}
@@ -101,7 +103,7 @@ export default function LocationPane({
               Species diversity
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1">
             {hasSpecies ? (
               location.species.map((s) => (
                 <Tag key={s} label={s} size="md" bgClass="bg-ribbon-300" textClass="text-vulcan-950" />

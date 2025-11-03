@@ -157,6 +157,14 @@ export default function AttestationDetailModal({ attestation, onClose, overlayCl
             </div>
           ) : null}
 
+          {/* Internal ID (owner-only; provided by parent) */}
+          {attestation && (attestation as any).internalId ? (
+            <div>
+              <div className="text-vulcan-400 text-lg">Internal ID</div>
+              <div className="text-white text-xl font-black">{(attestation as any).internalId}</div>
+            </div>
+          ) : null}
+
           {/* Media */}
           {(fileName || fileViewUrl) && (
             <IdentifierBar

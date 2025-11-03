@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { ensureUniqueHandle } from "@/lib/profile/handle";
 
 type Body = {
   wallet_address: string;
@@ -14,32 +15,7 @@ function isAddress(addr: string): boolean {
   return /^0x[0-9a-fA-F]{40}$/.test(addr);
 }
 
-function toBaseHandle(input: string): string {
-  return input
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-_]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-async function ensureUniqueHandle(base: string, existingId?: string): Promise<string> {
-  const b = toBaseHandle(base || "");
-  if (!b) return "reef-user";
-  let candidate = b;
-  let suffix = 0;
-  while (true) {
-    const { data, error } = await supabaseAdmin
-      .from("profiles")
-      .select("id, handle")
-      .ilike("handle", candidate)
-      .maybeSingle();
-    if (error && error.code !== "PGRST116") throw error; // ignore no rows
-    if (!data || (existingId && data.id === existingId)) return candidate;
-    suffix += 1;
-    candidate = `${b}-${suffix}`;
-  }
-}
+// ensureUniqueHandle moved to shared lib/profile/handle
 
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as Body | null;
