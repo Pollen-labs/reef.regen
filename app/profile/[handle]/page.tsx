@@ -208,7 +208,7 @@ export default function ProfilePage() {
                 <div className="flex flex-col items-center gap-6 w-full">
                   <DonutChartJS data={actionsChart} tooltipMode="count" />
                   {/* Category legend with summed totals */}
-                  <div className="w-full flex flex-col gap-3">
+                  <div className="w-full flex flex-col gap-1">
                     {(data.actions_category_breakdown || []).map((g) => (
                       <div key={g.name} className="w-full flex items-center justify-between">
                         <span className="text-vulcan-300 text-lg font-light">{g.name}</span>
@@ -231,8 +231,16 @@ export default function ProfilePage() {
                 />
               </div>
               {/* Bottom panel with stacked bar + legend */}
-              <div className="bg-vulcan-900/70 backdrop-blur-[1px] px-6 pt-4 pb-3">
-                <StackedBarChartJS segments={siteBarSegments} height={96} barRadius={18} barThickness={24} padding={0} tooltipMode="count" />
+              <div className="bg-vulcan-900/70 backdrop-blur-[1px] px-4 pt-3 pb-1">
+                <StackedBarChartJS
+                  segments={siteBarSegments}
+                  height={32}
+                  barRadius={40}
+                  barThickness={20}
+                  padding={4}
+                  tooltipMode="count"
+                  legendInside={false}
+                />
               </div>
             </div>
           </div>

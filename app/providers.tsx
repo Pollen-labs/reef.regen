@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactNode, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { Web3AuthProvider, type Web3AuthContextConfig } from "@web3auth/modal/react";
 import { WagmiProvider } from "@web3auth/modal/react/wagmi";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
@@ -45,6 +45,22 @@ export default function Providers({ children }: { children: ReactNode }) {
         <WagmiProvider>
           <AttestationWizardProvider>
             <LeaveGuardProvider>
+              {process.env.NEXT_PUBLIC_HIDE_WEB3AUTH_LAUNCHER === 'true' && (
+                <HideWeb3AuthLauncher />
+              )}
+              {process.env.NEXT_PUBLIC_HIDE_WEB3AUTH_LAUNCHER === 'true' && (
+                <style jsx global>{`
+                  /* Hide Web3Auth floating launcher when feature flag is on */
+                  /* Adjust selectors if your SDK uses different class names */
+                  [class*="w3a-launcher"],
+                  [class*="w3a__launcher"],
+                  [data-testid="w3a-modal-button"],
+                  .w3a-modal__launcher,
+                  .w3a-widget__launcher {
+                    display: none !important;
+                  }
+                `}</style>
+              )}
               {children}
             </LeaveGuardProvider>
           </AttestationWizardProvider>
@@ -52,4 +68,30 @@ export default function Providers({ children }: { children: ReactNode }) {
       </QueryClientProvider>
     </Web3AuthProvider>
   );
+}
+
+function HideWeb3AuthLauncher() {
+  useEffect(() => {
+    const hide = () => {
+      try {
+        const candidates = Array.from(document.querySelectorAll('*')).filter((el) => {
+          const anyEl = el as HTMLElement;
+          const id = anyEl.id || '';
+          const cls = anyEl.className?.toString() || '';
+          const tag = anyEl.tagName || '';
+          return /w3a|web3auth/i.test(id + ' ' + cls + ' ' + tag);
+        });
+        for (const el of candidates) {
+          (el as HTMLElement).style.setProperty('display', 'none', 'important');
+          (el as HTMLElement).style.setProperty('visibility', 'hidden', 'important');
+          (el as HTMLElement).style.setProperty('pointer-events', 'none', 'important');
+        }
+      } catch {}
+    };
+    hide();
+    const obs = new MutationObserver(() => hide());
+    obs.observe(document.documentElement, { childList: true, subtree: true });
+    return () => obs.disconnect();
+  }, []);
+  return null;
 }

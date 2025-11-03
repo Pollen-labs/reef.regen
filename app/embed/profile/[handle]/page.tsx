@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import StaticSiteMap from "@/components/profile/StaticSiteMap";
 
 type EmbedData = {
@@ -7,8 +8,9 @@ type EmbedData = {
   sites: { id: string; name: string; type?: string; coords: [number, number] }[];
 };
 
-export default function EmbedProfileMap({ params }: { params: { handle: string } }) {
-  const { handle } = params;
+export default function EmbedProfileMap() {
+  const params = useParams<{ handle: string }>();
+  const handle = (params?.handle as string) || "";
   const [data, setData] = useState<EmbedData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -48,4 +50,3 @@ export default function EmbedProfileMap({ params }: { params: { handle: string }
     </div>
   );
 }
-
