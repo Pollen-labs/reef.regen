@@ -6,8 +6,11 @@ import { useWeb3AuthDisconnect } from "@web3auth/modal/react";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import Button from "@/components/ui/Button";
-import ExportPrivateKeyButton from "@/components/security/ExportPrivateKeyButton";
+import RevealPrivateKeyModal from "@/components/security/RevealPrivateKeyModal";
+import { env } from "@/lib/env";
 import { SiteModal } from "@/components/wizard/SiteModal";
+import IdentifierBar from "@/components/ui/IdentifierBar";
+
 
 type Profile = {
   profile_name: string | null;
@@ -186,6 +189,8 @@ export default function ProfileSettingPage() {
     return (isConnected && address) ? address : (profile?.wallet_address || "");
   }, [isConnected, address, profile?.wallet_address]);
 
+  const [revealOpen, setRevealOpen] = useState(false);
+
   async function onLogout() {
     try {
       await disconnectWeb3Auth();
@@ -291,18 +296,26 @@ export default function ProfileSettingPage() {
               )}
             </div>
 
-            {/* Wallet */}
-            <h2 className="text-h4 font-black mt-16 mb-3">Wallet</h2>
+            {/* Wallet & Security */}
+            <h2 className="text-h4 font-black mt-16 mb-3">Wallet & Security</h2>
             <div className="grid gap-4 mb-12">
-              <label className="grid gap-2">
-                <span className="text-sm text-vulcan-400">Wallet address</span>
-                <Input value={truncate(displayAddress)} readOnly disabled className="flex-1" />
-              </label>
+              <IdentifierBar
+                label="Wallet address"
+                value={displayAddress}
+                copyable
+                shorten
+                actionLabel="Explorer"
+                external
+                onAction={() => {
+                  const url = `${env.blockExplorerAddressPrefix}${displayAddress}`;
+                  window.open(url, "_blank", "noopener,noreferrer");
+                }}
+              />
               <div>
-                <ExportPrivateKeyButton label="Export private key" />
+                <Button type="button" variant="outline"  onClick={() => setRevealOpen(true)}>Reveal private key</Button>
               </div>
-              <div>
-                <Button type="button" variant="outline" onClick={onLogout}>Log out</Button>
+              <div className="mt-8">
+                <Button type="button" variant="outlineOrange" size="lg" onClick={onLogout}>Log out</Button>
               </div>
             </div>
           </div>
@@ -327,6 +340,9 @@ export default function ProfileSettingPage() {
           onClose={() => setEditSite(null)}
           onSaved={() => { setEditSite(null); refreshSites(); }}
         />
+      )}
+      {revealOpen && (
+        <RevealPrivateKeyModal open={revealOpen} onClose={() => setRevealOpen(false)} />
       )}
     </div>
   );

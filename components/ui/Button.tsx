@@ -2,7 +2,7 @@
 
 import React from "react";
 
-type Variant = "solid" | "outline";
+type Variant = "solid" | "outline" | "outlineOrange";
 type Size = "sm" | "md" | "lg";
 
 type Props = React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -15,6 +15,7 @@ const base = "inline-flex items-center justify-center rounded-2xl font-bold disa
 const variants: Record<Variant, string> = {
   solid: "bg-orange text-white hover:bg-orange/90",
   outline: "outline outline-4 outline-offset-[-4px] outline-vulcan-500 text-white hover:bg-white/5",
+  outlineOrange: "outline outline-4 outline-offset-[-4px] outline-orange text-white hover:bg-white/5",
 };
 const sizes: Record<Size, string> = {
   sm: "px-3 py-1.5 text-sm",
@@ -30,4 +31,3 @@ export default function Button({ variant = "solid", size = "md", fullWidth, clas
     />
   );
 }
-

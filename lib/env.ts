@@ -5,5 +5,8 @@ export const env = {
   easAddress: process.env.NEXT_PUBLIC_EAS_ADDRESS || "",
   defaultSchemaUid: process.env.NEXT_PUBLIC_DEFAULT_SCHEMA_UID || "",
   easVersion: process.env.NEXT_PUBLIC_EAS_VERSION || "0.26",
-  openMapTilesKey: process.env.NEXT_PUBLIC_OPENMAPTILES_KEY || ""
+  openMapTilesKey: process.env.NEXT_PUBLIC_OPENMAPTILES_KEY || "",
+  blockExplorerAddressPrefix:
+    process.env.NEXT_PUBLIC_BLOCK_EXPLORER_ADDRESS_PREFIX ||
+    "https://sepolia-optimism.etherscan.io/address/",
 };
