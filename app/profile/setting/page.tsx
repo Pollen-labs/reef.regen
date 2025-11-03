@@ -6,6 +6,7 @@ import { useWeb3AuthDisconnect } from "@web3auth/modal/react";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import Button from "@/components/ui/Button";
+import ExportPrivateKeyButton from "@/components/security/ExportPrivateKeyButton";
 import { SiteModal } from "@/components/wizard/SiteModal";
 
 type Profile = {
@@ -286,17 +287,16 @@ export default function ProfileSettingPage() {
               )}
             </div>
 
-            {/* Security */}
-            <h2 className="text-h4 font-black mt-16 mb-3">Security</h2>
-            <div className="grid gap-4">
+            {/* Wallet */}
+            <h2 className="text-h4 font-black mt-16 mb-3">Wallet</h2>
+            <div className="grid gap-4 mb-12">
               <label className="grid gap-2">
                 <span className="text-sm text-vulcan-400">Wallet address</span>
-                <div className="flex items-center gap-3">
-                  <Input value={truncate(profile?.wallet_address)} readOnly disabled className="flex-1" />
-                  <Button type="button" variant="outline" disabled>Export private key</Button>
-                </div>
-                <div className="text-xs text-vulcan-400">⚠️ Do not share your private key. Anyone with this key can access your funds.</div>
+                <Input value={truncate(profile?.wallet_address)} readOnly disabled className="flex-1" />
               </label>
+              <div>
+                <ExportPrivateKeyButton label="Export private key" />
+              </div>
               <div>
                 <Button type="button" variant="outline" onClick={onLogout}>Log out</Button>
               </div>
