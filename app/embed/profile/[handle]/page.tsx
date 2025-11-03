@@ -35,17 +35,16 @@ export default function EmbedProfileMap({ params }: { params: { handle: string }
     }
   };
 
-  if (loading) return <div style={{ width: "100%", height: 400, background: "#0B0C10", color: "white", display: "grid", placeItems: "center" }}>Loading…</div>;
-  if (!data) return <div style={{ width: "100%", height: 400, background: "#0B0C10" }} />;
+  if (loading) return <div className="min-h-screen bg-black text-white grid place-items-center" style={{ height: 400 }}>Loading…</div>;
+  if (!data) return <div className="min-h-screen bg-black" style={{ height: 400 }} />;
 
   return (
-    <div style={{ width: "100%", background: "#0B0C10" }}>
+    <div className="w-full bg-black min-h-screen">
       <StaticSiteMap sites={data.sites as any} height={400} onSiteClick={onClickSite} className="w-full rounded-none overflow-hidden" />
-      <div className="w-full px-4 py-2 bg-black/60 text-white text-xs flex items-center justify-between">
+      <div className="w-full px-4 py-2 bg-black/70 text-white text-xs flex items-center justify-between">
         <span>Powered by <a href="/" target="_top" className="font-bold underline">Reef.Regen</a></span>
         <a href={`/profile/${encodeURIComponent(handle)}`} target="_top" className="underline">View full profile</a>
       </div>
     </div>
   );
 }
-
