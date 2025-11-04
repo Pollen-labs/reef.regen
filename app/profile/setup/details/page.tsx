@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { useRouter, useSearchParams } from "next/navigation";
 import Input from "@/components/ui/Input";
@@ -8,7 +8,7 @@ import Textarea from "@/components/ui/Textarea";
 import Button from "@/components/ui/Button";
 import type { Route } from "next";
 
-export default function ProfileDetailsStep() {
+function ProfileDetailsInner() {
   const { address, isConnected } = useAccount();
   const router = useRouter();
   const search = useSearchParams();
@@ -128,5 +128,13 @@ export default function ProfileDetailsStep() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProfileDetailsStep() {
+  return (
+    <Suspense fallback={null}>
+      <ProfileDetailsInner />
+    </Suspense>
   );
 }

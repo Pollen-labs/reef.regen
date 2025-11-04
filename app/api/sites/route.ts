@@ -16,8 +16,10 @@ export async function POST(req: Request) {
   if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) return NextResponse.json({ error: "Invalid wallet_address" }, { status: 400 });
   const name = (body.name || "").trim();
   const type = body.type;
-  const depth_m = body.depth_m === null || body.depth_m === undefined || body.depth_m === '' ? null : Number(body.depth_m);
-  const area_m2 = body.area_m2 === null || body.area_m2 === undefined || body.area_m2 === '' ? null : Number(body.area_m2);
+  const rawDepth: any = (body as any).depth_m;
+  const rawArea: any = (body as any).area_m2;
+  const depth_m = rawDepth == null || rawDepth === '' ? null : Number(rawDepth);
+  const area_m2 = rawArea == null || rawArea === '' ? null : Number(rawArea);
   const loc = body.location;
   if (!name || !type || !Array.isArray(loc) || loc.length !== 2) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

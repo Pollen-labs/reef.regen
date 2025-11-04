@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { WalletConnect } from "@/components/WalletConnect";
@@ -8,7 +8,7 @@ import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import type { Route } from "next";
 
-export default function ProfileSetupPage() {
+function ProfileSetupInner() {
   const { address, isConnected } = useAccount();
   const router = useRouter();
   const search = useSearchParams();
@@ -108,5 +108,13 @@ export default function ProfileSetupPage() {
       </div>
       </div>
     </div>
+  );
+}
+
+export default function ProfileSetupPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProfileSetupInner />
+    </Suspense>
   );
 }

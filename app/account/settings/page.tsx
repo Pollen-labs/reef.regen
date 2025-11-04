@@ -1,14 +1,25 @@
 "use client";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import type { Route } from "next";
 
-export default function RedirectToProfileSetting() {
+function RedirectInner() {
   const router = useRouter();
   const search = useSearchParams();
   useEffect(() => {
     const redirect = search.get("redirect");
-    const to = redirect ? `/profile/setting?redirect=${encodeURIComponent(redirect)}` : "/profile/setting";
+    const to: Route = redirect
+      ? (`/profile/setting?redirect=${encodeURIComponent(redirect)}` as Route)
+      : ("/profile/setting" as Route);
     router.replace(to);
   }, [router, search]);
   return null;
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <RedirectInner />
+    </Suspense>
+  );
 }

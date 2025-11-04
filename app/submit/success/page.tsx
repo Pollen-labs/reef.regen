@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import IdentifierBar from "@/components/ui/IdentifierBar";
 import { useEffect } from "react";
 import { useAttestationWizard } from "@/lib/wizard/attestationWizardStore";
 
-export default function SubmitSuccessPage() {
+function SuccessInner() {
   const params = useSearchParams();
   const router = useRouter();
   const wizard = useAttestationWizard();
@@ -64,5 +65,13 @@ export default function SubmitSuccessPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SubmitSuccessPage() {
+  return (
+    <Suspense fallback={null}>
+      <SuccessInner />
+    </Suspense>
   );
 }
