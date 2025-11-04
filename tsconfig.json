@@ -16,7 +16,7 @@
     "baseUrl": ".",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "paths": {
       "@/components/*": [
@@ -27,6 +27,9 @@
       ],
       "@/hooks/*": [
         "hooks/*"
+      ],
+      "@/types/*": [
+        "types/*"
       ]
     },
     "plugins": [
@@ -40,7 +43,8 @@
     "**/*.ts",
     "**/*.tsx",
     "**/*.d.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

@@ -1,3 +1,38 @@
+Reef.Regen — EAS Schema v0.4 (DB‑aligned)
+
+Deployed raw schema (single line):
+string organizationName,string[] reefRegenAction,string actionDate,string siteName,string siteType,string[] location,string locationType,string srs,uint256 siteDepthM,uint256 siteAreaSqM,string actionSummary,string[] biodiversity,string[] contributors,string fileName,string ipfsCID
+
+Pretty format:
+string organizationName,
+string[] reefRegenAction,
+string actionDate,
+string siteName,
+string siteType,
+string[] location,
+string locationType,
+string srs,
+uint256 siteDepthM,
+uint256 siteAreaSqM,
+string actionSummary,
+string[] biodiversity,
+string[] contributors,
+string fileName,
+string ipfsCID
+
+Notes
+- Location is [lon, lat] (strings) in GeoJSON order; enforce exactly two items in code/tests.
+- `locationType` = "coordinate-decimal/lon-lat" (FE constant; not in DB).
+- `srs` = "EPSG:4326" (FE constant; not in DB).
+- `reefRegenAction` uses `regen_type.name` values; DB joins via ids.
+- Depth/area are integers (meters, m^2) for EAS; DB may store decimals.
+
+Depoly on https://optimism-sepolia.easscan.org/schema/view/0xe5ea0fa944171214978a03dffb9fce36faefc0bf1703cb71f1cb3c274d05e58f , oct 31
+
+---
+
+Historical log (pre‑v0.4)
+
 Coral Action Attestation — EAS Schema (raw)
 
 POC schema (already used in app):

@@ -1,16 +1,13 @@
 import { WalletConnect } from "@/components/WalletConnect";
-import { AttestationForm } from "@/components/AttestationForm";
+import { AttestSection } from "@/components/AttestSection";
 
 export default function Page() {
   return (
     <div style={{ display: "grid", gap: 24 }}>
       <h1>Attest</h1>
       <WalletConnect />
-      <section>
-        <h2>Create Delegated Attestation</h2>
-        <AttestationForm />
-      </section>
+      {/* Soft onboarding + form (client wrapper) */}
+      <AttestSection />
     </div>
   );
 }
-

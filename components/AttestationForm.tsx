@@ -1,4 +1,16 @@
 "use client";
+/**
+ * NOTE: Legacy Attestation Form (POC)
+ *
+ * This is our original, proof‑of‑concept attestation form used during early development
+ * to debug the delegated EAS flow end‑to‑end. We intentionally keep this file for
+ * historical context and troubleshooting. Do not remove.
+ *
+ * Why it stays:
+ * - Serves as a reference implementation for signing + relaying delegated attestations
+ * - Useful for isolating issues in the production wizard flow
+ * - Documents lessons learned in development
+ */
 
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
@@ -26,7 +38,14 @@ export function AttestationForm() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [values, setValues] = useState({
-    // DB fields
+    // EAS v0.4 fields (UI-sourced)
+    organizationName: "",
+    reefRegenActionsCsv: "", // legacy input; superseded by multi-select below
+    reefRegenActions: [] as string[],
+    siteName: "",
+    siteType: "",
+    selectedSiteId: "",
+    // DB fields (legacy)
     regenType: "other" as "transplantation" | "nursery" | "other",
     actionDate: (() => {
       const d = new Date();
@@ -42,6 +61,8 @@ export function AttestationForm() {
     speciesCsv: "",
     summary: "",
     contributorsCsv: "",
+    speciesSelected: [] as string[],
+    speciesQuery: "",
     fileCid: "",
     fileUrl: "",
 
@@ -53,6 +74,9 @@ export function AttestationForm() {
   });
 
   const publicClient = usePublicClient();
+  const [regenOptions, setRegenOptions] = useState<{ id: number; name: string }[]>([]);
+  const [sites, setSites] = useState<{ id: string; name: string; lon: number|string; lat: number|string; depthM: number|null; areaM2: number|null; siteType?: string }[]>([]);
+  const [speciesOptions, setSpeciesOptions] = useState<{ id: number; name: string; common: string|null; label: string }[]>([]);
 
   const canSubmit = useMemo(() => {
     // Require Embedded Wallet connection for signing & relaying
@@ -64,55 +88,73 @@ export function AttestationForm() {
     setDebugEvents((prev) => [line, ...prev].slice(0, 100));
   }
 
-  // Build EAS encoded data for the deployed schema (v0.3 includes fileCID)
-  const schemaString = "string regenType,string[] regenLocation,string regenDate,uint256 depthScaled,uint256 surfaceAreaScaled,string[] species,string summary,string[] contributors,string fileCID";
+  // Build EAS encoded data for the deployed schema (v0.4)
+  const LOCATION_TYPE = "coordinate-decimal/lon-lat" as const;
+  const SRS = "EPSG:4326" as const;
+  const schemaString = "string organizationName,string[] reefRegenAction,string actionDate,string siteName,string siteType,string[] location,string locationType,string srs,uint256 siteDepthM,uint256 siteAreaSqM,string actionSummary,string[] biodiversity,string[] contributors,string fileName,string ipfsCID";
   const encodedData = useMemo(() => {
     try {
       const encoder = new SchemaEncoder(schemaString);
-      const dateStr = values.actionDate
-        ? (() => { const [y,m,d] = values.actionDate.split("-"); return `${m}-${d}-${y}`; })()
-        : "";
-      const depthScaled = values.depth === "" ? 0n : BigInt(Math.round(Number(values.depth) * 100));
-      const areaScaled = values.surfaceArea === "" ? 0n : BigInt(Math.round(Number(values.surfaceArea) * 100));
-      const species = values.speciesCsv.split(",").map(s => s.trim()).filter(Boolean);
+      const actions = (values.reefRegenActions.length ? values.reefRegenActions : values.reefRegenActionsCsv.split(",").map(s => s.trim()).filter(Boolean));
+      const biodiversity = (values.speciesSelected.length
+        ? values.speciesSelected
+        : values.speciesCsv.split(",").map(s => s.trim()).filter(Boolean));
       const contributors = values.contributorsCsv.split(",").map(s => s.trim()).filter(Boolean);
-      const regenLocation = [values.lat, values.lng].filter(v => v !== "");
-      const fileCidNorm = values.fileCid || "";
+      const location = [values.lng, values.lat].filter(v => v !== ""); // [lon, lat]
+      const depthInt = values.depth === "" ? 0n : BigInt(Math.round(Number(values.depth)));
+      const areaInt = values.surfaceArea === "" ? 0n : BigInt(Math.round(Number(values.surfaceArea)));
+      const fileName = selectedFile?.name || "";
+      const ipfsCID = values.fileCid || "";
       return encoder.encodeData([
-        { name: "regenType", type: "string", value: values.regenType },
-        { name: "regenLocation", type: "string[]", value: regenLocation as any },
-        { name: "regenDate", type: "string", value: dateStr },
-        { name: "depthScaled", type: "uint256", value: depthScaled },
-        { name: "surfaceAreaScaled", type: "uint256", value: areaScaled },
-        { name: "species", type: "string[]", value: species as any },
-        { name: "summary", type: "string", value: values.summary },
+        { name: "organizationName", type: "string", value: values.organizationName },
+        { name: "reefRegenAction", type: "string[]", value: actions as any },
+        { name: "actionDate", type: "string", value: values.actionDate || "" },
+        { name: "siteName", type: "string", value: values.siteName },
+        { name: "siteType", type: "string", value: values.siteType },
+        { name: "location", type: "string[]", value: location as any },
+        { name: "locationType", type: "string", value: LOCATION_TYPE },
+        { name: "srs", type: "string", value: SRS },
+        { name: "siteDepthM", type: "uint256", value: depthInt },
+        { name: "siteAreaSqM", type: "uint256", value: areaInt },
+        { name: "actionSummary", type: "string", value: values.summary },
+        { name: "biodiversity", type: "string[]", value: biodiversity as any },
         { name: "contributors", type: "string[]", value: contributors as any },
-        { name: "fileCID", type: "string", value: fileCidNorm },
+        { name: "fileName", type: "string", value: fileName },
+        { name: "ipfsCID", type: "string", value: ipfsCID },
       ]);
     } catch {
       return "0x";
     }
-  }, [values.regenType, values.actionDate, values.lat, values.lng, values.depth, values.surfaceArea, values.speciesCsv, values.summary, values.contributorsCsv, values.fileCid]);
+  }, [values.organizationName, values.reefRegenActionsCsv, values.reefRegenActions, values.actionDate, values.siteName, values.siteType, values.lat, values.lng, values.depth, values.surfaceArea, values.speciesCsv, values.speciesSelected, values.summary, values.contributorsCsv, values.fileCid, selectedFile?.name]);
 
   function buildEncodedDataLocal(v: typeof values) {
     const encoder = new SchemaEncoder(schemaString);
-    const dateStr = v.actionDate ? (() => { const [y,m,d] = v.actionDate.split("-"); return `${m}-${d}-${y}`; })() : "";
-    const depthScaled = v.depth === "" ? 0n : BigInt(Math.round(Number(v.depth) * 100));
-    const areaScaled = v.surfaceArea === "" ? 0n : BigInt(Math.round(Number(v.surfaceArea) * 100));
-    const species = v.speciesCsv.split(",").map(s => s.trim()).filter(Boolean);
+    const actions = (v.reefRegenActions.length ? v.reefRegenActions : v.reefRegenActionsCsv.split(",").map(s => s.trim()).filter(Boolean));
+    const biodiversity = (v.speciesSelected.length
+      ? v.speciesSelected
+      : v.speciesCsv.split(",").map(s => s.trim()).filter(Boolean));
     const contributors = v.contributorsCsv.split(",").map(s => s.trim()).filter(Boolean);
-    const regenLocation = [v.lat, v.lng].filter(x => x !== "");
-    const fileCidNorm = v.fileCid || "";
+    const location = [v.lng, v.lat].filter(x => x !== ""); // [lon, lat]
+    const depthInt = v.depth === "" ? 0n : BigInt(Math.round(Number(v.depth)));
+    const areaInt = v.surfaceArea === "" ? 0n : BigInt(Math.round(Number(v.surfaceArea)));
+    const fileName = selectedFile?.name || "";
+    const ipfsCID = v.fileCid || "";
     return encoder.encodeData([
-      { name: "regenType", type: "string", value: v.regenType },
-      { name: "regenLocation", type: "string[]", value: regenLocation as any },
-      { name: "regenDate", type: "string", value: dateStr },
-      { name: "depthScaled", type: "uint256", value: depthScaled },
-      { name: "surfaceAreaScaled", type: "uint256", value: areaScaled },
-      { name: "species", type: "string[]", value: species as any },
-      { name: "summary", type: "string", value: v.summary },
+      { name: "organizationName", type: "string", value: v.organizationName },
+      { name: "reefRegenAction", type: "string[]", value: actions as any },
+      { name: "actionDate", type: "string", value: v.actionDate || "" },
+      { name: "siteName", type: "string", value: v.siteName },
+      { name: "siteType", type: "string", value: v.siteType },
+      { name: "location", type: "string[]", value: location as any },
+      { name: "locationType", type: "string", value: LOCATION_TYPE },
+      { name: "srs", type: "string", value: SRS },
+      { name: "siteDepthM", type: "uint256", value: depthInt },
+      { name: "siteAreaSqM", type: "uint256", value: areaInt },
+      { name: "actionSummary", type: "string", value: v.summary },
+      { name: "biodiversity", type: "string[]", value: biodiversity as any },
       { name: "contributors", type: "string[]", value: contributors as any },
-      { name: "fileCID", type: "string", value: fileCidNorm },
+      { name: "fileName", type: "string", value: fileName },
+      { name: "ipfsCID", type: "string", value: ipfsCID },
     ]);
   }
 
@@ -133,6 +175,101 @@ export function AttestationForm() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address]);
+
+  // Prefill organization name from profile handle if available
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!address || values.organizationName) return;
+        const res = await fetch(`/api/profiles/by-wallet?address=${address}`);
+        const json = await res.json();
+        if (!cancelled && res.ok && (json?.name || json?.orgName || json?.handle) && !values.organizationName) {
+          setValues((s) => ({ ...s, organizationName: (json.name || json.orgName || json.handle) as string }));
+        }
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address]);
+
+  // Load regen types options
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/regen-types`);
+        const json = await res.json();
+        if (!cancelled && res.ok) setRegenOptions((json.items || []) as any);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Load user's sites and populate dropdown; also set lat/lng when selection changes
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!address) return;
+        const res = await fetch(`/api/sites/by-wallet?address=${address}`);
+        const json = await res.json();
+        if (!cancelled && res.ok) setSites((json.items || []) as any);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [address]);
+
+  // Query taxa search options (debounced on speciesQuery)
+  useEffect(() => {
+    let cancelled = false;
+    const h = setTimeout(async () => {
+      try {
+        const q = values.speciesQuery.trim();
+        if (q.length < 2) { if (!cancelled) setSpeciesOptions([]); return; }
+        const res = await fetch(`/api/taxa/search?q=${encodeURIComponent(q)}&limit=20`);
+        const json = await res.json();
+        if (!cancelled && res.ok) setSpeciesOptions((json.items || []) as any);
+      } catch {}
+    }, 250);
+    return () => { cancelled = true; clearTimeout(h); };
+  }, [values.speciesQuery]);
+
+  function onSelectRegenOptions(e: React.ChangeEvent<HTMLSelectElement>) {
+    const selected = Array.from(e.target.selectedOptions).map((o) => o.value);
+    setValues((s) => ({ ...s, reefRegenActions: selected }));
+  }
+
+  function onSelectSite(e: React.ChangeEvent<HTMLSelectElement>) {
+    const id = e.target.value;
+    setValues((s) => ({ ...s, selectedSiteId: id }));
+    const site = sites.find((x) => x.id === id);
+    if (site) {
+      setValues((s) => ({
+        ...s,
+        siteName: site.name,
+        siteType: site.siteType || s.siteType,
+        // ensure string values for encoder
+        lat: String(site.lat ?? ""),
+        lng: String(site.lon ?? ""),
+        depth: site.depthM != null ? String(site.depthM) : s.depth,
+        surfaceArea: site.areaM2 != null ? String(site.areaM2) : s.surfaceArea,
+      }));
+    }
+  }
+
+  function addSpecies(name: string) {
+    setValues((s) => ({
+      ...s,
+      speciesSelected: s.speciesSelected.includes(name) ? s.speciesSelected : [...s.speciesSelected, name],
+      speciesQuery: "",
+    }));
+    setSpeciesOptions([]);
+  }
+
+  function removeSpecies(name: string) {
+    setValues((s) => ({ ...s, speciesSelected: s.speciesSelected.filter((n) => n !== name) }));
+  }
 
   // Fetch and display current chain nonce for attester
   useEffect(() => {
@@ -318,10 +455,11 @@ export function AttestationForm() {
           if (profileId) {
             const depthNum = values.depth === "" ? null : Number(values.depth);
             const areaNum = values.surfaceArea === "" ? null : Number(values.surfaceArea);
-            const species = values.speciesCsv
+            const speciesCsvArr = values.speciesCsv
               .split(",")
               .map((s) => s.trim())
               .filter((s) => s.length > 0);
+            const species = Array.from(new Set([...(values.speciesSelected || []), ...speciesCsvArr]));
             const contributor_name = values.contributorsCsv
               .split(",")
               .map((s) => s.trim())
@@ -331,22 +469,35 @@ export function AttestationForm() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 profile_id: profileId,
-                regen_type: values.regenType,
                 action_date: values.actionDate,
-                location_lat: latNum,
-                location_lng: lngNum,
-                depth: depthNum,
-                surface_area: areaNum,
-                species,
+                site_id: values.selectedSiteId || undefined,
                 summary: values.summary || null,
                 contributor_name,
                 file_cid: cidLocal || null,
                 file_gateway_url: urlLocal || null,
+                file_name: selectedFile?.name || null,
+                reef_regen_action_names: values.reefRegenActions,
+                species_names: Array.from(new Set([...(values.speciesSelected || []), ...species]))
               })
             });
             const crtJson = await crt.json();
             if (crt.ok && crtJson.attestationId) attestationId = crtJson.attestationId as string;
             addDebug(`Draft create ${crt.ok ? "ok" : "fail"}; attestationId=${attestationId || ""}`);
+            // Ensure IPFS fields persisted immediately on the draft row
+            if (attestationId) {
+              try {
+                const updates: any = { attestation_id: attestationId };
+                if (cidLocal) updates.file_cid = cidLocal;
+                if (urlLocal) updates.file_gateway_url = urlLocal;
+                if (selectedFile?.name) updates.file_name = selectedFile.name;
+                const resSet = await fetch("/api/attestations/set-file", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(updates),
+                });
+                addDebug(`Draft file set ${resSet.ok ? "ok" : "fail"}`);
+              } catch {}
+            }
           }
         }
       } catch {
@@ -410,16 +561,16 @@ export function AttestationForm() {
       }
 
       // Ensure file CID/URL are persisted in DB even if we didn't create a draft earlier
-      if (json.uid && (values.fileCid || values.fileUrl)) {
+      if (json.uid) {
         try {
+          const updates: any = { uid: json.uid as string };
+          if (values.fileCid) updates.file_cid = values.fileCid;
+          if (values.fileUrl) updates.file_gateway_url = values.fileUrl;
+          if (selectedFile?.name) updates.file_name = selectedFile.name;
           await fetch("/api/attestations/set-file", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              uid: json.uid as string,
-              file_cid: values.fileCid || null,
-              file_gateway_url: values.fileUrl || null,
-            }),
+            body: JSON.stringify(updates),
           });
           addDebug("DB updated with file CID/URL");
         } catch {}
@@ -436,110 +587,160 @@ export function AttestationForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} style={{ display: "grid", gap: 16 }}>
-      <fieldset style={{ border: "1px solid #ddd", padding: 12 }}>
-        <legend>Attestation Details (DB)</legend>
-        <label>
-          Regeneration Type
-          <select value={values.regenType} onChange={(e) => update("regenType", e.target.value)} style={{ width: "100%" }}>
-            <option value="transplantation">transplantation</option>
-            <option value="nursery">nursery</option>
-            <option value="other">other</option>
+    <form onSubmit={onSubmit} className="grid gap-6">
+      <fieldset className="border border-vulcan-300 rounded-lg p-6">
+        <legend className="body-lg font-semibold text-black px-2">Attestation Details</legend>
+        {/* Organization name is sourced from the user's profile (org_name) during onboarding.
+            We no longer show an editable field here to avoid duplication. */}
+        <label className="block body-sm font-medium text-vulcan-700 mt-4">
+          Reef Regen Actions
+          <select
+            multiple
+            value={values.reefRegenActions}
+            onChange={onSelectRegenOptions}
+            className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500 h-32"
+          >
+            {regenOptions.map((o) => (
+              <option key={o.id} value={o.name}>{o.name}</option>
+            ))}
           </select>
+          <span className="body-xs text-vulcan-500">Hold Cmd/Ctrl to select multiple</span>
         </label>
-        <label>
+        <label className="block body-sm font-medium text-vulcan-700 mt-4">
           Action Date
           <input
             type="date"
             value={values.actionDate}
             onChange={(e) => update("actionDate", e.target.value)}
             required
-            style={{ width: "100%" }}
+            className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
           />
         </label>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <label>
-            Latitude
-            <input
-              inputMode="decimal"
-              value={values.lat}
-              onChange={(e) => update("lat", e.target.value)}
-              placeholder="e.g. 25.0343"
-              required
-              style={{ width: "100%" }}
-            />
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <label className="block body-sm font-medium text-vulcan-700">
+            Site
+            <select
+              value={values.selectedSiteId}
+              onChange={onSelectSite}
+              className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
+            >
+              <option value="">Select a site…</option>
+              {sites.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
           </label>
-          <label>
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block body-sm font-medium text-vulcan-700">
+              Site Name
+              <input value={values.siteName} readOnly className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base bg-vulcan-50 text-vulcan-600" />
+            </label>
+            <label className="block body-sm font-medium text-vulcan-700">
+              Site Type
+              <input value={values.siteType} readOnly className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base bg-vulcan-50 text-vulcan-600" />
+            </label>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <label className="block body-sm font-medium text-vulcan-700">
+            Latitude
+            <input value={values.lat} readOnly className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base bg-vulcan-50 text-vulcan-600" />
+          </label>
+          <label className="block body-sm font-medium text-vulcan-700">
             Longitude
-            <input
-              inputMode="decimal"
-              value={values.lng}
-              onChange={(e) => update("lng", e.target.value)}
-              placeholder="e.g. -77.3963"
-              required
-              style={{ width: "100%" }}
-            />
+            <input value={values.lng} readOnly className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base bg-vulcan-50 text-vulcan-600" />
           </label>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <label>
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <label className="block body-sm font-medium text-vulcan-700">
             Depth (m)
             <input
               inputMode="decimal"
               value={values.depth}
               onChange={(e) => update("depth", e.target.value)}
               placeholder="optional"
-              style={{ width: "100%" }}
+              className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
             />
           </label>
-          <label>
+          <label className="block body-sm font-medium text-vulcan-700">
             Surface Area (m²)
             <input
               inputMode="decimal"
               value={values.surfaceArea}
               onChange={(e) => update("surfaceArea", e.target.value)}
               placeholder="optional"
-              style={{ width: "100%" }}
+              className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
             />
           </label>
         </div>
-        <label>
-          Species (comma separated)
+        <div className="grid gap-2 mt-4">
+          <label className="block body-sm font-medium text-vulcan-700">Biodiversity (search + select)</label>
+          <input
+            value={values.speciesQuery}
+            onChange={(e) => setValues((s) => ({ ...s, speciesQuery: e.target.value }))}
+            placeholder="Search taxa by scientific or common name…"
+            className="w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
+          />
+          {!!speciesOptions.length && (
+            <div className="border border-vulcan-200 rounded-md max-h-40 overflow-auto bg-white scrollbar-thin">
+              {speciesOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => addSpecies(opt.name)}
+                  className="w-full text-left px-3 py-2 hover:bg-vulcan-50 body-sm text-black"
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {!!values.speciesSelected.length && (
+            <div className="flex flex-wrap gap-2 mt-1">
+              {values.speciesSelected.map((n) => (
+                <span key={n} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-vulcan-100 text-vulcan-700 body-xs">
+                  {n}
+                  <button type="button" onClick={() => removeSpecies(n)} className="ml-1 text-vulcan-600 hover:text-black">×</button>
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="body-xs text-vulcan-500">Optional fallback: comma separated</div>
           <input
             value={values.speciesCsv}
             onChange={(e) => update("speciesCsv", e.target.value)}
             placeholder="Elkhorn coral, Brain coral"
-            style={{ width: "100%" }}
+            className="w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
           />
-        </label>
-        <label>
+        </div>
+        <label className="block body-sm font-medium text-vulcan-700 mt-4">
           Summary
           <textarea
             value={values.summary}
             onChange={(e) => update("summary", e.target.value)}
             placeholder="Short description"
             rows={3}
-            style={{ width: "100%" }}
+            className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
           />
         </label>
-        <label>
+        <label className="block body-sm font-medium text-vulcan-700 mt-4">
           Contributors (comma separated)
           <input
             value={values.contributorsCsv}
             onChange={(e) => update("contributorsCsv", e.target.value)}
             placeholder="Alice, Bob"
-            style={{ width: "100%" }}
+            className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
           />
         </label>
-        <label>
+        <label className="block body-sm font-medium text-vulcan-700 mt-4">
           Evidence File (optional)
-          <input type="file" onChange={onFileSelected} />
+          <input type="file" onChange={onFileSelected} className="mt-1 w-full body-sm text-vulcan-700" />
           {(values.fileCid || values.fileUrl) && (
-            <div style={{ fontSize: 12 }}>
+            <div className="mt-2 body-xs text-vulcan-600 bg-vulcan-50 p-2 rounded">
               {values.fileCid && <div>CID: {values.fileCid}</div>}
               {values.fileUrl && (
                 <div>
-                  <a href={values.fileUrl} target="_blank" rel="noreferrer">View file</a>
+                  <a href={values.fileUrl} target="_blank" rel="noreferrer" className="text-ribbon-600 hover:text-ribbon-700 underline">View file</a>
                 </div>
               )}
             </div>
@@ -547,13 +748,13 @@ export function AttestationForm() {
         </label>
       </fieldset>
 
-      <fieldset style={{ border: "1px solid #ddd", padding: 12 }}>
-        <legend>EAS Delegation</legend>
-      <div style={{ fontSize: 12, color: "#555", marginBottom: 8 }}>
+      <fieldset className="border border-vulcan-300 rounded-lg p-6">
+        <legend className="body-lg font-semibold text-black px-2">EAS Delegation</legend>
+      <div className="body-sm text-vulcan-500 mb-3">
         Env default schema: {env.defaultSchemaUid || "(none)"}
       </div>
       {/* Removed inline wallet connect buttons; use the global WalletConnect component instead */}
-      <label>
+      <label className="block body-sm font-medium text-vulcan-700">
         Schema UID
         <input
           value={values.schemaUid}
@@ -561,91 +762,103 @@ export function AttestationForm() {
           placeholder="0x…"
           required
           readOnly={Boolean(env.defaultSchemaUid)}
-          style={{ width: "100%" }}
+          className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500 read-only:bg-vulcan-50 read-only:text-vulcan-600"
         />
       </label>
-      <label>
+      <label className="block body-sm font-medium text-vulcan-700 mt-4">
         Recipient Address
         <input
           value={values.recipient}
           onChange={(e) => update("recipient", e.target.value)}
           placeholder="0x…"
           required
-          style={{ width: "100%" }}
+          className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
         />
       </label>
-      <div>
-        Encoded data (auto):
-        <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-all", background: "#f6f6f6", padding: 8 }}>
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <label className="block body-sm font-medium text-vulcan-700">
+            Site Name
+            <input value={values.siteName} readOnly className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base bg-vulcan-50 text-vulcan-600" />
+          </label>
+          <label className="block body-sm font-medium text-vulcan-700">
+            Site Type
+            <input value={values.siteType} readOnly className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base bg-vulcan-50 text-vulcan-600" />
+          </label>
+        </div>
+      <div className="mt-4">
+        <p className="body-sm font-medium text-vulcan-700 mb-1">Encoded data (auto):</p>
+        <pre className="whitespace-pre-wrap break-all bg-vulcan-50 p-3 rounded-lg body-xs text-vulcan-700 font-mono">
           {encodedData}
         </pre>
       </div>
-      <label>
+      <label className="block body-sm font-medium text-vulcan-700 mt-4">
         Nonce (auto from chain)
-        <input value={values.nonce} readOnly style={{ width: "100%", background: "#f6f6f6" }} />
+        <input value={values.nonce} readOnly className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base bg-vulcan-50 text-vulcan-600" />
       </label>
-      <label>
+      <label className="block body-sm font-medium text-vulcan-700 mt-4">
         Deadline (unix seconds)
         <input
           type="number"
           value={values.deadline}
           onChange={(e) => update("deadline", e.target.value)}
-          style={{ width: "100%" }}
+          className="mt-1 w-full px-3 py-2 border border-vulcan-300 rounded-lg body-base text-black focus:outline-none focus:ring-2 focus:ring-ribbon-500"
         />
       </label>
       </fieldset>
       {progress && (
-        <div style={{ padding: 8, background: "#eef", border: "1px solid #ccd" }}>{progress}</div>
+        <div className="body-sm text-ribbon-700 bg-ribbon-50 p-4 rounded-lg border border-ribbon-200">{progress}</div>
       )}
-      <details open={debugOpen} onToggle={(e) => setDebugOpen((e.target as HTMLDetailsElement).open)}>
-        <summary>Debug</summary>
-        <div style={{ fontSize: 12, display: "grid", gap: 6 }}>
-          <div>Upload status: {uploadStatus}{uploadError ? ` — ${uploadError}` : ""}</div>
+      <details open={debugOpen} onToggle={(e) => setDebugOpen((e.target as HTMLDetailsElement).open)} className="border border-vulcan-200 rounded-lg p-4">
+        <summary className="body-sm font-semibold text-vulcan-700 cursor-pointer">Debug</summary>
+        <div className="body-xs grid gap-2 mt-3">
+          <div className="text-vulcan-600">Upload status: {uploadStatus}{uploadError ? ` — ${uploadError}` : ""}</div>
           {(values.fileCid || values.fileUrl) && (
-            <div>
+            <div className="text-vulcan-600">
               {values.fileCid && <div>CID: {values.fileCid}</div>}
               {values.fileUrl && <div>URL: {values.fileUrl}</div>}
             </div>
           )}
-          <div>Events:</div>
-          <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", background: "#f6f6f6", padding: 8, maxHeight: 160, overflow: "auto" }}>
+          <div className="text-vulcan-700 font-medium">Events:</div>
+          <pre className="whitespace-pre-wrap break-words bg-vulcan-50 p-3 rounded max-h-40 overflow-auto font-mono text-vulcan-600 scrollbar-thin">
             {debugEvents.join("\n") || "(no events yet)"}
           </pre>
         </div>
       </details>
-      <button type="submit" disabled={!canSubmit || submitting}>
+      <button
+        type="submit"
+        disabled={!canSubmit || submitting}
+        className="w-full px-6 py-3 bg-flamingo-400 text-white body-base font-semibold rounded-lg hover:bg-flamingo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
         {submitting ? "Submitting…" : "Sign & Relay"}
       </button>
-      {errors && <div style={{ color: "#b00" }}>{errors}</div>}
+      {errors && <div className="body-sm text-flamingo-600 bg-flamingo-50 p-4 rounded-lg border border-flamingo-200">{errors}</div>}
       {result?.txHash && (
-        <div>
-          Submitted. Tx Hash: {result.txHash}
-          <div>
-            <a
-              href={`https://optimism-sepolia.easscan.org/tx/${result.txHash}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              View in EAS Explorer
-            </a>
-          </div>
+        <div className="body-sm text-aquamarine-800 bg-aquamarine-50 p-4 rounded-lg border border-aquamarine-200">
+          <p className="font-semibold mb-1">Submitted. Tx Hash: {result.txHash}</p>
+          <a
+            href={`https://optimism-sepolia.easscan.org/tx/${result.txHash}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-aquamarine-600 hover:text-aquamarine-700 underline"
+          >
+            View in EAS Explorer
+          </a>
         </div>
       )}
       {result?.uid && (
-        <div>
-          Attestation UID: {result.uid}
-          <div>
-            <a
-              href={`https://optimism-sepolia.easscan.org/attestation/view/${result.uid}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              View Attestation
-            </a>
-          </div>
+        <div className="body-sm text-aquamarine-800 bg-aquamarine-50 p-4 rounded-lg border border-aquamarine-200">
+          <p className="font-semibold mb-1">Attestation UID: {result.uid}</p>
+          <a
+            href={`https://optimism-sepolia.easscan.org/attestation/view/${result.uid}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-aquamarine-600 hover:text-aquamarine-700 underline"
+          >
+            View Attestation
+          </a>
         </div>
       )}
-      {result?.error && <div style={{ color: "#b00" }}>{result.error}</div>}
+      {result?.error && <div className="body-sm text-flamingo-600 bg-flamingo-50 p-4 rounded-lg border border-flamingo-200">{result.error}</div>}
     </form>
   );
 }

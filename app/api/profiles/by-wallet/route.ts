@@ -9,11 +9,12 @@ export async function GET(req: NextRequest) {
   }
   const { data, error } = await supabaseAdmin
     .from("profiles")
-    .select("handle")
+    .select("handle, org_name")
     .filter("wallet_address", "ilike", address)
     .maybeSingle();
   if (error && error.code !== "PGRST116") return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!data?.handle) return NextResponse.json({ ok: true, handle: null });
-  return NextResponse.json({ ok: true, handle: data.handle });
+  if (!data) return NextResponse.json({ ok: true, handle: null, name: null });
+  const orgName = (data as any).org_name as string | null;
+  const handle = (data as any).handle as string | null;
+  return NextResponse.json({ ok: true, handle, orgName, name: orgName || handle || null });
 }
-

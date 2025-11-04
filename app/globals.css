@@ -1,0 +1,117 @@
+/* app/globals.css */
+@import 'framework7-icons/css/framework7-icons.css';
+@import 'maplibre-gl/dist/maplibre-gl.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base defaults */
+@layer base {
+  :root {
+    /* semantic aliases (use or extend as needed) */
+    --bg:        theme(colors.white);
+    --fg:        theme(colors.black);
+    --brand:     theme(colors.ribbon.500);
+    --accent:    theme(colors.flamingo.400);
+    --muted:     theme(colors.vulcan.500);
+  }
+
+  html, body {
+    @apply bg-[var(--bg)] text-[var(--fg)];
+    @apply font-sans antialiased;
+  }
+
+  /* Default typography rhythm */
+  p { @apply leading-body; }
+}
+
+@layer components {
+  /* Headings (Outfit Black, -2% tracking, 104% leading) */
+  .hd-1 { @apply text-h1 font-black tracking-hd; }
+  .hd-2 { @apply text-h2 font-black tracking-hd; }
+  .hd-3 { @apply text-h3 font-black tracking-hd; }
+  .hd-4 { @apply text-h4 font-black tracking-hd; }
+  .hd-5 { @apply text-h5 font-black tracking-hd; }
+  .hd-6 { @apply text-h6 font-black tracking-hd; }
+
+  /* Body sizes (140% leading) */
+  .body-2xl { @apply text-2xlb; }
+  .body-xl  { @apply text-xlb;  }
+  .body-lg  { @apply text-lgb;  }
+  .body-base{ @apply text-baseb;}
+  .body-sm  { @apply text-smb;  }
+  .body-xs  { @apply text-xsb;  }
+
+  /* Reef·Regen UI primitives */
+  .rr-input { @apply w-full bg-vulcan-700/70 text-white placeholder-white/50 rounded-lg px-4 py-3; }
+  .rr-select { @apply w-full appearance-none bg-vulcan-700/70 text-white rounded-2xl px-4 py-3 pr-10; }
+  .rr-input-icon { @apply absolute right-3 top-1/2 -translate-y-1/2 text-white/70; }
+  .rr-option-card { @apply w-full max-w-[600px] rounded-2xl p-4 flex items-start gap-3 cursor-pointer outline outline-1 transition-colors; }
+  .rr-option-card-default { @apply bg-vulcan-200 text-black outline-vulcan-200 }
+  .rr-option-card-selected { @apply bg-orange text-white outline-orange; }
+
+  /* Badges for consistent labeling */
+  .badge { @apply inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-bold; }
+  .badge-sm { @apply text-xs px-2 py-0.5 rounded-md; }
+  .badge-lg { @apply text-base px-4 py-2 rounded-xl; }
+  .site-type-badge { @apply badge bg-ribbon-300 text-vulcan-900; }
+  .regen-action-badge { @apply badge bg-orange text-black; }
+  
+  /* Number input: hide native spinner & provide custom stepper */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] { -moz-appearance: textfield; }
+  .rr-input-number { @apply pr-12; }
+  .rr-stepper { @apply absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-1; }
+  .rr-stepper-btn { @apply h-5 w-7 rounded-md bg-white/10 hover:bg-white/20 text-white grid place-items-center; }
+}
+
+/* Inputs: hide native date picker indicator so we only show our icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  display: none;
+}
+input[type="date"]::-ms-clear { display: none; }
+input[type="date"]::-ms-reveal { display: none; }
+
+/* Dropdown primitives */
+.rr-dropdown { @apply relative w-full max-w-[700px]; }
+.rr-dropdown-trigger { @apply rr-input pr-12; }
+.rr-dropdown-chevron { @apply absolute right-3 top-1/2 -translate-y-1/2 text-white/70 pointer-events-none; }
+.rr-dropdown-panel { @apply absolute z-50 mt-2 w-full max-h-[70vh] overflow-auto rounded-2xl bg-vulcan-200 text-vulcan-950 shadow-xl; }
+.rr-dropdown-item { @apply block w-full text-left h-16 px-4 flex items-center text-2xl font-light leading-9 truncate; }
+.rr-dropdown-item-selected { @apply bg-orange text-white; }
+
+/* Custom scrollbar styles */
+/* Site‑wide custom scrollbar (html/body) + utility class for inner scroll areas */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 10px;
+}
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: rgba(44, 46, 60, 0.5);
+  border-radius: 9999px;
+}
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background: rgb(75, 85, 99);
+  border-radius: 9999px;
+}
+html:hover::-webkit-scrollbar-thumb,
+body:hover::-webkit-scrollbar-thumb {
+  background: rgb(107, 114, 128);
+}
+
+/* For Firefox */
+html, body { scrollbar-width: thin; scrollbar-color: rgb(75, 85, 99) rgba(44, 46, 60, 0.5); }
+
+/* Utility: opt‑in thin scrollbar for inner scrollable containers */
+.scrollbar-thin::-webkit-scrollbar { width: 8px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: rgba(44, 46, 60, 0.5); border-radius: 9999px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: rgb(75, 85, 99); border-radius: 9999px; }
+.scrollbar-thin:hover::-webkit-scrollbar-thumb { background: rgb(107, 114, 128); }
+.scrollbar-thin { scrollbar-width: thin; scrollbar-color: rgb(75, 85, 99) rgba(44, 46, 60, 0.5); }
