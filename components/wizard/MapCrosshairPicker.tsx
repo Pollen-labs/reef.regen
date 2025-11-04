@@ -32,6 +32,21 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
         const styleResp = await fetch(styleUrl, { cache: "no-store" });
         if (!styleResp.ok) throw new Error(`Style ${styleUrl} ${styleResp.status}`);
         const style = await styleResp.json();
+        // Inject MapTiler/OpenMapTiles key if the style contains the public placeholder
+        const key = process.env.NEXT_PUBLIC_OPENMAPTILES_KEY;
+        if (key) {
+          try {
+            const src = (style?.sources?.openmaptiles?.url || '') as string;
+            if (src.includes('get_your_own_')) {
+              style.sources.openmaptiles.url = src.replace(/key=[^&]+/, `key=${key}`);
+            }
+            if (typeof style.glyphs === 'string' && style.glyphs.includes('get_your_own_')) {
+              style.glyphs = (style.glyphs as string).replace(/key=[^&]+/, `key=${key}`);
+            }
+          } catch {}
+        } else {
+          console.warn('Missing NEXT_PUBLIC_OPENMAPTILES_KEY; map tiles may fail to load.');
+        }
         map = new maplibregl.Map({
           container: containerRef.current!,
           style,

@@ -43,7 +43,7 @@ export default function StaticSiteMap({
         transformRequest: (u: any) => {
           const url = typeof u === "string" ? u : (u?.url as string | undefined) || "";
           if (!url) return typeof u === "string" ? { url: u } : (u as any);
-          const token = process.env.NEXT_PUBLIC_MAPTILER_KEY;
+          const token = process.env.NEXT_PUBLIC_OPENMAPTILES_KEY;
           if (!token) return { url };
           const needsKey = url.includes("api.maptiler.com") || url.includes("tilehosting.com");
           if (!needsKey) return { url };
