@@ -1,10 +1,10 @@
 export default function Hero() {
   return (
     <section className="relative isolate bg-black text-white">
-      <div className="mx-auto w-full max-w-[1060px] px-6 md:px-10 pt-16 pb-20 md:pt-20 md:pb-28 flex flex-col items-stretch gap-8">
-        {/* Heading + Image: stack on mobile, two columns on desktop */}
-        <div className="w-full flex flex-col md:flex-row items-start justify-between gap-6">
-          <div className="min-w-0 text-left md:text-right md:basis-[65%] md:grow-0 md:shrink-0">
+      <div className="mx-auto w-full max-w-[1440px] px-6 md:px-10 pt-16 pb-20 md:pt-20 md:pb-28 flex flex-col items-stretch gap-8">
+        {/* Heading + Image: stack on mobile, 12-col grid on desktop */}
+        <div className="w-full grid grid-cols-1 md:grid-cols-12 items-end gap-6">
+          <div className="min-w-0 text-left md:text-right md:col-span-7">
             <h1 className="hd-1">
               Make
               <br />
@@ -13,11 +13,11 @@ export default function Hero() {
               count
             </h1>
           </div>
-          <div className="w-full flex justify-center md:justify-end md:basis-[35%] md:grow-0 md:shrink-0">
+          <div className="w-full flex  md:col-span-5 md:-mt-8 lg:-mt-12">
             <img
               src="/assets/img-hero.svg"
               alt="Reef.Regen hero illustration"
-              className="h-64 md:h-80 w-auto"
+              className="h-[380px] md:h-[380px] lg:h-[480px] w-auto select-none pointer-events-none"
               loading="eager"
               decoding="async"
             />

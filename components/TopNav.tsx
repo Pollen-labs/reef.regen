@@ -34,6 +34,25 @@ export default function TopNav() {
   const [profileHandle, setProfileHandle] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [menuAnim, setMenuAnim] = useState(false);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const prev = document.body.style.overflow;
+    if (open) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = prev || '';
+    return () => { document.body.style.overflow = prev || ''; };
+  }, [open]);
+
+  // Subtle fade/slide animation for mobile menu
+  useEffect(() => {
+    if (open) {
+      const id = requestAnimationFrame(() => setMenuAnim(true));
+      return () => cancelAnimationFrame(id);
+    }
+    setMenuAnim(false);
+  }, [open]);
 
   // Close dropdown on outside click / ESC
   useEffect(() => {
@@ -98,16 +117,16 @@ export default function TopNav() {
   return (
     <header className="sticky top-0 z-40 bg-black text-white">
       {/* Global announcement bar */}
-      <div className="w-full bg-orange text-white h-6">
-        <div className="w-full max-w-[1440px] mx-auto px-8 h-full flex items-center justify-center">
-          <p className="text-xsb whitespace-nowrap overflow-x-auto text-center">
+      <div className="w-full bg-orange text-white">
+        <div className="w-full px-6 md:px-10 py-1 flex items-center justify-center">
+          <p className="text-xsb text-center break-words">
             This is a preview release, all attestation will be posted on testnet, please help us to test this app and let us know any bug or issues. - update on Nov 3,2025
           </p>
         </div>
       </div>
-      <div className="w-full max-w-[1440px] mx-auto px-8 py-6 flex justify-between items-end">
+      <div className="w-full px-6 md:px-4 py-6  md:py-4 flex justify-between items-end">
         {/* Left: Logo + Wordmark */}
-        <a href="/" className="flex items-center gap-1">
+        <a href="/" className="flex items-center gap-1 -m-2 p-2 md:m-0 md:p-0 rounded-2xl hover:bg-white/5">
           <img
             src="/assets/full-logo.svg"
             alt="Reef·Regen"
@@ -201,68 +220,97 @@ export default function TopNav() {
         {/* Mobile trigger */}
         <button
           aria-label="Open menu"
-          className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-white/5"
+          className="md:hidden inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 hover:bg-white/20"
           onClick={() => setOpen(true)}
         >
-          <span aria-hidden>☰</span>
+          <span aria-hidden className="text-2xl leading-none">≡</span>
         </button>
       </div>
 
-      {/* Mobile Sheet */}
+      {/* Mobile Fullscreen Menu */}
       {open && (
         <div
-          className="md:hidden fixed inset-0 z-50 bg-black/50"
+          className={`md:hidden fixed inset-0 z-50 bg-black transition-opacity duration-200 ease-out ${menuAnim ? 'opacity-100' : 'opacity-0'}`}
           role="dialog"
           aria-modal="true"
-          onClick={() => setOpen(false)}
         >
-          <div
-            className="absolute left-0 top-0 h-full w-80 bg-black p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="mb-6 rounded-lg px-3 py-2 hover:bg-white/5"
-              onClick={() => setOpen(false)}
-            >
-              Close
-            </button>
-            <nav className="grid gap-2">
-              <a
-                href="/map"
-                className={`px-4 py-2 text-xl font-bold leading-8 ${
-                  pathname === "/map" ? "text-orange" : ""
-                }`}
-              >
-                Map
+          <div className={`flex h-full flex-col px-6 md:px-4 py-6 md:py-4 transition-transform duration-200 ease-out ${menuAnim ? 'translate-y-0' : 'translate-y-1'}` }>
+            {/* Top row: logo + close */}
+            <div className="flex items-center justify-between">
+              <a href="/" onClick={() => setOpen(false)} className="flex items-center gap-1 -m-2 p-2 rounded-2xl hover:bg-white/5">
+                <img
+                  src="/assets/full-logo.svg"
+                  alt="Reef·Regen"
+                  className="h-16 w-auto"
+                />
+                <span className="sr-only">Reef·Regen</span>
               </a>
-              <a
-                href="/submit/steps/1"
-                className={`px-4 py-2 text-xl font-bold leading-8 ${
-                  pathname?.startsWith("/submit") ? "text-orange" : ""
-                }`}
+              <button
+                aria-label="Close menu"
+                className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 hover:bg-white/20"
+                onClick={() => setOpen(false)}
               >
-                Submit
-              </a>
-              {isConnected ? (
+                <span className="text-2xl leading-none">×</span>
+              </button>
+            </div>
+
+            {/* Menu links */}
+            <nav className="flex-1 w-full flex items-center justify-end">
+              <div className="text-right space-y-6">
                 <a
-                  href={accountHref}
-                  className={`mt-2 px-4 py-2 text-xl font-bold leading-8 ${
-                    pathname.startsWith("/profile") ? "text-orange" : ""
-                  }`}
+                  href="/map"
+                  onClick={(e) => { onNavClick(e, "/map"); setOpen(false); }}
+                  className={`block text-4xl font-extrabold ${pathname === "/map" ? "text-orange" : "text-white hover:text-white/80"}`}
                 >
-                  Account
+                  Map
                 </a>
-              ) : (
-                <Button
-                  onClick={handleSignIn}
-                  disabled={web3authLoading}
-                  variant="outline"
-                  size="md"
-                  className="mt-2 leading-8"
+                <a
+                  href="/submit/steps/1"
+                  onClick={(e) => { onNavClick(e, "/submit/steps/1"); setOpen(false); }}
+                  className={`block text-4xl font-extrabold ${pathname?.startsWith("/submit") ? "text-orange" : "text-white hover:text-white/80"}`}
                 >
-                  {web3authLoading ? "Connecting..." : "Sign in"}
-                </Button>
-              )}
+                  Submit
+                </a>
+
+                {isConnected ? (
+                  <>
+                    <a
+                      href={accountHref}
+                      onClick={(e) => { onNavClick(e, accountHref); setOpen(false); }}
+                      className={`block text-4xl font-extrabold ${pathname.startsWith("/profile") ? "text-orange" : "text-white hover:text-white/80"}`}
+                    >
+                      Profile
+                    </a>
+                    <a
+                      href="/profile/setting"
+                      onClick={(e) => { onNavClick(e, "/profile/setting"); setOpen(false); }}
+                      className="block text-4xl font-extrabold text-white hover:text-white/80"
+                    >
+                      Settings
+                    </a>
+                    <button
+                      onClick={async () => {
+                        try { await disconnectWeb3Auth(); } catch {}
+                        disconnect();
+                        setOpen(false);
+                        try { localStorage.clear(); } catch {}
+                        if (typeof window !== 'undefined') window.location.href = "/";
+                      }}
+                      className="block text-4xl font-extrabold text-left text-white hover:text-white/80"
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={async () => { await handleSignIn(); setOpen(false); }}
+                    disabled={web3authLoading}
+                    className="block text-4xl font-extrabold text-left text-white hover:text-white/80"
+                  >
+                    {web3authLoading ? "Connecting..." : "Sign in"}
+                  </button>
+                )}
+              </div>
             </nav>
           </div>
         </div>

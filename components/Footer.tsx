@@ -17,18 +17,18 @@ export default function Footer() {
   return (
     <footer className="bg-vulcan-800 flex flex-col gap-8">
       {/* Top bar */}
-      <div className="w-full max-w-[1440px] mx-auto px-6 pt-20 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-        <div className="flex flex-col md:flex-row items-start md:items-end gap-4">
+      <div className="w-full px-6 md:px-10 pt-12 md:pt-20 flex flex-col md:flex-row justify-between items-start md:items-end gap-10 md:gap-6">
+        <div className="flex flex-col md:flex-row items-start md:items-end gap-6 md:gap-4">
           <a href="/">
             <img
               src="/assets/logo.svg"
               alt="Reef·Regen Logo"
-              className="h-32 w-auto"
+              className="h-28 md:h-32 w-auto"
             />
           </a>
           <p className="max-w-[640px] text-base leading-6 font-light text-vulcan-200">
           
-          <span className="block text-2xl font-black tracking-hd text-white mb-2">
+          <span className="block text-2xl md:text-3xl font-black tracking-hd text-white mb-3">
             Built for transparent, verifiable ocean restoration.
           </span>
             Reef.Regen is a collaboration between{" "}
@@ -65,10 +65,10 @@ export default function Footer() {
           </p>
         </div>
 
-        <nav className="flex items-center gap-6">
+        <nav className="w-full md:w-auto grid grid-cols-3 md:flex items-center gap-x-8 gap-y-4 md:gap-6 mt-6 md:mt-0 text-left">
           <a
             href="/map"
-            className={`px-4 py-2 text-xl font-bold leading-8 ${
+            className={`px-0 md:px-4 py-2 text-xl md:text-xl font-bold leading-8 ${
               pathname === "/map"
                 ? "text-orange"
                 : "text-white hover:text-white/90"
@@ -77,9 +77,9 @@ export default function Footer() {
             Map
           </a>
           <a
-            href="/attest"
-            className={`px-4 py-2 text-xl font-bold leading-8 ${
-              pathname === "/attest"
+            href="/submit/steps/1"
+            className={`px-0 md:px-4 py-2 text-xl md:text-xl font-bold leading-8 ${
+              pathname?.startsWith("/submit")
                 ? "text-orange"
                 : "text-white hover:text-white/90"
             }`}
@@ -88,7 +88,7 @@ export default function Footer() {
           </a>
           <a
             href="https://github.com/Pollen-labs/reef.regen"
-            className="px-4 py-2 text-xl font-bold text-white leading-8 hover:text-white/90"
+            className="px-0 md:px-4 py-2 text-xl md:text-xl font-bold text-white leading-8 hover:text-white/90"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -99,12 +99,15 @@ export default function Footer() {
 
       {/* Bottom decorative block row - repeating coral pattern */}
       <div className="w-full overflow-hidden pb-4">
-        <img
-          src="/assets/img-logo-repeat-footer.svg"
-          alt=""
-          aria-hidden="true"
-          className="w-full h-80 object-cover object-center"
-        />
+        <picture>
+          <source media="(max-width: 767px)" srcSet="/assets/img-logo-repeat-footer-mobile.svg" />
+          <img
+            src="/assets/img-logo-repeat-footer.svg"
+            alt=""
+            aria-hidden="true"
+            className="w-full h-[520px] md:h-80 object-cover object-center"
+          />
+        </picture>
       </div>
     </footer>
   );
