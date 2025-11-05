@@ -12,7 +12,17 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 export type DonutDatum = { label: string; count: number; color: string; category?: string };
 
-export default function DonutChartJS({ data, tooltipMode = "countPercent", height = 260 }: { data: DonutDatum[]; tooltipMode?: "count" | "countPercent"; height?: number }) {
+export default function DonutChartJS({
+  data,
+  tooltipMode = "countPercent",
+  height,
+  className,
+}: {
+  data: DonutDatum[];
+  tooltipMode?: "count" | "countPercent";
+  height?: number; // optional fixed px height; otherwise fills parent
+  className?: string; // allow parent-driven sizing via CSS
+}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const total = Math.max(1, data.reduce((s, d) => s + (d.count || 0), 0));
   const labels = data.map((d) => d.label);
@@ -79,8 +89,13 @@ export default function DonutChartJS({ data, tooltipMode = "countPercent", heigh
     },
   };
 
+  const style: React.CSSProperties = {
+    width: "100%",
+    height: height ? height : "100%",
+    position: "relative",
+  };
   return (
-    <div ref={containerRef} style={{ width: "100%", height, position: "relative" }}>
+    <div ref={containerRef} style={style} className={className}>
       <Doughnut data={chartData} options={options} />
     </div>
   );

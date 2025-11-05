@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ResourceType, RequestParameters } from "maplibre-gl";
 import type { LocationPoint } from "@/types/map";
+import { MAP_COLORS } from "@/lib/style/mapColors";
 
 /**
  * MapView — Full-screen interactive map
@@ -36,6 +37,15 @@ export default function MapView({
   const mapRef = useRef<any>(null);
   const pulseRafRef = useRef<number | null>(null);
   const pulseStartRef = useRef<number>(0);
+  // Multi-select popover for overlapping pins at identical coordinates
+  const [multi, setMulti] = useState<
+    | null
+    | {
+        x: number;
+        y: number;
+        items: { id: string; name: string; orgName?: string | null; attestationCount: number }[];
+      }
+  >(null);
   // Keep latest points for when map loads later
   const pointsRef = useRef(points);
   useEffect(() => {
@@ -87,6 +97,10 @@ export default function MapView({
         style: "/map/styles/dark_matter.json",
         center: [0, 15],
         zoom: 1.6,
+        minZoom: 2, // avoid world repeating at z0
+        pitch: 0,
+        dragRotate: false,
+        pitchWithRotate: false,
         attributionControl: true,
         transformRequest: (
           u: string | RequestParameters,
@@ -112,8 +126,16 @@ export default function MapView({
 
       mapRef.current = map;
 
-      // Controls
-      map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }));
+      // Controls: show +/− zoom, hide compass (rotation disabled)
+      map.addControl(new maplibregl.NavigationControl({ showZoom: true, showCompass: false, visualizePitch: false }));
+
+      // Extra safety: disable rotate interactions from all inputs
+      try {
+        map.dragRotate.disable();
+        if (map.touchZoomRotate && map.touchZoomRotate.disableRotation) {
+          map.touchZoomRotate.disableRotation();
+        }
+      } catch {}
 
       map.on("load", () => {
         // Initial empty source (data will be set by points effect)
@@ -130,10 +152,15 @@ export default function MapView({
             source: "locations",
             paint: {
               "circle-radius": ["case", ["==", ["get", "id"], ""], 10, 6],
-              // Back to fixed brand orange for all pins
-              "circle-color": "#FF7F5C",
+              // Use design system colors via MAP_COLORS
+              "circle-color": [
+                "case",
+                [">", ["get", "attestationCount"], 0],
+                MAP_COLORS.pin.hasData,
+                MAP_COLORS.pin.noData
+              ],
               "circle-stroke-width": 1,
-              "circle-stroke-color": "#3C3D50", // vulcan-800
+              "circle-stroke-color": MAP_COLORS.stroke,
             },
           });
         }
@@ -157,6 +184,24 @@ export default function MapView({
           });
         }
 
+        // Temporary pulse for multi-select hint (non-animated)
+        if (!map.getLayer("location-pulse-temp")) {
+          map.addLayer({
+            id: "location-pulse-temp",
+            type: "circle",
+            source: "locations",
+            filter: ["==", ["get", "id"], ""],
+            paint: {
+              "circle-radius": 14,
+              "circle-color": "rgba(0,0,0,0)",
+              "circle-opacity": 0,
+              "circle-stroke-color": "rgba(255,255,255,0.45)",
+              "circle-stroke-width": 3,
+              "circle-stroke-opacity": 0.45,
+            },
+          });
+        }
+
         // Set initial data using the latest points
         const source = map.getSource("locations");
         if (source) {
@@ -168,6 +213,7 @@ export default function MapView({
               properties: {
                 id: point.id,
                 name: point.name,
+                orgName: (point as any).orgName ?? undefined,
                 attestationCount: point.attestationCount,
                 color: (point as any).colorHex || undefined,
               },
@@ -178,13 +224,45 @@ export default function MapView({
           } catch {}
         }
 
-        // Click handler for pins
+        // Click handler for pins — disambiguate overlapping points
         map.on("click", "location-pins", (e: any) => {
           e.originalEvent.stopPropagation();
-          const feature = e?.features?.[0];
-          if (!feature) return;
-          const locationId = feature.properties.id;
-          onSelectRef.current(locationId);
+          // Query all pins near the click using a small bounding box (radius not in type)
+          const pad = 6;
+          const bbox: [[number, number], [number, number]] = [
+            [e.point.x - pad, e.point.y - pad],
+            [e.point.x + pad, e.point.y + pad],
+          ];
+          const features = map.queryRenderedFeatures(bbox, { layers: ["location-pins"] }) as any[];
+          const itemsMap = new Map<string, { id: string; name: string; orgName?: string | null; attestationCount: number }>();
+          for (const f of features) {
+            const props = f?.properties || {};
+            if (!props?.id) continue;
+            if (!itemsMap.has(props.id)) {
+              itemsMap.set(props.id, {
+                id: String(props.id),
+                name: String(props.name || "Unknown Site"),
+                orgName: props.orgName ? String(props.orgName) : undefined,
+                attestationCount: Number(props.attestationCount || 0),
+              });
+            }
+          }
+          const items = Array.from(itemsMap.values());
+
+          if (items.length <= 1) {
+            // Single item → select directly
+            const feature = features?.[0];
+            const locationId = feature?.properties?.id;
+            if (locationId) onSelectRef.current(locationId);
+            setMulti(null);
+            return;
+          }
+
+          // Multiple items → show disambiguation list near click
+          setMulti({ x: e.point.x, y: e.point.y, items });
+          try {
+            map.setFilter("location-pulse-temp", ["==", ["get", "id"], items[0].id]);
+          } catch {}
         });
 
         // Click handler for background: deselect if not on a pin
@@ -192,6 +270,8 @@ export default function MapView({
           const features = map.queryRenderedFeatures(e.point, { layers: ["location-pins"] });
           if (features.length === 0) {
             onDeselectRef.current();
+            setMulti(null);
+            try { map.setFilter("location-pulse-temp", ["==", ["get", "id"], ""]); } catch {}
           }
         });
 
@@ -228,6 +308,7 @@ export default function MapView({
         properties: {
           id: point.id,
           name: point.name,
+          orgName: (point as any).orgName ?? undefined,
           attestationCount: point.attestationCount,
           color: point.colorHex || undefined,
         },
@@ -313,6 +394,38 @@ export default function MapView({
   return (
     <div className="absolute inset-0 bg-vulcan-900 overflow-hidden">
       <div ref={containerRef} className="w-full h-full" />
+      {multi && (
+        <div
+          className="absolute z-20 max-w-[80vw] sm:max-w-xs"
+          style={{ left: multi.x + 12, top: multi.y + 12 }}
+        >
+          <div className="rounded-2xl bg-vulcan-900/90 outline outline-1 outline-white/10 shadow-xl overflow-hidden">
+            <ul className="divide-y divide-white/10">
+              {multi.items.map((it) => (
+                <li key={it.id}>
+                  <button
+                    onClick={() => { onSelectRef.current(it.id); setMulti(null); }}
+                    className="w-full text-left px-4 py-3 block hover:bg-white/5"
+                  >
+                    <div className="flex items-start gap-2">
+                      <span
+                        className={`mt-2 inline-block h-2 w-2 rounded-full ${it.attestationCount > 0 ? 'bg-orange' : 'bg-vulcan-500'}`}
+                        aria-hidden
+                      />
+                      <div className="min-w-0">
+                        <div className={`text-base font-bold leading-7 truncate ${it.attestationCount > 0 ? 'text-orange' : 'text-vulcan-400'}`}>{it.name}</div>
+                        {it.orgName && (
+                          <div className="text-sm text-vulcan-300 truncate">by {it.orgName}</div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

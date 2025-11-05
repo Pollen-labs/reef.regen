@@ -9,6 +9,7 @@
 export type LocationPoint = {
   id: string;               // location_id
   name: string;             // org/location display
+  orgName?: string | null;  // organization display (optional)
   lat: number;
   lng: number;
   attestationCount: number; // for marker badge (optional)

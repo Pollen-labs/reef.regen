@@ -20,6 +20,12 @@ export default function MapPage() {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [activeAtt, setActiveAtt] = useState<Attestation | null>(null);
+  const [attLimit, setAttLimit] = useState<number>(20);
+
+  // Reset limit whenever a new location is activated
+  useEffect(() => {
+    if (activeLocationId) setAttLimit(20);
+  }, [activeLocationId]);
 
   useEffect(() => {
     // Fetch sites from backend view (one feature per site)
@@ -33,7 +39,8 @@ export default function MapPage() {
             const [lng, lat] = feature.geometry.coordinates;
             return {
               id: feature.properties.uid, // site_id
-              name: feature.properties.orgName || "Unknown Site",
+              name: feature.properties.siteName || feature.properties.orgName || "Unknown Site",
+              orgName: feature.properties.orgName || null,
               lat,
               lng,
               attestationCount: feature.properties.count ?? 0,
@@ -65,7 +72,7 @@ export default function MapPage() {
     setLocationLoading(true);
     async function fetchLocationDetails() {
       try {
-        const res = await fetch(`/api/sites/${activeLocationId}`);
+        const res = await fetch(`/api/sites/${activeLocationId}?recent=${attLimit}`);
         const data = await res.json();
 
         if (data.location) {
@@ -83,7 +90,7 @@ export default function MapPage() {
 
     fetchLocationDetails();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeLocationId]); // Only depend on activeLocationId, not points
+  }, [activeLocationId, attLimit]); // refetch when limit grows
 
   if (loading) {
     return (
@@ -96,6 +103,13 @@ export default function MapPage() {
   const handleClosePane = () => {
     setActiveLocationId(null);
     setSelectedLocation(null);
+    setAttLimit(20);
+  };
+
+  const handleLoadMoreAttestations = () => {
+    if (!selectedLocation) return;
+    if (selectedLocation.attestations.length >= (selectedLocation.attestationCount || 0)) return;
+    setAttLimit((n) => Math.min(n + 20, 200));
   };
 
   const handleOpenAttestation = async (attestation: Attestation) => {
@@ -110,7 +124,10 @@ export default function MapPage() {
   };
 
   return (
-    <div className="absolute inset-0">
+    <div
+      className="absolute left-0 right-0 bottom-0"
+      style={{ top: 'var(--topnav-height, 96px)' }}
+    >
       <MapView
         points={points}
         activeId={activeLocationId || undefined}
@@ -120,9 +137,52 @@ export default function MapPage() {
 
       {/* LocationPane - with slide animation */}
       {locationLoading && (
-        <aside className="absolute left-0 top-0 z-10 h-full w-96 md:w-[420px] px-4 py-3.5 bg-vulcan-800/70 backdrop-blur-[3px] text-white overflow-y-auto animate-slide-in-left scrollbar-thin">
-          <div className="flex items-center justify-center h-full">
-            <div className="text-xl">Loading location...</div>
+        <aside className="absolute z-30 text-white overflow-y-auto animate-slide-in-left scrollbar-thin
+                            left-0 right-0 bottom-0 top-auto h-[60svh] w-full px-4 py-3.5 bg-black/70 backdrop-blur-[8px] rounded-t-3xl
+                            md:left-0 md:top-0 md:bottom-auto md:right-auto md:h-full md:w-[420px] md:rounded-none">
+          <div className="md:hidden w-full grid place-items-center mb-2">
+            <div className="h-1.5 w-12 rounded-full bg-white/20" aria-hidden />
+          </div>
+          <div className="flex flex-col gap-2">
+            {/* Header Skeleton */}
+            <section className="p-6 bg-vulcan-900 rounded-3xl animate-pulse">
+              <div className="h-10 w-3/4 bg-vulcan-700/60 rounded" />
+              <div className="mt-3 h-4 w-1/3 bg-vulcan-700/50 rounded" />
+              <div className="mt-1 h-6 w-1/2 bg-vulcan-700/60 rounded" />
+            </section>
+            {/* Regen Skeleton */}
+            <section className="p-6 bg-vulcan-900 rounded-3xl animate-pulse">
+              <div className="flex items-center justify-between">
+                <div className="h-10 w-10 bg-vulcan-700/60 rounded" />
+                <div className="h-24 w-24 bg-vulcan-700/50 rounded-full" />
+              </div>
+              <div className="mt-4 space-y-2">
+                <div className="h-4 w-full bg-vulcan-700/40 rounded" />
+                <div className="h-4 w-5/6 bg-vulcan-700/40 rounded" />
+                <div className="h-4 w-4/6 bg-vulcan-700/40 rounded" />
+              </div>
+            </section>
+            {/* Species Skeleton */}
+            <section className="p-6 bg-vulcan-900 rounded-3xl animate-pulse">
+              <div className="h-6 w-24 bg-vulcan-700/50 rounded" />
+              <div className="mt-4 flex flex-wrap gap-2">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="h-8 w-24 bg-vulcan-700/40 rounded-lg" />
+                ))}
+              </div>
+            </section>
+            {/* Attestations Skeleton */}
+            <section className="bg-vulcan-900 rounded-3xl overflow-hidden animate-pulse">
+              <div className="p-6">
+                <div className="h-8 w-12 bg-vulcan-700/60 rounded" />
+                <div className="mt-2 h-4 w-32 bg-vulcan-700/40 rounded" />
+              </div>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="border-t border-vulcan-700/60">
+                  <div className="h-12 w-full bg-vulcan-800/60" />
+                </div>
+              ))}
+            </section>
           </div>
         </aside>
       )}
@@ -131,6 +191,7 @@ export default function MapPage() {
           location={selectedLocation}
           onClose={handleClosePane}
           onOpenAttestation={handleOpenAttestation}
+          onLoadMore={handleLoadMoreAttestations}
         />
       )}
 

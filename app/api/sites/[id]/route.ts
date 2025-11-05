@@ -2,13 +2,16 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 // GET /api/sites/:id → returns Location JSON from RPC get_site_detail
-export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id: siteId } = await ctx.params;
   if (!siteId) return NextResponse.json({ error: "Missing site id" }, { status: 400 });
+  const { searchParams } = new URL(req.url);
+  const recentParam = searchParams.get('recent');
+  const recent = Math.max(1, Math.min(200, Number(recentParam) || 20));
 
   const { data, error } = await supabaseAdmin.rpc("get_site_detail", {
     site_uuid: siteId,
-    recent_count: 5,
+    recent_count: recent,
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

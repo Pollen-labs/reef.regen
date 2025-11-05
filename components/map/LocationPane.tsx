@@ -1,6 +1,7 @@
 "use client";
+import { useEffect, useRef, useState } from "react";
 import type { Attestation, Location } from "@/types/map";
-import DonutChartJS from "@/components/shared/charts/DonutChartJS";
+import dynamic from "next/dynamic";
 import { classesForRegen } from "@/lib/style/regenColors";
 // Site type styled as text (no chip)
 import Tag from "@/components/ui/Tag";
@@ -24,10 +25,12 @@ export default function LocationPane({
   location,
   onClose: _onClose, // Reserved for future close button
   onOpenAttestation,
+  onLoadMore,
 }: {
   location: Location | null;
   onClose: () => void;
   onOpenAttestation: (att: Attestation) => void;
+  onLoadMore?: () => void;
 }) {
   if (!location) return null;
 
@@ -40,15 +43,88 @@ export default function LocationPane({
   const depthStr = location.depthM != null ? `${location.depthM}m` : "-";
   const areaStr = location.surfaceAreaM2 != null ? `${location.surfaceAreaM2}m²` : "-";
 
+  // Bottom-sheet height (mobile only)
+  const [isMdUp, setIsMdUp] = useState(false);
+  const [sheetH, setSheetH] = useState<number | null>(null);
+  const startY = useRef(0);
+  const startH = useRef(0);
+  const dragging = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(min-width: 768px)');
+    const set = () => setIsMdUp(mq.matches);
+    set();
+    mq.addEventListener?.('change', set);
+    return () => mq.removeEventListener?.('change', set);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const init = () => setSheetH(Math.round(window.innerHeight * 0.6));
+    init();
+    const onResize = () => {
+      // Keep the same ratio on rotate/resize
+      const current = sheetH ?? Math.round(window.innerHeight * 0.6);
+      const pct = Math.max(0.3, Math.min(0.92, current / (window.innerHeight || 1)));
+      setSheetH(Math.round(window.innerHeight * pct));
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onDragStart = (e: React.PointerEvent) => {
+    if (isMdUp) return; // desktop not draggable
+    dragging.current = true;
+    startY.current = e.clientY;
+    startH.current = sheetH || Math.round(window.innerHeight * 0.6);
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    // Prevent text selection while dragging
+    document.body.style.userSelect = 'none';
+  };
+  const onDragMove = (e: React.PointerEvent) => {
+    if (!dragging.current || isMdUp) return;
+    e.preventDefault();
+    const dy = e.clientY - startY.current;
+    const raw = startH.current - dy; // drag up increases height
+    const minH = Math.round((window.innerHeight || 1) * 0.3);
+    const maxH = Math.round((window.innerHeight || 1) * 0.9);
+    const next = Math.max(minH, Math.min(maxH, raw));
+    setSheetH(next);
+  };
+  const onDragEnd = (e: React.PointerEvent) => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    document.body.style.userSelect = '';
+    (e.target as Element).releasePointerCapture?.(e.pointerId);
+  };
+
+  const mobileStyle = !isMdUp && sheetH ? { height: `${sheetH}px` } : undefined;
+
   return (
     <aside
-      className="absolute left-0 top-0 z-10 h-full w-96 md:w-[420px] px-4 py-3.5 bg-black/70 backdrop-blur-[8px] text-white overflow-y-auto transition-transform duration-300 ease-out scrollbar-thin scrollbar-thumb-vulcan-600 scrollbar-track-vulcan-800/50 hover:scrollbar-thumb-vulcan-500"
+      className="absolute z-30 text-white transition-transform duration-300 ease-out overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-vulcan-600 scrollbar-track-vulcan-800/50 hover:scrollbar-thumb-vulcan-500
+                 left-0 right-0 bottom-0 top-auto h-[60svh] w-full px-4 pt-0 pb-3.5 bg-black/70 backdrop-blur-[8px] rounded-t-3xl
+                 md:left-0 md:top-0 md:bottom-auto md:right-auto md:h-full md:w-[420px] md:px-4 md:py-3.5 md:rounded-none"
+      style={mobileStyle}
       role="complementary"
       aria-label={`Location details for ${location.name}`}
     >
-      <div className="flex flex-col gap-2">
+      {/* Mobile drag handle (sticky) */}
+      <div
+        className="md:hidden sticky top-0 z-10 -mx-4 px-4 py-2 bg-black/70 backdrop-blur-[8px] rounded-t-3xl cursor-row-resize"
+        onPointerDown={onDragStart}
+        onPointerMove={onDragMove}
+        onPointerUp={onDragEnd}
+        onPointerCancel={onDragEnd}
+      >
+        <div className="mx-auto h-1.5 w-12 rounded-full bg-white/30" aria-hidden />
+      </div>
+      <div className="flex flex-col gap-2 mt-1 md:mt-0">
         {/* Header Card */}
         <section className="p-6 bg-vulcan-900 rounded-3xl flex flex-col gap-2">
+        <div className="text-lg font-light text-vulcan-400">Site name</div>
           <h2 className="text-h4 font-black text-white">
             {location.name}
           </h2>
@@ -63,7 +139,7 @@ export default function LocationPane({
         {/* Regen actions Card */}
         <section className="p-6 bg-vulcan-900 rounded-3xl flex flex-col gap-4">
           <div className="flex items-start justify-between gap-4">
-            <div className="w-40">
+            <div className="w-36 min-w-0">
               <div className="text-h4 font-black">
                 {totalActions}
               </div>
@@ -71,9 +147,9 @@ export default function LocationPane({
                 Regen actions
               </div>
             </div>
-            {/* Donut chart (Chart.js) */}
-            <div className="w-32">
-              <DonutChartJS data={chartData as any} tooltipMode="count" height={120} />
+            {/* Donut chart (lazy) */}
+            <div className="shrink-0 w-24 justify-right">
+              <LazyDonut data={chartData} />
             </div>
           </div>
 
@@ -161,6 +237,16 @@ export default function LocationPane({
                 </li>
               ))}
           </ul>
+          {onLoadMore && location.attestations.length < (location.attestationCount || 0) && (
+            <div className="border-t border-vulcan-700/60 p-4 grid place-items-center">
+              <button
+                onClick={onLoadMore}
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-base font-bold"
+              >
+                Load more
+              </button>
+            </div>
+          )}
         </section>
       </div>
 
@@ -175,5 +261,32 @@ export default function LocationPane({
         Press Escape or click outside the pane to close
       </span>
     </aside>
+  );
+}
+
+// Lazy Chart wrapper with idle rendering and skeleton fallback
+const DonutChart = dynamic(() => import("@/components/shared/charts/DonutChartJS"), { ssr: false });
+
+function LazyDonut({ data }: { data: { label: string; count: number; color: string }[] }) {
+  const [ready, setReady] = require("react").useState(false);
+  require("react").useEffect(() => {
+    const idle = (cb: () => void) => (
+      (window as any).requestIdleCallback ? (window as any).requestIdleCallback(cb, { timeout: 500 }) : setTimeout(cb, 200)
+    );
+    const id = idle(() => setReady(true));
+    return () => {
+      if ((window as any).cancelIdleCallback) (window as any).cancelIdleCallback(id);
+      else clearTimeout(id);
+    };
+  }, []);
+
+  return (
+    <div className="relative w-full aspect-square">
+      {ready ? (
+        <DonutChart data={data as any} tooltipMode="count" className="absolute inset-0" />
+      ) : (
+        <div className="absolute inset-0 m-auto rounded-full bg-vulcan-700/60 animate-pulse" aria-hidden />
+      )}
+    </div>
   );
 }
