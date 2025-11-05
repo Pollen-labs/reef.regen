@@ -14,6 +14,16 @@ export default function AttestationDetailModal({ attestation, onClose, overlayCl
   overlayClassName?: string; // optional: customize overlay styles
 }) {
   if (!attestation) return null;
+
+  // Close on ESC for convenience
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    require('react').useEffect(() => {
+      const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+      window.addEventListener('keydown', onKey);
+      return () => window.removeEventListener('keydown', onKey);
+    }, [onClose]);
+  } catch {}
   const siteType = attestation.siteType ?? "-";
   const locStr = attestation.lat != null && attestation.lng != null ? `${attestation.lat.toFixed(5)}, ${attestation.lng.toFixed(5)}` : "-";
   const depthStr = attestation.depthM != null ? `${attestation.depthM} meter` : "-";
@@ -38,8 +48,12 @@ export default function AttestationDetailModal({ attestation, onClose, overlayCl
       ].join(" ")}
       role="dialog"
       aria-modal="true"
+      onClick={onClose}
     >
-      <div className="relative w-full max-w-3xl rounded-3xl bg-vulcan-900 text-white shadow-2xl outline outline-1 outline-vulcan-500 max-h-[85vh] flex flex-col overflow-hidden">
+      <div
+        className="relative w-full max-w-3xl rounded-3xl bg-vulcan-900 text-white shadow-2xl outline outline-1 outline-vulcan-500 max-h-[85vh] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Static header with close button */}
         <div className="flex items-center justify-end p-3 bg-vulcan-900">
           <button
@@ -134,15 +148,18 @@ export default function AttestationDetailModal({ attestation, onClose, overlayCl
             <div className="text-vulcan-400 text-lg">Species include</div>
             <div className="flex flex-wrap gap-1">
               {attestation.speciesWithCount?.length ? (
-                attestation.speciesWithCount.map((s) => (
-                  <Tag
-                    key={`${s.name}-${s.count ?? 'n'}`}
-                    label={`${s.name}${s.count != null ? ` ${s.count}` : ''}`}
-                    size="md"
-                    bgClass="bg-ribbon-300"
-                    textClass="text-vulcan-950"
-                  />
-                ))
+                attestation.speciesWithCount.map((s) => {
+                  const label = s.count != null ? `${s.count} x ${s.name}` : s.name;
+                  return (
+                    <Tag
+                      key={`${s.name}-${s.count ?? 'n'}`}
+                      label={label}
+                      size="md"
+                      bgClass="bg-ribbon-300"
+                      textClass="text-vulcan-950"
+                    />
+                  );
+                })
               ) : (
                 <span className="text-lg text-white/70">-</span>
               )}
