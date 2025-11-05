@@ -35,6 +35,90 @@ export default function TopNav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [menuAnim, setMenuAnim] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const hideTimeout = useRef<number | null>(null);
+  const headerRef = useRef<HTMLElement | null>(null);
+
+  // Scroll-aware behavior: hide on scroll down, show on scroll up
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // initialize last scroll in case user is not at top
+    lastScrollY.current = window.scrollY || 0;
+
+    const THRESHOLD = 16; // px delta before considering a direction change
+    const MIN_HIDE_Y = 200; // only hide after passing this scroll position
+    let ticking = false;
+
+    const onScroll = () => {
+      const run = () => {
+        const y = window.scrollY;
+        const delta = y - lastScrollY.current;
+
+        // ignore micro scrolls
+        if (Math.abs(delta) < THRESHOLD) {
+          ticking = false;
+          return;
+        }
+
+        // always show near top or on scroll up
+        if (y <= 0 || delta < 0) {
+          if (hideTimeout.current) {
+            window.clearTimeout(hideTimeout.current);
+            hideTimeout.current = null;
+          }
+          setIsVisible(true);
+        } else if (delta > 0 && y > MIN_HIDE_Y) {
+          // scrolling down past threshold and minimum position: delay hide slightly
+          if (hideTimeout.current) window.clearTimeout(hideTimeout.current);
+          hideTimeout.current = window.setTimeout(() => {
+            setIsVisible(false);
+          }, 200);
+        }
+
+        lastScrollY.current = y;
+        ticking = false;
+      };
+
+      if (!ticking) {
+        ticking = true;
+        window.requestAnimationFrame(run);
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (hideTimeout.current) window.clearTimeout(hideTimeout.current);
+    };
+  }, []);
+
+  // Keep nav visible when mobile menu is open
+  useEffect(() => {
+    if (open) setIsVisible(true);
+  }, [open]);
+
+  // Measure header height and expose CSS var for layout padding
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const el = headerRef.current;
+    if (!el) return;
+
+    const setVar = () => {
+      const h = el.offsetHeight;
+      document.documentElement.style.setProperty('--topnav-height', `${h}px`);
+    };
+
+    setVar();
+    const ro = new ResizeObserver(setVar);
+    ro.observe(el);
+    window.addEventListener('resize', setVar);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', setVar);
+    };
+  }, []);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -115,7 +199,16 @@ export default function TopNav() {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-black text-white">
+    <header
+      ref={headerRef}
+      className={`fixed top-0 left-0 right-0 z-40 bg-black text-white will-change-transform transition-transform ${
+        isVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}
+      style={{
+        transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)', // easeOutCubic
+        transitionDuration: isVisible ? '350ms' : '550ms',
+      }}
+    >
       {/* Global announcement bar */}
       <div className="w-full bg-orange text-white">
         <div className="w-full px-6 md:px-10 py-1 flex items-center justify-center">

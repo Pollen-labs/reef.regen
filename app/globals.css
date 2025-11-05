@@ -9,11 +9,13 @@
 @layer base {
   :root {
     /* semantic aliases (use or extend as needed) */
-    --bg:        theme(colors.white);
-    --fg:        theme(colors.black);
+    --bg:        theme(colors.black);
+    --fg:        theme(colors.white);
     --brand:     theme(colors.ribbon.500);
     --accent:    theme(colors.flamingo.400);
     --muted:     theme(colors.vulcan.500);
+    /* default header height to avoid initial jump before JS measures */
+    --topnav-height: 96px;
   }
 
   html, body {
