@@ -110,7 +110,10 @@ export default function MapPage() {
   };
 
   return (
-    <div className="absolute inset-0">
+    <div
+      className="absolute left-0 right-0 bottom-0"
+      style={{ top: 'var(--topnav-height, 96px)' }}
+    >
       <MapView
         points={points}
         activeId={activeLocationId || undefined}

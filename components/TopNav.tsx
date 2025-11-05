@@ -25,6 +25,7 @@ import Button from "@/components/ui/Button";
 export default function TopNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const isMapPage = pathname === "/map";
   const router = useRouter();
   const { confirm, shouldBlock } = useLeaveGuard();
   const { connect: connectWeb3Auth, loading: web3authLoading } = useWeb3AuthConnect();
@@ -42,6 +43,10 @@ export default function TopNav() {
 
   // Scroll-aware behavior: hide on scroll down, show on scroll up
   useEffect(() => {
+    if (isMapPage) {
+      setIsVisible(true);
+      return;
+    }
     if (typeof window === 'undefined') return;
 
     // initialize last scroll in case user is not at top
@@ -92,7 +97,7 @@ export default function TopNav() {
       window.removeEventListener('scroll', onScroll);
       if (hideTimeout.current) window.clearTimeout(hideTimeout.current);
     };
-  }, []);
+  }, [isMapPage]);
 
   // Keep nav visible when mobile menu is open
   useEffect(() => {
@@ -202,11 +207,11 @@ export default function TopNav() {
     <header
       ref={headerRef}
       className={`fixed top-0 left-0 right-0 z-40 bg-black text-white will-change-transform transition-transform ${
-        isVisible ? 'translate-y-0' : '-translate-y-full'
+        (isVisible || isMapPage) ? 'translate-y-0' : '-translate-y-full'
       }`}
       style={{
         transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)', // easeOutCubic
-        transitionDuration: isVisible ? '350ms' : '550ms',
+        transitionDuration: isMapPage ? '0ms' : (isVisible ? '350ms' : '550ms'),
       }}
     >
       {/* Global announcement bar */}

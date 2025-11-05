@@ -35,15 +35,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // Force entire site to dark theme
   const rootTheme = "bg-black text-white";
 
+  const mainBase = `relative flex-1 ${isMapPage ? 'overflow-hidden' : ''}`;
+  const mainClass = isMapPage ? mainBase : `${mainBase} pt-[var(--topnav-height)]`;
+
   return (
     <div className={`min-h-dvh flex flex-col ${rootTheme} ${isMapPage ? 'overflow-hidden' : ''}`}>
       <TopNav />
       <main
-        className={`relative flex-1 pt-[var(--topnav-height)] ${isMapPage ? 'overflow-hidden' : ''}`}
-        style={{
-          // Fallback for first paint before JS measures header
-          paddingTop: 'var(--topnav-height, 96px)'
-        }}
+        className={mainClass}
+        style={isMapPage ? undefined : { paddingTop: 'var(--topnav-height, 96px)' }}
       >
         {isMapPage || isHomePage || isOnboarding ? (
           // Map page: full-bleed for absolute positioning

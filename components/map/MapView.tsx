@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { ResourceType, RequestParameters } from "maplibre-gl";
 import type { LocationPoint } from "@/types/map";
+import { MAP_COLORS } from "@/lib/style/mapColors";
 
 /**
  * MapView — Full-screen interactive map
@@ -87,6 +88,10 @@ export default function MapView({
         style: "/map/styles/dark_matter.json",
         center: [0, 15],
         zoom: 1.6,
+        minZoom: 2, // avoid world repeating at z0
+        pitch: 0,
+        dragRotate: false,
+        pitchWithRotate: false,
         attributionControl: true,
         transformRequest: (
           u: string | RequestParameters,
@@ -112,8 +117,16 @@ export default function MapView({
 
       mapRef.current = map;
 
-      // Controls
-      map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }));
+      // Controls: show +/− zoom, hide compass (rotation disabled)
+      map.addControl(new maplibregl.NavigationControl({ showZoom: true, showCompass: false, visualizePitch: false }));
+
+      // Extra safety: disable rotate interactions from all inputs
+      try {
+        map.dragRotate.disable();
+        if (map.touchZoomRotate && map.touchZoomRotate.disableRotation) {
+          map.touchZoomRotate.disableRotation();
+        }
+      } catch {}
 
       map.on("load", () => {
         // Initial empty source (data will be set by points effect)
@@ -130,10 +143,15 @@ export default function MapView({
             source: "locations",
             paint: {
               "circle-radius": ["case", ["==", ["get", "id"], ""], 10, 6],
-              // Back to fixed brand orange for all pins
-              "circle-color": "#FF7F5C",
+              // Use design system colors via MAP_COLORS
+              "circle-color": [
+                "case",
+                [">", ["get", "attestationCount"], 0],
+                MAP_COLORS.pin.hasData,
+                MAP_COLORS.pin.noData
+              ],
               "circle-stroke-width": 1,
-              "circle-stroke-color": "#3C3D50", // vulcan-800
+              "circle-stroke-color": MAP_COLORS.stroke,
             },
           });
         }
