@@ -39,7 +39,8 @@ export default function MapPage() {
             const [lng, lat] = feature.geometry.coordinates;
             return {
               id: feature.properties.uid, // site_id
-              name: feature.properties.orgName || "Unknown Site",
+              name: feature.properties.siteName || feature.properties.orgName || "Unknown Site",
+              orgName: feature.properties.orgName || null,
               lat,
               lng,
               attestationCount: feature.properties.count ?? 0,
@@ -138,7 +139,7 @@ export default function MapPage() {
       {locationLoading && (
         <aside className="absolute z-30 text-white overflow-y-auto animate-slide-in-left scrollbar-thin
                             left-0 right-0 bottom-0 top-auto h-[60svh] w-full px-4 py-3.5 bg-black/70 backdrop-blur-[8px] rounded-t-3xl
-                            md:left-0 md:top-0 md:bottom-auto md:right-auto md:h-full md:w-96 md:w-[420px] md:rounded-none">
+                            md:left-0 md:top-0 md:bottom-auto md:right-auto md:h-full md:w-[420px] md:rounded-none">
           <div className="md:hidden w-full grid place-items-center mb-2">
             <div className="h-1.5 w-12 rounded-full bg-white/20" aria-hidden />
           </div>

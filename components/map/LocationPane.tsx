@@ -106,7 +106,7 @@ export default function LocationPane({
     <aside
       className="absolute z-30 text-white transition-transform duration-300 ease-out overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-vulcan-600 scrollbar-track-vulcan-800/50 hover:scrollbar-thumb-vulcan-500
                  left-0 right-0 bottom-0 top-auto h-[60svh] w-full px-4 pt-0 pb-3.5 bg-black/70 backdrop-blur-[8px] rounded-t-3xl
-                 md:left-0 md:top-0 md:bottom-auto md:right-auto md:h-full md:w-96 md:w-[420px] md:px-4 md:py-3.5 md:rounded-none"
+                 md:left-0 md:top-0 md:bottom-auto md:right-auto md:h-full md:w-[420px] md:px-4 md:py-3.5 md:rounded-none"
       style={mobileStyle}
       role="complementary"
       aria-label={`Location details for ${location.name}`}
