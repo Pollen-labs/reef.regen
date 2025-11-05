@@ -11,12 +11,12 @@ export type ColorClasses = {
 // Choose high-contrast light tints for dark backgrounds
 const LIGHT = {
   // hex values mirror tailwind.config.ts extended palette 300-level tints
-  flamingo:   { bg: "bg-flamingo-300",   text: "text-vulcan-950", hex: "#F6A17B" },
-  ribbon:     { bg: "bg-ribbon-300",     text: "text-vulcan-950", hex: "#96B5FA" },
-  aquamarine: { bg: "bg-aquamarine-300", text: "text-vulcan-950", hex: "#59FCCE" },
-  sunflower:  { bg: "bg-sunflower-300",  text: "text-vulcan-950", hex: "#F4EA50" },
-  violet:     { bg: "bg-violet-300",     text: "text-vulcan-950", hex: "#DDB2FF" },
-  magenta:    { bg: "bg-magenta-300",    text: "text-vulcan-950", hex: "#FADAFD" },
+  flamingo:   { bg: "bg-flamingo-400",   text: "text-vulcan-950", hex: "#F6A17B" },
+  ribbon:     { bg: "bg-ribbon-400",     text: "text-vulcan-950", hex: "#96B5FA" },
+  aquamarine: { bg: "bg-aquamarine-400", text: "text-vulcan-950", hex: "#59FCCE" },
+  sunflower:  { bg: "bg-sunflower-400",  text: "text-vulcan-950", hex: "#F4EA50" },
+  violet:     { bg: "bg-violet-400",     text: "text-vulcan-950", hex: "#DDB2FF" },
+  magenta:    { bg: "bg-magenta-400",    text: "text-vulcan-950", hex: "#FADAFD" },
   gray:       { bg: "bg-vulcan-200",     text: "text-vulcan-950", hex: "#D6D6E1" },
 } satisfies Record<string, ColorClasses>;
 
@@ -46,8 +46,25 @@ export const REGEN_CATEGORY_COLORS: Record<string, ColorClasses> = {
   "substratum enhancement": LIGHT.ribbon,
 };
 
+export function normalizeRegenName(name?: string): string {
+  const k = (name || "").trim().toLowerCase();
+  // Common UI labels → canonical keys used for color mapping
+  const ALIASES: Record<string, string> = {
+    "nursery phase": "coral gardening - nursery phase",
+    "transplantation phase": "coral gardening - transplantation phase",
+    "microfragmentation": "coral gardening - microfragmentation",
+    "hybridization": "coral gardening - hybridization",
+    "direct transplant": "direct transplant",
+    "larval enhancement": "larval enhancement",
+    "artificial reef": "substrate addition - artificial reef",
+    "substrate stabilization": "substrate stabilisation",
+    "substrate stabilisation": "substrate stabilisation",
+  };
+  return ALIASES[k] || k;
+}
+
 export function classesForRegen(name?: string, category?: string): ColorClasses {
-  const key = (name || "").trim().toLowerCase();
+  const key = normalizeRegenName(name);
   if (key && REGEN_TYPE_NAME_COLORS[key]) return REGEN_TYPE_NAME_COLORS[key];
   const cat = (category || "").trim().toLowerCase();
   if (cat && REGEN_CATEGORY_COLORS[cat]) return REGEN_CATEGORY_COLORS[cat];
