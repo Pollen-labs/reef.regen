@@ -1,7 +1,7 @@
 export default function Motivation() {
   return (
     <section className="bg-black text-vulcan-50">
-      <div className="mx-auto w-full max-w-[1440px] px-6 md:px-10 py-20 pb-12 md:py-24 grid grid-cols-12 items-center gap-y-10 gap-x-8">
+      <div className="mx-auto w-full max-w-[1440px] px-6 md:px-24 py-20 pb-12 md:py-24 grid grid-cols-12 items-center gap-y-10 gap-x-8">
         {/* Illustration */}
         <div className="col-span-12 lg:col-span-5 min-w-0 w-full flex justify-center lg:justify-start">
           <img
