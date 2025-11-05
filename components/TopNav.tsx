@@ -206,12 +206,16 @@ export default function TopNav() {
   return (
     <header
       ref={headerRef}
-      className={`fixed top-0 left-0 right-0 z-40 bg-black text-white will-change-transform transition-transform ${
-        (isVisible || isMapPage) ? 'translate-y-0' : '-translate-y-full'
+      className={`fixed top-0 left-0 right-0 z-40 bg-black text-white ${
+        open ? '' : 'will-change-transform transition-transform'
+      } ${
+        open ? '' : ((isVisible || isMapPage) ? 'translate-y-0' : '-translate-y-full')
       }`}
       style={{
         transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)', // easeOutCubic
         transitionDuration: isMapPage ? '0ms' : (isVisible ? '350ms' : '550ms'),
+        // Avoid creating a transformed containing block when mobile menu is open
+        transform: open ? 'none' as any : undefined,
       }}
     >
       {/* Global announcement bar */}
@@ -328,7 +332,7 @@ export default function TopNav() {
       {/* Mobile Fullscreen Menu */}
       {open && (
         <div
-          className={`md:hidden fixed inset-0 z-50 bg-black transition-opacity duration-200 ease-out ${menuAnim ? 'opacity-100' : 'opacity-0'}`}
+          className={`md:hidden fixed inset-0 z-[1000] bg-black transition-opacity duration-200 ease-out ${menuAnim ? 'opacity-100' : 'opacity-0'}`}
           role="dialog"
           aria-modal="true"
         >
