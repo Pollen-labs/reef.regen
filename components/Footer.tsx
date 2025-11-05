@@ -31,27 +31,16 @@ export default function Footer() {
           <span className="block text-2xl md:text-3xl font-black tracking-hd text-white mb-3">
             Built for transparent, verifiable ocean restoration.
           </span>
-            Reef.Regen is a collaboration between{" "}
-            <a
+          Reef.Regen was conceived, designed, and developed by {" "} 
+          <a
               href="https://pollenlabs.org/"
               target="_blank"
               rel="noopener noreferrer"
               className="font-bold text-white hover:text-white/80 transition-colors"
             >
               Pollen Labs
-            </a>{" "}
-            and{" "}
-            <a
-              href="https://mesoreefdao.org/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-bold text-white hover:text-white/80 transition-colors"
-            >
-              MesoReef DAO
             </a>
-            .
-            <br />
-            Supported by {" "}
+             {" "}with support from the {" "}
             <a
               href="https://community.optimism.io/"
               target="_blank"
@@ -60,7 +49,19 @@ export default function Footer() {
             >
               Optimism collective
             </a>
-            .
+            . 
+            
+            The application was created to empower reef scientists and restoration teams, such as  
+            {" "}
+            <a
+              href="https://mesoreefdao.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-white hover:text-white/80 transition-colors"
+            >
+              MesoReef DAO 
+            </a>
+             {" "}and many others, who are working to restore and protect coral ecosystems around the world.
            
           </p>
         </div>
