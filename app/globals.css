@@ -26,13 +26,18 @@
 }
 
 @layer components {
-  /* Headings (Outfit Black, -2% tracking, 104% leading) */
-  .hd-1 { @apply text-h1 font-black tracking-hd; }
-  .hd-2 { @apply text-h2 font-black tracking-hd; }
-  .hd-3 { @apply text-h3 font-black tracking-hd; }
-  .hd-4 { @apply text-h4 font-black tracking-hd; }
-  .hd-5 { @apply text-h5 font-black tracking-hd; }
-  .hd-6 { @apply text-h6 font-black tracking-hd; }
+  /* Headings — fluid sizes via clamp()
+   * Desktop targets (max): H1 118, H2 89, H3 67, H4 50, H5 38, H6 28
+   * Mobile mins chosen to keep a 1.333 modular ratio feel.
+   * Scales between 360px and 1440px viewport widths.
+   * To tweak: adjust the first (min) and last (max) numbers.
+   */
+  .hd-1 { @apply font-black tracking-hd leading-hd text-[clamp(72px,calc(44px+0.0685*(100vw-360px)),118px)]; }
+  .hd-2 { @apply font-black tracking-hd leading-hd text-[clamp(64px,calc(36px+0.0491*(100vw-360px)),89px)]; }
+  .hd-3 { @apply font-black tracking-hd leading-hd text-[clamp(50px,calc(28px+0.0361*(100vw-360px)),67px)]; }
+  .hd-4 { @apply font-black tracking-hd leading-hd text-[clamp(40px,calc(22px+0.0259*(100vw-360px)),50px)]; }
+  .hd-5 { @apply font-black tracking-hd leading-hd text-[clamp(36px,calc(20px+0.0167*(100vw-360px)),38px)]; }
+  .hd-6 { @apply font-black tracking-hd leading-hd text-[clamp(30px,calc(18px+0.00926*(100vw-360px)),28px)]; }
 
   /* Body sizes (140% leading) */
   .body-2xl { @apply text-2xlb; }
