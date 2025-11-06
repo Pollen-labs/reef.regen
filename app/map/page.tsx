@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import MapView from "@/components/map/MapView";
 import LocationPane from "@/components/map/LocationPane";
 import type { LocationPoint, Location, Attestation } from "@/types/map";
@@ -13,7 +14,7 @@ import { classesForSiteType } from "@/lib/style/siteTypeColors";
  * Shows all reef restoration locations with interactive pins.
  * Click a pin to view location details in LocationPane (Phase 3A).
  */
-export default function MapPage() {
+function MapPageContent() {
   const [activeLocationId, setActiveLocationId] = useState<string | null>(null);
   const [points, setPoints] = useState<LocationPoint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +22,52 @@ export default function MapPage() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [activeAtt, setActiveAtt] = useState<Attestation | null>(null);
   const [attLimit, setAttLimit] = useState<number>(20);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Derived helpers for reading/updating query params
+  const currentSiteFromUrl = searchParams?.get("site") || null;
+  const currentAttFromUrl = searchParams?.get("att") || null;
+
+  // Keep selection in sync with `?site=` shareable URL param
+  useEffect(() => {
+    if (currentSiteFromUrl !== (activeLocationId || null)) {
+      setActiveLocationId(currentSiteFromUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSiteFromUrl]);
+
+  // Open attestation modal from URL (?att=uid). Also sync location pane.
+  useEffect(() => {
+    const attId = currentAttFromUrl;
+    if (!attId) return;
+    if (activeAtt?.id === attId) return;
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/attestations/${attId}`);
+        const data = await res.json();
+        if (data?.attestation) {
+          const att: Attestation = data.attestation as Attestation;
+          setActiveAtt(att);
+          // Ensure the LocationPane is showing the attestation's site
+          if (att.locationId && att.locationId !== activeLocationId) {
+            setActiveLocationId(att.locationId);
+            try {
+              const next = new URLSearchParams(searchParams?.toString() || "");
+              next.set("site", att.locationId);
+              next.set("att", att.id);
+              router.replace(`${pathname}?${next.toString()}` as any);
+            } catch {}
+          }
+        }
+      } catch (e) {
+        // noop — leave modal closed on error
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAttFromUrl]);
 
   // Reset limit whenever a new location is activated
   useEffect(() => {
@@ -104,6 +151,14 @@ export default function MapPage() {
     setActiveLocationId(null);
     setSelectedLocation(null);
     setAttLimit(20);
+
+    // Remove `site` from URL for clean state
+    try {
+      const next = new URLSearchParams(searchParams?.toString() || "");
+      next.delete("site");
+      const qs = next.toString();
+      router.replace((qs ? `${pathname}?${qs}` : pathname) as any);
+    } catch {}
   };
 
   const handleLoadMoreAttestations = () => {
@@ -121,6 +176,26 @@ export default function MapPage() {
     } catch (e) {
       setActiveAtt(attestation);
     }
+
+    // Update URL (?att=) and include ?site= if known for shareability
+    try {
+      const next = new URLSearchParams(searchParams?.toString() || "");
+      next.set("att", attestation.id);
+      const siteId = activeLocationId || (attestation as any).locationId;
+      if (siteId) next.set("site", siteId);
+      router.replace(`${pathname}?${next.toString()}` as any);
+    } catch {}
+  };
+
+  const handleCloseAttestationModal = () => {
+    setActiveAtt(null);
+    // Remove att from URL
+    try {
+      const next = new URLSearchParams(searchParams?.toString() || "");
+      next.delete("att");
+      const qs = next.toString();
+      router.replace((qs ? `${pathname}?${qs}` : pathname) as any);
+    } catch {}
   };
 
   return (
@@ -131,7 +206,15 @@ export default function MapPage() {
       <MapView
         points={points}
         activeId={activeLocationId || undefined}
-        onSelect={(id) => setActiveLocationId(id)}
+        onSelect={(id) => {
+          setActiveLocationId(id);
+          // Update URL for shareable deep link to this site
+          try {
+            const next = new URLSearchParams(searchParams?.toString() || "");
+            next.set("site", id);
+            router.replace(`${pathname}?${next.toString()}` as any);
+          } catch {}
+        }}
         onDeselect={handleClosePane}
       />
 
@@ -195,7 +278,19 @@ export default function MapPage() {
         />
       )}
 
-      <AttestationDetailModal attestation={activeAtt} onClose={() => setActiveAtt(null)} />
+      <AttestationDetailModal attestation={activeAtt} onClose={handleCloseAttestationModal} />
     </div>
+  );
+}
+
+export default function MapPage() {
+  return (
+    <Suspense fallback={
+      <div className="absolute inset-0 bg-vulcan-900 flex items-center justify-center" style={{ top: 'var(--topnav-height, 96px)' }}>
+        <div className="text-white text-xl">Loading map...</div>
+      </div>
+    }>
+      <MapPageContent />
+    </Suspense>
   );
 }

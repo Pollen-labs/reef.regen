@@ -206,9 +206,22 @@ export default function ReviewPage() {
       const jF = await resF.json().catch(() => ({}));
       if (!resF.ok) throw new Error(jF?.error || `Finalize failed (${resF.status})`);
 
-      // done — clear wizard completely to avoid stale hydration
+      // done — compute redirect params BEFORE clearing wizard state
+      const attestationId = (jF as any)?.attestationId as string | undefined;
+      const siteIdSafe = (s.siteId || '').trim();
+
+      // Clear wizard to avoid stale hydration
       s.resetAndPurge();
-      router.replace(`/submit/success?uid=${encodeURIComponent(easUID)}`);
+
+      try {
+        const params = new URLSearchParams();
+        params.set('uid', easUID);
+        if (attestationId) params.set('att', attestationId);
+        if (siteIdSafe) params.set('site', siteIdSafe);
+        router.replace(`/submit/success?${params.toString()}`);
+      } catch {
+        router.replace(`/submit/success?uid=${encodeURIComponent(easUID)}`);
+      }
     } catch (err: any) {
       console.error('Submit failed', err);
       s.setPatch({ submitError: err?.message || String(err), submitPhase: 'failed', submitting: false });

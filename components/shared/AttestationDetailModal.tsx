@@ -185,7 +185,7 @@ export default function AttestationDetailModal({ attestation, onClose, overlayCl
           {/* Media */}
           {(fileName || fileViewUrl) && (
             <IdentifierBar
-              label="Additional media"
+              label="Attachment"
               value={fileViewUrl || fileName || ''}
               actionLabel="View"
               external
@@ -198,7 +198,7 @@ export default function AttestationDetailModal({ attestation, onClose, overlayCl
           {/* EAS UID */}
           {attestation.easUid && (
             <IdentifierBar
-              label="Attestation UID"
+              label="EAS UID"
               value={attestation.easUid}
               actionLabel="View on EAS"
               external
