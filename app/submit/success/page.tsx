@@ -23,8 +23,14 @@ function SuccessInner() {
   return (
     <div className="w-full max-w-[1100px] mx-auto py-24 px-6 md:px-8">
       <div className="grid grid-cols-1 md:grid-cols-[520px_1fr] gap-8 items-center">
-        {/* Image placeholder */}
-        <div className="rounded-3xl bg-vulcan-600/40 aspect-[4/3] md:h-[380px] md:aspect-auto" />
+        {/* Image */}
+        <div className="rounded-3xl overflow-hidden aspect-[1/1] md:h-[480px] md:aspect-auto flex items-center justify-center">
+          <img
+            src="/assets/img-submit-success.svg"
+            alt="Submission success"
+            className="w-full h-full object-contain"
+          />
+        </div>
 
         {/* Text column */}
         <div className="flex flex-col gap-6">
@@ -32,7 +38,7 @@ function SuccessInner() {
             <div className="text-white text-5xl md:text-7xl font-black leading-[1.04]">Submission is</div>
             <div className="text-white text-5xl md:text-7xl font-black leading-[1.04]">completed!</div>
           </div>
-          <div className="text-vulcan-200 text-2xl font-light leading-9">All your data is submitted to the blockchain.</div>
+          <div className="text-vulcan-200 text-xl font-light leading-9">All your data is submitted to the blockchain.</div>
 
           {uid && (
             <IdentifierBar
