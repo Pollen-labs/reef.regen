@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import DonutChartJS from "@/components/shared/charts/DonutChartJS";
+import LineChartJS from "@/components/shared/charts/LineChartJS";
 import Tag from "@/components/ui/Tag";
 import AttestationDetailModal from "@/components/shared/AttestationDetailModal";
 import { formatDateShort } from "@/lib/format/date";
@@ -65,11 +66,37 @@ export default function ProfilePage() {
       });
   }, [data]);
 
+  // Build category legend with per-action colors
+  const categoryLegend = useMemo(() => {
+    const cats = data?.actions_category_breakdown || [];
+    const actions = data?.actions_breakdown || [];
+    return cats.map((g) => {
+      const colors: string[] = [];
+      const seen = new Set<string>();
+      for (const a of actions) {
+        if ((a.category || '') !== g.name || a.count <= 0) continue;
+        const hex = classesForRegen(a.name, a.category).hex;
+        if (!seen.has(hex)) {
+          colors.push(hex);
+          seen.add(hex);
+        }
+      }
+      return { name: g.name, count: g.count, colors } as { name: string; count: number; colors: string[] };
+    });
+  }, [data?.actions_category_breakdown, data?.actions_breakdown]);
+
   const siteTypes = data?.site_types_breakdown || [];
   const siteBarSegments = useMemo(() => {
     const palette = ["#F6A17B", "#96B5FA", "#59FCCE", "#F4EA50", "#DDB2FF", "#FADAFD"];
     return siteTypes.map((s, i) => ({ label: s.name, value: s.count, color: palette[i % palette.length] }));
   }, [siteTypes]);
+
+  // Build timeline from API monthly timeline (YYYY-MM → value)
+  const timelinePoints = useMemo(() => {
+    const items = (data as any)?.timeline_monthly as { month: string; value: number }[] | undefined;
+    if (!items || !items.length) return [] as { label: string; value: number }[];
+    return items.map((it) => ({ label: it.month, value: it.value }));
+  }, [data]);
 
   const truncateWallet = (w?: string) => (w ? `${w.slice(0, 6)}...${w.slice(-5)}` : "");
   const formatMDY = (iso: string) => {
@@ -80,21 +107,7 @@ export default function ProfilePage() {
     return `${mm}-${dd}-${yyyy}`;
   };
 
-  // Measure left donut card height to sync the right column (map + bubbles)
-  const leftCardRef = useRef<HTMLDivElement | null>(null);
-  const [leftHeight, setLeftHeight] = useState<number | null>(null);
-  useEffect(() => {
-    const el = leftCardRef.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
-    const obs = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const h = Math.round(entry.contentRect.height);
-        if (!Number.isNaN(h)) setLeftHeight(h);
-      }
-    });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
+  // No dynamic height syncing required in the new layout
 
   // Compute ownership every render to keep hook order stable
   const isOwner = useMemo(() => {
@@ -140,13 +153,12 @@ export default function ProfilePage() {
   }
 
   const gapPx = 6; // matches gap-1.5
-  const panelPx = 168; // merged bottom panel inside the map card
 
   return (
     <div className="min-h-screen text-white">
       {/* Breadcrumb bar */}
       <nav aria-label="Breadcrumb" className="w-full">
-        <div className="w-full max-w-[1440px] mx-auto px-2 lg:px-24  mb-4 flex items-center justify-between">
+        <div className="w-full max-w-[1440px] mx-auto px-0 lg:px-24  mb-2 md:mb-4 flex items-center justify-between">
           <div className="text-vulcan-500 text-lg font-bold">Profile</div>
           <div className="flex items-center gap-6">
             {isOwner && (
@@ -165,7 +177,7 @@ export default function ProfilePage() {
 
       {/* Full-width background section */}
       <div className="w-full">
-        <div className="w-full max-w-[1440px] mx-auto px-6 lg:px-24  flex justify-between items-start gap-8">
+        <div className="w-full max-w-[1440px] mx-auto px-0 lg:px-24  flex justify-between items-start gap-8">
         {/* Left column: profile header */}
         <div className="w-full max-w-96 flex flex-col gap-6">
           <h1 className="text-orange text-5xl md:text-7xl font-black leading-tight">{p.profile_name || p.handle}</h1>
@@ -232,10 +244,11 @@ export default function ProfilePage() {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
             {[
+              { label: "Attestations", value: data.stats.attestations_total },
               { label: "Regen actions", value: data.stats.actions_total },
               { label: "Sites", value: data.stats.sites_total },
               { label: "Species", value: data.stats.species_total },
-              { label: "Attestations", value: data.stats.attestations_total },
+              
             ].map((s) => (
               <div key={s.label} className="p-6 bg-vulcan-800 rounded-3xl flex flex-col">
                 <div className="text-h4 font-black">{s.value}</div>
@@ -244,48 +257,58 @@ export default function ProfilePage() {
             ))}
           </div>
 
-          {/* Charts + Map */}
+          {/* Charts row: Left line chart, Right donut + legend */}
           <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-1.5">
-            {/* Actions donut */}
-            <div ref={leftCardRef} className="flex flex-col gap-2">
-              <div className="px-6 py-8 bg-vulcan-800 rounded-3xl flex flex-col items-center gap-6">
-                <div className="flex flex-col items-center gap-6 w-full">
-                  <DonutChartJS data={actionsChart} tooltipMode="count" />
-                  {/* Category legend with summed totals */}
-                  <div className="w-full flex flex-col gap-1">
-                    {(data.actions_category_breakdown || []).map((g) => (
-                      <div key={g.name} className="w-full flex items-center justify-between">
-                        <span className="text-vulcan-300 text-lg font-light">{g.name}</span>
-                        <span className="text-white text-xl font-black">{g.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+            {/* Line chart card */}
+            <div className="px-6 py-6 bg-vulcan-800 rounded-3xl">
+              <div className="text-vulcan-300 text-lg font-bold mb-3">Action over time (last 6 months)</div>
+              <LineChartJS data={timelinePoints} height={220} lineColor="#F6A17B" fillColor="rgba(246,161,123,0.25)" />
             </div>
 
-            {/* Map + Site types merged card */}
-            <div className="bg-vulcan-800 rounded-3xl overflow-hidden" style={leftHeight ? { height: leftHeight } : undefined}>
-              {/* Map area */}
-              <div style={{ height: Math.max(320, (leftHeight ?? 0) - panelPx) }}>
-                <StaticSiteMap
-                  sites={data.sites}
-                  height={Math.max(320, (leftHeight ?? 0) - panelPx)}
-                  className="w-full rounded-t-3xl overflow-hidden"
-                />
+            {/* Donut + legend card */}
+            <div className="px-6 py-8 bg-vulcan-800 rounded-3xl flex flex-col items-center gap-6">
+              <div className="w-full text-vulcan-300 text-lg font-bold">Regen actions</div>
+              <DonutChartJS data={actionsChart} tooltipMode="count" height={260} />
+              <div className="w-full flex flex-col gap-4">
+                {categoryLegend.map((g) => (
+                  <div key={g.name} className="w-full flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="text-vulcan-300 text-lg font-bold">{g.name}</div>
+                      {g.colors.length > 0 && (
+                        <div className="flex gap-1 mt-1" aria-label={`${g.name} action colors`}>
+                          {g.colors.map((c, i) => (
+                            <span key={`${g.name}-${i}`} className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: c }} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-white text-xl font-black ml-3">{g.count}</span>
+                  </div>
+                ))}
               </div>
-              {/* Bottom panel with stacked bar + legend */}
-              <div className="bg-vulcan-900/70 backdrop-blur-[1px] px-4 pt-3 pb-1">
-                <StackedBarChartJS
-                  segments={siteBarSegments}
-                  height={32}
-                  barRadius={40}
-                  barThickness={20}
-                  padding={4}
-                  tooltipMode="count"
-                  legendInside={false}
-                />
-              </div>
+            </div>
+          </div>
+
+          {/* Full-width Map card */}
+          <div className="w-full mt-1.5 bg-vulcan-800 rounded-3xl overflow-hidden">
+            <div>
+              <StaticSiteMap
+                sites={data.sites}
+                height={460}
+                className="w-full"
+              />
+            </div>
+            <div className="bg-vulcan-900/70 backdrop-blur-[1px] px-4 pt-3 pb-2">
+              <div className="text-vulcan-300 text-lg font-bold mb-1">Sites</div>
+              <StackedBarChartJS
+                segments={siteBarSegments}
+                height={36}
+                barRadius={40}
+                barThickness={20}
+                padding={4}
+                tooltipMode="count"
+                legendInside={false}
+              />
             </div>
           </div>
 

@@ -108,7 +108,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
   // Attestations table rows: date, actions, site name
   const { data: attRows, error: attErr } = await supabaseAdmin
     .from("attestation")
-    .select("attestation_id, action_start_date, site:site_id(site_name), profile_id")
+    .select("attestation_id, action_start_date, action_end_date, site:site_id(site_name), profile_id")
     .eq("profile_id", profileId)
     .order("action_start_date", { ascending: false });
   if (attErr) return NextResponse.json({ error: attErr.message }, { status: 500 });
@@ -130,9 +130,44 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
   const attestations = (attRows || []).map((a: any) => ({
     id: a.attestation_id as string,
     date: a.action_start_date as string,
+    endDate: (a.action_end_date as string | null) || null,
     actions: actionTypesByAtt.get(a.attestation_id) || [],
     site: (a.site?.site_name as string) || undefined,
   }));
+
+  // Build monthly timeline of total actions (start..end inclusive)
+  function ym(d: Date) {
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+  }
+  function* monthsBetween(start: Date, end: Date) {
+    const cur = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
+    const last = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), 1));
+    while (cur <= last) {
+      yield new Date(cur);
+      cur.setUTCMonth(cur.getUTCMonth() + 1);
+    }
+  }
+  const monthly = new Map<string, number>();
+  for (const a of attestations) {
+    const start = a.date ? new Date(a.date) : null;
+    const end = a.endDate ? new Date(a.endDate) : start;
+    if (!start || !end) continue;
+    const val = Math.max(1, (a.actions || []).length);
+    for (const m of monthsBetween(start, end)) {
+      const k = ym(m);
+      monthly.set(k, (monthly.get(k) || 0) + val);
+    }
+  }
+  // Ensure last 6 months are present with zero-fill
+  function ymStr(d: Date) { return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`; }
+  const endRef = new Date();
+  endRef.setUTCDate(1);
+  const months6: string[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(Date.UTC(endRef.getUTCFullYear(), endRef.getUTCMonth() - i, 1));
+    months6.push(ymStr(d));
+  }
+  const timeline_monthly = months6.map((m) => ({ month: m, value: monthly.get(m) || 0 }));
 
   const payload = {
     profile: {
@@ -144,7 +179,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
       handle: profile.handle as string,
     },
     stats: {
-      actions_total: Array.from(usedCounts.keys()).length,
+      actions_total: Array.from(usedCounts.values()).reduce((a, b) => a + b, 0),
       sites_total: sites.length,
       species_total: species.length,
       attestations_total: attTotal.count || 0,
@@ -155,6 +190,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
     sites: sitesPayload,
     species,
     attestations,
+    timeline_monthly,
   };
 
   return NextResponse.json(payload);
