@@ -41,8 +41,8 @@ export function WizardFooter({
                 disabled={backDisabled}
                 onClick={onBack}
                 variant="outline"
-                size="md"
-                className="w-full md:w-40 h-14 md:h-12 text-xl font-black"
+                size="sm"
+                className="w-full md:w-40 h-12 md:h-12 text-xl font-black"
               >
                 Back
               </Button>
@@ -61,8 +61,8 @@ export function WizardFooter({
               disabled={nextDisabled}
               onClick={onNext}
               variant="solid"
-              size="md"
-              className="w-full md:w-40 h-14 md:h-12 text-xl font-black"
+              size="sm"
+              className="w-full md:w-40 h-12 md:h-12 text-xl font-black"
             >
               {nextLabel || "Next"}
             </Button>

@@ -26,6 +26,7 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     let map: maplibregl.Map | null = null;
+    let wheelHandler: ((e: WheelEvent) => void) | null = null;
     const styleUrl = process.env.NEXT_PUBLIC_MAP_STYLE_URL || "/map/styles/dark_matter.json";
     const init = async () => {
       try {
@@ -86,8 +87,8 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
       mapRef.current = map!;
 
       map!.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
-      // Disable default scroll-zoom and implement a center-based zoom to avoid cursor focal point
-      const wheelHandler = (e: WheelEvent) => {
+      // Disable default scroll-zoom and implement cursor‑focused zoom
+      wheelHandler = (e: WheelEvent) => {
         if (!interactive) return;
         e.preventDefault();
         const z = map!.getZoom();
@@ -100,7 +101,7 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
         map!.easeTo({ zoom: next, around, duration: 200 });
       };
       map!.scrollZoom.disable();
-      containerRef.current!.addEventListener('wheel', wheelHandler, { passive: false });
+      containerRef.current!.addEventListener('wheel', wheelHandler!, { passive: false });
       if (!interactive) {
         map!.dragPan.disable();
         map!.boxZoom.disable();
@@ -121,7 +122,7 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
     };
     init();
     return () => {
-      try { containerRef.current?.removeEventListener('wheel', wheelHandler as any); } catch {}
+      try { if (wheelHandler) containerRef.current?.removeEventListener('wheel', wheelHandler as any); } catch {}
       if (map) map.remove();
     };
   }, []);
