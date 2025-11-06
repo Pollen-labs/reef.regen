@@ -54,6 +54,11 @@ export default function StaticSiteMap({
       });
       mapRef.current = map;
 
+      // Add +/- zoom controls for verification view
+      try {
+        map.addControl(new maplibregl.NavigationControl({ showCompass: false, visualizePitch: false }), 'bottom-right');
+      } catch {}
+
       map.on("load", () => {
         if (!map.getSource("sites")) {
           map.addSource("sites", {

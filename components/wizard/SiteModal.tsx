@@ -44,6 +44,24 @@ export function SiteModal({ open, mode, initial, walletAddress, onClose, onSaved
     })();
   }, [open]);
 
+  // Reset form fields on open for create mode (start fresh every time)
+  useEffect(() => {
+    if (!open) return;
+    if (mode === 'create') {
+      setName("");
+      setType("");
+      setDepthM('');
+      setAreaM2('');
+      setCoords(undefined);
+    } else if (mode === 'edit' && initial) {
+      setName(initial.name || "");
+      setType(initial.type || "");
+      setDepthM(initial.depthM ?? '');
+      setAreaM2(initial.areaM2 ?? '');
+      setCoords(initial.coords);
+    }
+  }, [open, mode, initial]);
+
   const valid = useMemo(() => {
     const hasName = name.trim().length > 0;
     const hasType = String(type).length > 0;
@@ -103,7 +121,7 @@ export function SiteModal({ open, mode, initial, walletAddress, onClose, onSaved
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
       <form
         onSubmit={onSubmit}
-        className="relative z-10 w-[760px] max-w-[95vw] rounded-[28px] bg-vulcan-900 outline outline-1 outline-vulcan-600 p-6 md:p-8 text-white"
+        className="relative z-10 w-[760px] max-w-[95vw] md:max-w-[90vw] rounded-[28px] bg-vulcan-900 outline outline-1 outline-vulcan-600 p-6 md:p-8 text-white max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-vulcan-600 scrollbar-track-vulcan-800/50 hover:scrollbar-thumb-vulcan-500"
       >
         <div className="flex items-start justify-between mb-4">
           <div>
@@ -120,7 +138,16 @@ export function SiteModal({ open, mode, initial, walletAddress, onClose, onSaved
         )}
         {mode === "edit" && initial?.coords && (
           <div className="mb-5">
-            <MapCrosshairPicker initial={initial.coords} interactive={false} zoom={4} showPick={false} />
+            {/* Static map with orange pin; allow pan/zoom for verification */}
+            {/** Using profile StaticSiteMap for consistent visuals */}
+            <div className="rounded-2xl overflow-hidden">
+              {require('react').createElement(require('@/components/profile/StaticSiteMap').default, {
+                sites: [{ id: initial.id || 'site', name: initial.name || 'Site', coords: initial.coords! }],
+                height: 280,
+                onSiteClick: () => {}, // enable interactivity without actions
+              })}
+            </div>
+            <div className="mt-2 text-sm text-white/80"><code>{initial.coords[0]}, {initial.coords[1]}</code> <span className="ml-2">[lon, lat]</span></div>
             <div className="mt-2 text-white/70 text-sm">Location is fixed and cannot be changed.</div>
           </div>
         )}

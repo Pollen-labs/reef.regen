@@ -30,8 +30,8 @@ export function SignInRequired({ returnTo = "/submit/steps/1" }: Props) {
     <section className="w-full max-w-[960px] mx-auto px-6 md:px-8 py-12 md:py-16 text-center">
       <div className="flex w-full items-center justify-center mb-8 md:mb-12">
         <img
-          src="/assets/submit-signin-placeholder.svg"
-          alt="Sign in illustration placeholder"
+          src="/assets/img-signin-required.svg"
+          alt="Sign in illustration"
           className="w-[320px] md:w-[420px] h-auto opacity-90"
         />
       </div>

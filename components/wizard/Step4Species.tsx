@@ -15,10 +15,11 @@ export function Step4Species() {
   const [loading, setLoading] = useState(false);
   const listRef = useRef<HTMLUListElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // Debounced search
+  // Debounced search (require >=5 characters)
   useEffect(() => {
-    if (q.trim().length < 2) {
+    if (q.trim().length < 5) {
       setItems([]);
       setOpen(false);
       setHighlight(-1);
@@ -54,14 +55,12 @@ export function Step4Species() {
 
   const selectedItem = useMemo(() => (highlight >= 0 ? items[highlight] : undefined), [items, highlight]);
 
-  const onAdd = useCallback(() => {
-    if (!selectedItem) return;
-    // limit guard
+  const addItem = useCallback((item: SearchItem | undefined) => {
+    if (!item) return;
     if (species.length >= 200) return;
-    const id = selectedItem.id;
+    const id = item.id;
     const existingIdx = species.findIndex((s) => s.taxonId === id);
     if (existingIdx >= 0) {
-      // dedupe: flash and scroll
       const row = document.getElementById(`species-row-${id}`);
       if (row) {
         row.scrollIntoView({ block: 'center' });
@@ -70,23 +69,23 @@ export function Step4Species() {
       }
       return;
     }
-    const entry: SpeciesEntry = { taxonId: id, scientificName: selectedItem.name, count: null };
+    const entry: SpeciesEntry = { taxonId: id, scientificName: item.name, count: null };
     setPatch({ species: [...species, entry] });
-    // clear search; close list
     setQ("");
     setItems([]);
     setOpen(false);
     setHighlight(-1);
-    // focus the new count input shortly after render
     setTimeout(() => {
       const el = document.getElementById(`species-count-${id}`) as HTMLInputElement | null;
       el?.focus();
     }, 50);
-  }, [selectedItem, setPatch, species]);
+  }, [setPatch, species]);
+
+  const onAdd = useCallback(() => addItem(selectedItem), [addItem, selectedItem]);
 
   const onKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
     if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
-      setOpen(true);
+      if (q.trim().length >= 5) setOpen(true);
       return;
     }
     if (e.key === 'ArrowDown') {
@@ -127,6 +126,7 @@ export function Step4Species() {
         <div className="flex gap-3 items-center w-full pb-4">
           <div className="rr-dropdown flex-1">
             <Input
+              ref={inputRef}
               role="combobox"
               aria-autocomplete="list"
               aria-expanded={open}
@@ -134,15 +134,20 @@ export function Step4Species() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="Search here"
+              placeholder="Search species (min 5 letters)"
               className=""
+              rightIcon={q.trim().length > 0 ? 'xmark_circle_fill' : undefined}
+              onRightIconClick={() => { setQ(''); setItems([]); setOpen(false); setHighlight(-1); inputRef.current?.focus(); }}
             />
+            {q.trim().length > 0 && q.trim().length < 5 && (
+              <div className="mt-1 text-left text-white/60 text-xs">Type at least 5 characters to search.</div>
+            )}
             {open && (
               <ul
                 id="species-listbox"
                 role="listbox"
                 ref={listRef}
-                className="rr-dropdown-panel scrollbar-thin overscroll-contain"
+                className="rr-dropdown-panel scrollbar-thin overscroll-contain max-h-[40vh]"
               >
                 {loading && !items.length && (
                   <li className="rr-dropdown-item">Searching…</li>
@@ -158,7 +163,7 @@ export function Step4Species() {
                     className={`rr-dropdown-item ${highlight === idx ? 'rr-dropdown-item-selected' : ''}`}
                     onMouseEnter={() => setHighlight(idx)}
                     onMouseDown={(e) => { e.preventDefault(); }}
-                    onClick={() => { setHighlight(idx); setQ(it.name); setOpen(false); }}
+                    onClick={() => { setHighlight(idx); addItem(it); }}
                   >
                     {it.name}
                   </li>
@@ -170,16 +175,16 @@ export function Step4Species() {
             type="button"
             onClick={onAdd}
             disabled={!selectedItem || species.length >= 200}
-            className="px-6 py-3 rounded-2xl outline outline-4 outline-offset-[-4px] outline-vulcan-500 text-white disabled:opacity-50"
+            className="hidden md:inline-flex px-6 py-3 rounded-2xl outline outline-4 outline-offset-[-4px] outline-vulcan-500 text-white disabled:opacity-50"
           >
             Add to the list
           </button>
         </div>
 
         {/* Table header */}
-        <div className="grid grid-cols-[1fr_200px_48px] gap-1 items-center mt-1">
-        <div className="rr-input bg-vulcan-700/70 text-white/80 font-semibold text-left min-h-[48px] flex items-center">Species name</div>
-          <div className="rr-input bg-vulcan-700/70 text-white/80 font-semibold text-left min-h-[48px] flex items-center">Counts <span className="text-sm text-white/50 pl-1"> (Optional)</span></div>
+        <div className="grid grid-cols-[60%_25%_15%] gap-1 items-center mt-1">
+          <div className="rr-input bg-vulcan-700/70 text-white/80 font-semibold text-left min-h-[48px] flex items-center">Species name</div>
+          <div className="rr-input bg-vulcan-700/70 text-white/80 font-semibold text-left min-h-[48px] flex items-center">Counts <span className="hidden sm:inline text-sm text-white/50 pl-1">(Optional)</span></div>
           <div className="rr-input bg-vulcan-700/70 min-h-[48px]" aria-hidden="true" />
         </div>
 
@@ -189,7 +194,7 @@ export function Step4Species() {
             <div className="text-white/60 text-sm mt-2">Add a species using the search above</div>
           )}
           {species.map((s) => (
-            <div key={s.taxonId} id={`species-row-${s.taxonId}`} className="grid grid-cols-[1fr_200px_48px] gap-1 items-center">
+            <div key={s.taxonId} id={`species-row-${s.taxonId}`} className="grid grid-cols-[60%_25%_15%] gap-1 items-center">
               <div className="rr-input bg-ribbon-300 text-vulcan-950 font-semibold truncate text-left" title={s.scientificName}>{s.scientificName}</div>
               <Input
                 id={`species-count-${s.taxonId}`}

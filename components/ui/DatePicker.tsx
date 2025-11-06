@@ -7,6 +7,7 @@ type Props = {
   onChange: (val: string) => void;
   placeholder?: string;
   className?: string;
+  disableFuture?: boolean; // when true, disallow selecting dates after today (local)
 };
 
 function ymd(d: Date): string {
@@ -24,7 +25,7 @@ function fromYmd(s?: string): Date | null {
   return new Date(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate());
 }
 
-export default function DatePicker({ value, onChange, placeholder = "mm/dd/yyyy", className }: Props) {
+export default function DatePicker({ value, onChange, placeholder = "mm/dd/yyyy", className, disableFuture }: Props) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -49,12 +50,19 @@ export default function DatePicker({ value, onChange, placeholder = "mm/dd/yyyy"
       if (!el) return;
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
+      const vw = window.innerWidth;
       const margin = 8;
       const below = vh - rect.bottom - margin;
       const above = rect.top - margin;
       const openUp = below < 260 && above > below;
       const maxHpx = Math.min(openUp ? above : below, Math.round(vh * 0.7));
-      setPanelStyle(openUp ? { bottom: `calc(100% + ${margin}px)`, maxHeight: `${maxHpx}px` } : { top: `calc(100% + ${margin}px)`, maxHeight: `${maxHpx}px` });
+      const spaceRight = vw - rect.left;
+      const alignRight = spaceRight < 340; // panel ~320 + padding
+      const side = alignRight ? { right: 0 as const, left: 'auto' as const } : { left: 0 as const, right: 'auto' as const };
+      const pos = openUp
+        ? { bottom: `calc(100% + ${margin}px)` }
+        : { top: `calc(100% + ${margin}px)` };
+      setPanelStyle({ ...side, ...pos, maxHeight: `${maxHpx}px` });
     }
     if (open) {
       document.addEventListener("mousedown", onDocClick);
@@ -89,6 +97,10 @@ export default function DatePicker({ value, onChange, placeholder = "mm/dd/yyyy"
 
   const label = selected ? selected.toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' }) : placeholder;
 
+  // compute end-of-today once per render for disableFuture
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   return (
     <div className={`relative ${className || ''}`}>
       <button ref={triggerRef} type="button" className="rr-input pr-12 text-left w-full" onClick={() => setOpen((s) => !s)}>
@@ -112,9 +124,15 @@ export default function DatePicker({ value, onChange, placeholder = "mm/dd/yyyy"
           <div className="grid grid-cols-7 gap-1">
             {weeks.flat().map((d, idx) => {
               const isSel = d && selected && ymd(d) === ymd(selected);
+              const isFuture = !!d && disableFuture && d.getTime() > today.getTime();
               return (
-                <button key={idx} type="button" disabled={!d} onClick={() => d && select(d)}
-                  className={`h-9 rounded-full flex items-center justify-center ${!d ? 'opacity-0' : isSel ? 'bg-orange text-white font-bold' : 'hover:bg-white/10'}`}
+                <button key={idx} type="button" disabled={!d || isFuture} onClick={() => d && !isFuture && select(d)}
+                  className={`h-9 rounded-full flex items-center justify-center ${
+                    !d ? 'opacity-0'
+                    : isFuture ? 'text-white/30 cursor-not-allowed'
+                    : isSel ? 'bg-orange text-white font-bold'
+                    : 'hover:bg-white/10'
+                  }`}
                 >
                   {d?.getDate()}
                 </button>

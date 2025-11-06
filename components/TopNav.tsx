@@ -206,12 +206,16 @@ export default function TopNav() {
   return (
     <header
       ref={headerRef}
-      className={`fixed top-0 left-0 right-0 z-40 bg-black text-white will-change-transform transition-transform ${
-        (isVisible || isMapPage) ? 'translate-y-0' : '-translate-y-full'
+      className={`fixed top-0 left-0 right-0 z-40 bg-black text-white ${
+        open ? '' : 'will-change-transform transition-transform'
+      } ${
+        open ? '' : ((isVisible || isMapPage) ? 'translate-y-0' : '-translate-y-full')
       }`}
       style={{
         transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)', // easeOutCubic
         transitionDuration: isMapPage ? '0ms' : (isVisible ? '350ms' : '550ms'),
+        // Avoid creating a transformed containing block when mobile menu is open
+        transform: open ? 'none' as any : undefined,
       }}
     >
       {/* Global announcement bar */}
@@ -244,15 +248,23 @@ export default function TopNav() {
           >
             Map
           </a>
-          <a
-            className={`px-4 py-2 text-xl font-bold leading-8 hover:text-white/90 ${
-              pathname?.startsWith("/submit") ? "text-orange" : ""
-            }`}
-            href="/submit/steps/1"
-            onClick={(e) => onNavClick(e, "/submit/steps/1")}
-          >
-            Submit
-          </a>
+          {pathname?.startsWith("/submit") ? (
+            <span
+              className="px-4 py-2 text-xl font-bold leading-8 text-orange cursor-default select-none"
+              aria-current="page"
+              aria-disabled="true"
+            >
+              Submit
+            </span>
+          ) : (
+            <a
+              className="px-4 py-2 text-xl font-bold leading-8 hover:text-white/90"
+              href="/submit/steps/1"
+              onClick={(e) => onNavClick(e, "/submit/steps/1")}
+            >
+              Submit
+            </a>
+          )}
           {isConnected ? (
             <div className="relative" ref={menuRef}>
               <button
@@ -328,7 +340,7 @@ export default function TopNav() {
       {/* Mobile Fullscreen Menu */}
       {open && (
         <div
-          className={`md:hidden fixed inset-0 z-50 bg-black transition-opacity duration-200 ease-out ${menuAnim ? 'opacity-100' : 'opacity-0'}`}
+          className={`md:hidden fixed inset-0 z-[1000] bg-black transition-opacity duration-200 ease-out ${menuAnim ? 'opacity-100' : 'opacity-0'}`}
           role="dialog"
           aria-modal="true"
         >
@@ -362,13 +374,17 @@ export default function TopNav() {
                 >
                   Map
                 </a>
-                <a
-                  href="/submit/steps/1"
-                  onClick={(e) => { onNavClick(e, "/submit/steps/1"); setOpen(false); }}
-                  className={`block text-4xl font-extrabold ${pathname?.startsWith("/submit") ? "text-orange" : "text-white hover:text-white/80"}`}
-                >
-                  Submit
-                </a>
+                {pathname?.startsWith("/submit") ? (
+                  <span className="block text-4xl font-extrabold text-orange cursor-default select-none" aria-current="page" aria-disabled="true">Submit</span>
+                ) : (
+                  <a
+                    href="/submit/steps/1"
+                    onClick={(e) => { onNavClick(e, "/submit/steps/1"); setOpen(false); }}
+                    className="block text-4xl font-extrabold text-white hover:text-white/80"
+                  >
+                    Submit
+                  </a>
+                )}
 
                 {isConnected ? (
                   <>

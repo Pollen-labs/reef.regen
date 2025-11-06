@@ -49,6 +49,7 @@ export type WizardState = {
 type WizardActions = {
   setPatch: (patch: Partial<WizardState>) => void;
   reset: () => void;
+  resetAndPurge: () => void;
 };
 
 const STORAGE_KEY = "reefregen.attestation.wizard.v1";
@@ -73,6 +74,11 @@ export const useAttestationWizard = create<WizardState & WizardActions>()(
       ...WizardDefaults,
       setPatch: (patch: Partial<WizardState>) => set({ ...patch, lastSavedAt: Date.now() }),
       reset: () => set({ ...WizardDefaults, lastSavedAt: Date.now() }),
+      // Clear state and also remove the persisted key to avoid stale re-hydration across routes
+      resetAndPurge: () => {
+        set({ ...WizardDefaults, lastSavedAt: Date.now() });
+        try { localStorage.removeItem(STORAGE_KEY); } catch {}
+      },
     }),
     {
       name: STORAGE_KEY,
@@ -92,6 +98,12 @@ export function hasUnsavedWork(snapshot?: WizardState) {
   if (s.reefRegenActions.length > 0) return true;
   if (s.organizationName.trim().length > 0) return true;
   if ((s.summary || "").trim().length > 0) return true;
+  if ((s.actionDate || s.actionStart || s.actionEnd)) return true;
+  if (s.siteId || s.siteName || s.siteType) return true;
+  if ((s.siteDepthM || 0) > 0 || (s.siteAreaM2 || 0) > 0) return true;
+  if (s.species && s.species.length > 0) return true;
+  if (s.contributors && s.contributors.length > 0) return true;
+  if ((s.fileCid || s.fileUrl || s.fileName)) return true;
   return false;
 }
 

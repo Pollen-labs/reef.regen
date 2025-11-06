@@ -26,12 +26,12 @@ function DateModeToggle() {
     );
   };
   return (
-    <div className="flex items-center justify-center gap-3">
-      <button onClick={() => setMode('single')} className={`px-5 py-2 rounded-2xl flex items-center gap-2 ${dateMode==='single' ? 'bg-orange text-white font-bold' : 'bg-vulcan-700/70 text-white'}`}>
+    <div className="flex items-stretch justify-center gap-3 w-full">
+      <button onClick={() => setMode('single')} className={`flex-1 px-4 sm:px-5 py-2 min-h-[44px] rounded-2xl flex items-center gap-2 justify-start text-left text-sm sm:text-base whitespace-nowrap leading-6 ${dateMode==='single' ? 'bg-orange text-white font-bold' : 'bg-vulcan-700/70 text-white'}`}>
         <i className="f7-icons text-lg">{dateMode==='single' ? 'checkmark_alt_circle_fill' : 'circle'}</i>
         On a specific date
       </button>
-      <button onClick={() => setMode('range')} className={`px-5 py-2 rounded-2xl flex items-center gap-2 ${dateMode==='range' ? 'bg-orange text-white font-bold' : 'bg-vulcan-700/70 text-white'}`}>
+      <button onClick={() => setMode('range')} className={`flex-1 px-4 sm:px-5 py-2 min-h-[44px] rounded-2xl flex items-center gap-2 justify-start text-left text-sm sm:text-base whitespace-nowrap leading-6 ${dateMode==='range' ? 'bg-orange text-white font-bold' : 'bg-vulcan-700/70 text-white'}`}>
         <i className="f7-icons text-lg">{dateMode==='range' ? 'checkmark_alt_circle_fill' : 'circle'}</i>
         On a duration
       </button>
@@ -43,7 +43,7 @@ function SingleDate() {
   const { actionDate, setPatch } = useAttestationWizard();
   const ref = useRef<HTMLInputElement | null>(null);
   return (
-    <DatePicker value={actionDate} onChange={(v) => setPatch({ actionDate: v })} className="w-full max-w-[600px]" />
+    <DatePicker value={actionDate} onChange={(v) => setPatch({ actionDate: v })} className="w-full max-w-[600px]" disableFuture />
   );
 }
 
@@ -54,9 +54,9 @@ function RangeDate() {
   const endRef = useRef<HTMLInputElement | null>(null);
   return (
     <div className="flex gap-3 items-center">
-      <DatePicker value={actionStart} onChange={(v) => setPatch({ actionStart: v })} className="w-full max-w-[290px]" />
+      <DatePicker value={actionStart} onChange={(v) => setPatch({ actionStart: v })} className="w-full max-w-[290px]" disableFuture />
       <span className="text-white/60">~</span>
-      <DatePicker value={actionEnd} onChange={(v) => setPatch({ actionEnd: v })} className="w-full max-w-[290px]" />
+      <DatePicker value={actionEnd} onChange={(v) => setPatch({ actionEnd: v })} className="w-full max-w-[290px]" disableFuture />
     </div>
   );
 }

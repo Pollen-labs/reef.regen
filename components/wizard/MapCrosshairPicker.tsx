@@ -19,12 +19,14 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
   const [startCenter] = useState<[number, number]>(initial ?? [100, 10]);
   const [startZoom] = useState<number>(zoom ?? (initial ? 9 : 3));
   const [center, setCenter] = useState<[number, number]>(startCenter);
+  const [picked, setPicked] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [failed, setFailed] = useState<boolean>(false);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     let map: maplibregl.Map | null = null;
+    let wheelHandler: ((e: WheelEvent) => void) | null = null;
     const styleUrl = process.env.NEXT_PUBLIC_MAP_STYLE_URL || "/map/styles/dark_matter.json";
     const init = async () => {
       try {
@@ -52,6 +54,7 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
           style,
           center: startCenter,
           zoom: startZoom,
+          minZoom: 2,
           pitch: 0,
           bearing: 0,
           dragRotate: false,
@@ -67,6 +70,7 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
             style: "https://demotiles.maplibre.org/style.json",
             center: startCenter,
             zoom: startZoom,
+            minZoom: 2,
             pitch: 0,
             bearing: 0,
             dragRotate: false,
@@ -83,9 +87,23 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
       mapRef.current = map!;
 
       map!.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
+      // Disable default scroll-zoom and implement cursor‑focused zoom
+      wheelHandler = (e: WheelEvent) => {
+        if (!interactive) return;
+        e.preventDefault();
+        const z = map!.getZoom();
+        const delta = (e.deltaY < 0 ? 0.25 : -0.25);
+        const next = Math.max(2, Math.min(20, z + delta));
+        // Zoom around the cursor position so users can navigate by pointing
+        const rect = containerRef.current!.getBoundingClientRect();
+        const px: [number, number] = [e.clientX - rect.left, e.clientY - rect.top];
+        const around = map!.unproject(px as any);
+        map!.easeTo({ zoom: next, around, duration: 200 });
+      };
+      map!.scrollZoom.disable();
+      containerRef.current!.addEventListener('wheel', wheelHandler!, { passive: false });
       if (!interactive) {
         map!.dragPan.disable();
-        map!.scrollZoom.disable();
         map!.boxZoom.disable();
         map!.keyboard.disable();
         map!.doubleClickZoom.disable();
@@ -95,13 +113,18 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
       const update = () => {
         const c = map!.getCenter();
         setCenter([+c.lng.toFixed(6), +c.lat.toFixed(6)]);
+        // Any move should invalidate previous explicit pick
+        setPicked(false);
       };
       map!.on("load", () => { setLoading(false); update(); });
       map!.on("move", update);
       map!.on("error", () => { setFailed(true); setLoading(false); });
     };
     init();
-    return () => { if (map) map.remove(); };
+    return () => {
+      try { if (wheelHandler) containerRef.current?.removeEventListener('wheel', wheelHandler as any); } catch {}
+      if (map) map.remove();
+    };
   }, []);
 
   return (
@@ -120,20 +143,25 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
         </div>
       )}
       <div className="mt-3 text-sm text-white/80 flex items-center justify-between gap-3">
-        <div>
+        <div className="flex items-center gap-2">
           <code>{center[0]}, {center[1]}</code> <span className="ml-2">[lon, lat]</span>
         </div>
         {showPick && onPick && (
           <Button
             variant="outline"
             size="md"
+            className="inline-flex items-center gap-3"
             onClick={() => {
               const c = mapRef.current?.getCenter();
               const coords: [number, number] = c ? [Number(c.lng.toFixed(6)), Number(c.lat.toFixed(6))] : center;
               onPick(coords);
+              setPicked(true);
             }}
           >
-            Use this location
+            <span className="font-black">{picked ? 'Location is set' : 'Set this location'}</span>
+            <span className={`h-6 w-6 grid place-items-center rounded-full `}>
+              <i className={`f7-icons text-base ${picked ? ' text-green-400' : ' text-white/40'}`}>checkmark_alt_circle_fill</i>
+            </span>
           </Button>
         )}
       </div>

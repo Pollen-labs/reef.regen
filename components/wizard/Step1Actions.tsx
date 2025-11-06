@@ -69,7 +69,7 @@ export function Step1Actions() {
     <div className="self-stretch flex flex-col items-center gap-10">
       {grouped.map((group) => (
         <div key={group.title} className="self-stretch flex flex-col items-center gap-6">
-          <div className="w-full max-w-[600px] flex flex-col items-center gap-4">
+          <div className="w-full max-w-full md:max-w-[600px] px-3 sm:px-6 flex flex-col items-stretch md:items-center gap-3 md:gap-4">
             <div className="text-vulcan-700 text-3xl text-center font-black leading-9 tracking-tight">{group.title}</div>
           </div>
           {(() => {
@@ -99,7 +99,8 @@ export function Step1Actions() {
             const rowClass = (c: number) => {
               const lg = c === 1 ? "lg:grid-cols-1" : c === 2 ? "lg:grid-cols-2" : c === 3 ? "lg:grid-cols-3" : "lg:grid-cols-4";
               const md = c >= 2 ? "md:grid-cols-2" : "md:grid-cols-1";
-              return `grid gap-2 grid-cols-1 ${md} ${lg}`;
+              const sm = c >= 2 ? "sm:grid-cols-2" : "sm:grid-cols-1";
+              return `grid grid-cols-1 ${sm} ${md} ${lg} gap-2 sm:gap-3`;
             };
 
             return (
@@ -114,12 +115,12 @@ export function Step1Actions() {
                           type="button"
                           onClick={() => toggle(opt.name)}
                           className={
-                            "text-left relative p-6 rounded-3xl inline-flex flex-col justify-start items-start gap-1 min-h-[9rem] shadow transition-colors " +
+                            "text-left relative p-4 md:p-6 rounded-3xl inline-flex flex-col justify-start items-start gap-1 min-h-[7rem] md:min-h-[9rem] shadow transition-colors " +
                             (isSelected ? "bg-orange text-white" : "bg-vulcan-200 text-black")
                           }
                         >
-                          <div className="pt-2 inline-flex justify-start items-start gap-4 w-full">
-                            <div className="flex-1 text-3xl font-black leading-9 tracking-tight">
+                          <div className="pt-1 md:pt-2 inline-flex justify-start items-start gap-3 md:gap-4 w-full">
+                            <div className="flex-1 text-2xl md:text-3xl font-black leading-8 md:leading-9 tracking-tight">
                               {opt.name}
                             </div>
                             <div className="w-6 h-6 relative">
@@ -129,7 +130,7 @@ export function Step1Actions() {
                             </div>
                           </div>
                           {opt.description && (
-                            <div className={"text-base font-light leading-6 " + (isSelected ? "text-white" : "text-black/80")}>
+                            <div className={"text-sm md:text-base font-light leading-6 " + (isSelected ? "text-white" : "text-black/80")}>
                               {opt.description}
                             </div>
                           )}

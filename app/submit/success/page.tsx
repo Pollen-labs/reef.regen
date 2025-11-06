@@ -16,7 +16,7 @@ function SuccessInner() {
 
   // Extra safety: clear any leftover wizard state on success
   useEffect(() => {
-    try { wizard.reset(); } catch {}
+    try { wizard.resetAndPurge(); } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -56,7 +56,7 @@ function SuccessInner() {
             </button>
             <button
               type="button"
-              onClick={() => router.replace('/submit/steps/1')}
+              onClick={() => { try { wizard.resetAndPurge(); } catch {}; router.replace('/submit/steps/1'); }}
               className="px-6 py-3 bg-orange rounded-2xl text-white font-bold"
             >
               Submit another one

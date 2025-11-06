@@ -16,6 +16,7 @@ import Tag from "@/components/ui/Tag";
 import Button from "@/components/ui/Button";
 import { classesForRegen } from "@/lib/style/regenColors";
 import { classesForSiteType } from "@/lib/style/siteTypeColors";
+import { WizardFooter } from "@/components/wizard/WizardFooter";
 
 export default function ReviewPage() {
   const router = useRouter();
@@ -31,19 +32,8 @@ export default function ReviewPage() {
     return formatDateRangeShort(s.actionDate, null);
   }, [s.dateMode, s.actionDate, s.actionStart, s.actionEnd]);
 
-  const [internalExists, setInternalExists] = useState(false);
-  useEffect(() => {
-    let active = true;
-    const id = setTimeout(async () => {
-      if (!s.internalId || !address) { if (active) setInternalExists(false); return; }
-      try {
-        const res = await fetch(`/api/attestations/check-internal?address=${address}&value=${encodeURIComponent(s.internalId)}`);
-        const json = await res.json().catch(() => ({}));
-        if (active) setInternalExists(!!json.exists);
-      } catch { if (active) setInternalExists(false); }
-    }, 300);
-    return () => { active = false; clearTimeout(id); };
-  }, [s.internalId, address]);
+  // Skip uniqueness check for internal ID; no async validation
+  const [internalExists] = useState(false);
 
   const goEdit = (step: number) => router.replace(`/submit/steps/${step}`);
 
@@ -70,10 +60,7 @@ export default function ReviewPage() {
       setLocalError("Connect your wallet to submit.");
       return;
     }
-    if (internalExists) {
-      setLocalError("Internal ID already used for this account. Choose another.");
-      return;
-    }
+    // no uniqueness guard
     if (!publicClient) {
       setLocalError("Network client not ready. Please refresh and try again.");
       return;
@@ -219,8 +206,8 @@ export default function ReviewPage() {
       const jF = await resF.json().catch(() => ({}));
       if (!resF.ok) throw new Error(jF?.error || `Finalize failed (${resF.status})`);
 
-      // done
-      s.reset();
+      // done — clear wizard completely to avoid stale hydration
+      s.resetAndPurge();
       router.replace(`/submit/success?uid=${encodeURIComponent(easUID)}`);
     } catch (err: any) {
       console.error('Submit failed', err);
@@ -232,7 +219,7 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className="w-full max-w-[9600px] mx-auto py-6 px-4 md:px-2 pb-40">
+    <div className="w-full max-w-[9600px] mx-auto py-6 px-0 md:px-2 pb-40">
       <div className="w-full max-w-[800px] flex flex-col items-center gap-3 mx-auto mb-6">
         <div className="text-center text-white text-5xl md:text-7xl font-black leading-[1.04]">Review your submission</div>
         <div className="text-center text-vulcan-100 text-2xl font-light leading-9">Please review your submission throughly as it is about to be submitted to the blockchain and will be permanent and uneditable by nature.</div>
@@ -310,7 +297,13 @@ export default function ReviewPage() {
           <button aria-label="Edit species" onClick={() => goEdit(4)} className="absolute right-3 top-3 text-white/70 hover:text-white"><i className="f7-icons">pencil_circle</i></button>
           <div className="flex flex-wrap gap-1">
             {(s.species || []).map((sp) => (
-              <Tag key={sp.taxonId} label={`${sp.scientificName}${sp.count != null ? ` ${sp.count}` : ''}`} size="md" bgClass="bg-ribbon-300" textClass="text-vulcan-950" />
+              <Tag
+                key={sp.taxonId}
+                label={`${sp.count != null ? `${sp.count} x ` : ''}${sp.scientificName}`}
+                size="md"
+                bgClass="bg-ribbon-300"
+                textClass="text-vulcan-950"
+              />
             ))}
             {(!s.species || s.species.length === 0) && <div className="text-white/60">—</div>}
           </div>
@@ -342,27 +335,21 @@ export default function ReviewPage() {
               }}
               placeholder="CORAL-113"
             />
-            {internalExists && (
-              <div className="mt-2 text-flamingo-300 text-sm">This internal ID is already used for your account.</div>
-            )}
+            {/* No uniqueness validation for internal ID */}
           </div>
         </section>
       </div>
 
       {/* Footer */}
-      <div className="sticky bottom-2 left-0 right-0 pt-0 md:pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-        <div className="w-full max-w-[960px] mx-auto rounded-3xl backdrop-blur-md bg-vulcan-800/70 outline outline-1 outline-vulcan-700/70 px-4 md:px-6 py-6 flex items-center justify-between gap-3">
-          <div className="w-40 hidden md:block">
-            <Button variant="outline" size="md" onClick={() => router.replace('/submit/steps/5')} className="w-40">Back</Button>
-          </div>
-          <div className="text-vulcan-400 text-sm font-light leading-6 text-center flex-1">Review & Submit</div>
-          <div className="w-60 flex items-center justify-end">
-            <Button type="button" disabled={s.submitting} onClick={handleSubmit} variant="solid" size="md" className="w-40">
-              {s.submitting ? 'Submitting…' : 'Submit'}
-            </Button>
-          </div>
-        </div>
-      </div>
+      <WizardFooter
+        backVisible
+        onBack={() => router.replace('/submit/steps/5')}
+        onNext={handleSubmit}
+        nextLabel={s.submitting ? 'Submitting…' : 'Submit'}
+        nextDisabled={s.submitting}
+        centerLabel="Review & Submit"
+        centerLabelMobile="Review & Submit"
+      />
 
       {localError && (
         <div className="mt-4 text-flamingo-300">{localError}</div>
