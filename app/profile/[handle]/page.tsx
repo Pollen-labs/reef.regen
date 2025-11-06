@@ -147,7 +147,7 @@ export default function ProfilePage() {
       {/* Breadcrumb bar */}
       <nav aria-label="Breadcrumb" className="w-full">
         <div className="w-full max-w-[1440px] mx-auto px-2 lg:px-24  mb-4 flex items-center justify-between">
-          <div className="text-vulcan-500 text-lg font-bold">Profile/ Dashboard</div>
+          <div className="text-vulcan-500 text-lg font-bold">Profile</div>
           <div className="flex items-center gap-6">
             {isOwner && (
               <a

@@ -119,9 +119,9 @@ function ProfileDetailsInner() {
 
               {error && <div className="text-red-300 text-sm">{error}</div>}
 
-              <div className="flex gap-3 mt-2">
-                <Button type="button" variant="outline" onClick={onSkip}>Do it later</Button>
-                <Button type="submit" disabled={!canSave}>{saving ? "Saving…" : "Save & Continue"}</Button>
+              <div className="flex w-full gap-3 mt-2">
+                <Button type="button" variant="outline" onClick={onSkip} fullWidth>Do it later</Button>
+                <Button type="submit" fullWidth disabled={!canSave}>{saving ? "Saving…" : "Save & Continue"}</Button>
               </div>
             </form>
           </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAccount, useDisconnect } from "wagmi";
-import { useWeb3AuthDisconnect } from "@web3auth/modal/react";
+import { useWeb3Auth, useWeb3AuthDisconnect, useWeb3AuthUser } from "@web3auth/modal/react";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import Button from "@/components/ui/Button";
@@ -34,6 +34,8 @@ export default function ProfileSettingPage() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { disconnect: disconnectWeb3Auth } = useWeb3AuthDisconnect();
+  const { userInfo } = useWeb3AuthUser();
+  const web3Ctx = (useWeb3Auth() as any) || {};
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -191,6 +193,18 @@ export default function ProfileSettingPage() {
 
   const [revealOpen, setRevealOpen] = useState(false);
 
+  // Show Wallet section only when using embedded OpenLogin (social/email)
+  const showWalletSection = useMemo(() => {
+    // Most reliable signal: Web3Auth user has an email (social/email logins)
+    if ((userInfo as any)?.email) return true;
+    // Otherwise, check adapter name if available
+    const adapter = String(web3Ctx?.web3Auth?.connectedAdapterName || web3Ctx?.connectedAdapterName || "").toLowerCase();
+    if (adapter) return adapter === "openlogin";
+    // Final fallback: presence of typeOfLogin also indicates OpenLogin
+    const t = (userInfo as any)?.typeOfLogin;
+    return !!t;
+  }, [userInfo, web3Ctx?.web3Auth?.connectedAdapterName, web3Ctx?.connectedAdapterName]);
+
   async function onLogout() {
     try {
       await disconnectWeb3Auth();
@@ -206,7 +220,7 @@ export default function ProfileSettingPage() {
     <div className="min-h-screen bg-black text-white">
       {/* Breadcrumb bar to match Profile main page */}
       <nav aria-label="Breadcrumb" className="w-full">
-        <div className="w-full max-w-[1440px] mx-auto px-2 lg:px-24 mb-4 flex items-center justify-between">
+        <div className="w-full max-w-[1440px] mx-auto px-0 lg:px-24 mb-2 md:mb-4 flex items-center justify-between">
           <div className="text-vulcan-500 text-lg font-bold">
             {profile?.handle ? (
               <a href={`/profile/${profile.handle}`} className="hover:text-white/90">Profile</a>
@@ -219,7 +233,7 @@ export default function ProfileSettingPage() {
         </div>
       </nav>
 
-      <div className="w-full max-w-[1440px] mx-auto px-6 lg:px-24 py-6 mb-12">
+      <div className="w-full max-w-[1440px] mx-auto px-0 lg:px-24 py-6 mb-12">
 
         {loading ? (
           <div>Loading…</div>
@@ -291,26 +305,29 @@ export default function ProfileSettingPage() {
               )}
             </div>
 
-            {/* Wallet & Security */}
-            <h2 className="text-h4 font-black mt-16 mb-3">Wallet</h2>
-            <div className="grid gap-4 mb-12">
-              <IdentifierBar
-                label="Wallet address"
-                value={displayAddress}
-                copyable
-                shorten
-                actionLabel="Explorer"
-                external
-                onAction={() => {
-                  const url = `${env.blockExplorerAddressPrefix}${displayAddress}`;
-                  window.open(url, "_blank", "noopener,noreferrer");
-                }}
-              />
-              <div>
-                <Button type="button" variant="outline"  onClick={() => setRevealOpen(true)}>Reveal private key</Button>
-              </div>
-              
-            </div>
+            {/* Wallet & Security (only for OpenLogin users) */}
+            {showWalletSection && (
+              <>
+                <h2 className="text-h4 font-black mt-16 mb-3">Wallet</h2>
+                <div className="grid gap-4 mb-12">
+                  <IdentifierBar
+                    label="Wallet address"
+                    value={displayAddress}
+                    copyable
+                    shorten
+                    actionLabel="Explorer"
+                    external
+                    onAction={() => {
+                      const url = `${env.blockExplorerAddressPrefix}${displayAddress}`;
+                      window.open(url, "_blank", "noopener,noreferrer");
+                    }}
+                  />
+                  <div>
+                    <Button type="button" variant="outline" onClick={() => setRevealOpen(true)}>Reveal private key</Button>
+                  </div>
+                </div>
+              </>
+            )}
 
             { /* session */ }
             <h4 className="text-h6 font-black mt-16 mb-3">Connection</h4>
