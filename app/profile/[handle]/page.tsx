@@ -12,6 +12,7 @@ import { useAccount } from "wagmi";
 import { useParams } from "next/navigation";
 import { ethers } from "ethers";
 import { env } from "@/lib/env";
+import Skeleton from "@/components/ui/Skeleton";
 
 type Api = {
   profile: { id: string; profile_name: string | null; description: string | null; website: string | null; wallet_address: string; handle: string };
@@ -144,7 +145,58 @@ export default function ProfilePage() {
     return () => { cancelled = true; };
   }, [isOwner, address, data?.attestations?.length]);
 
-  if (loading) return <div className="w-full max-w-screen-xl mx-auto px-6 lg:px-24 py-12 text-white">Loading profile…</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen text-white">
+        <nav aria-label="Breadcrumb" className="w-full">
+          <div className="w-full max-w-[1440px] mx-auto px-0 lg:px-24 mb-2 md:mb-4 flex items-center justify-between">
+            <div className="text-vulcan-500 text-lg font-bold">Profile</div>
+            <div className="flex items-center gap-6" />
+          </div>
+        </nav>
+        <div className="w-full">
+          <div className="w-full max-w-[1440px] mx-auto px-0 lg:px-24 flex flex-col lg:flex-row lg:justify-between items-start gap-4 lg:gap-8">
+            {/* Left column skeleton */}
+            <div className="w-full lg:max-w-96 flex flex-col gap-4">
+              <Skeleton className="h-10 w-40 rounded-3xl" />
+              <Skeleton className="h-12 w-4/5" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-10 w-3/5" />
+            </div>
+
+            {/* Right column skeleton */}
+            <div className="flex-1 w-full flex flex-col gap-1.5 mt-4 lg:mt-0">
+              {/* Stats cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
+                <Skeleton className="h-24 rounded-3xl" />
+                <Skeleton className="h-24 rounded-3xl" />
+                <Skeleton className="h-24 rounded-3xl" />
+                <Skeleton className="h-24 rounded-3xl" />
+              </div>
+              {/* Charts row */}
+              <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-1.5">
+                <Skeleton className="h-80 rounded-3xl" />
+                <Skeleton className="h-80 rounded-3xl" />
+              </div>
+              {/* Map card */}
+              <Skeleton className="h-[360px] lg:h-[520px] rounded-3xl" />
+              {/* Table header + rows */}
+              <div className="mt-4">
+                <Skeleton className="h-8 w-40 mb-2" />
+                <div className="grid gap-1">
+                  <Skeleton className="h-10 rounded-lg" />
+                  <Skeleton className="h-10 rounded-lg" />
+                  <Skeleton className="h-10 rounded-lg" />
+                  <Skeleton className="h-10 rounded-lg" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (error) return <div className="w-full max-w-screen-xl mx-auto px-6 lg:px-24 py-12 text-red-300">{error}</div>;
   if (!data) return null;
 
