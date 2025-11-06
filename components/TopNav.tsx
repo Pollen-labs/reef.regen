@@ -248,15 +248,23 @@ export default function TopNav() {
           >
             Map
           </a>
-          <a
-            className={`px-4 py-2 text-xl font-bold leading-8 hover:text-white/90 ${
-              pathname?.startsWith("/submit") ? "text-orange" : ""
-            }`}
-            href="/submit/steps/1"
-            onClick={(e) => onNavClick(e, "/submit/steps/1")}
-          >
-            Submit
-          </a>
+          {pathname?.startsWith("/submit") ? (
+            <span
+              className="px-4 py-2 text-xl font-bold leading-8 text-orange cursor-default select-none"
+              aria-current="page"
+              aria-disabled="true"
+            >
+              Submit
+            </span>
+          ) : (
+            <a
+              className="px-4 py-2 text-xl font-bold leading-8 hover:text-white/90"
+              href="/submit/steps/1"
+              onClick={(e) => onNavClick(e, "/submit/steps/1")}
+            >
+              Submit
+            </a>
+          )}
           {isConnected ? (
             <div className="relative" ref={menuRef}>
               <button
@@ -366,13 +374,17 @@ export default function TopNav() {
                 >
                   Map
                 </a>
-                <a
-                  href="/submit/steps/1"
-                  onClick={(e) => { onNavClick(e, "/submit/steps/1"); setOpen(false); }}
-                  className={`block text-4xl font-extrabold ${pathname?.startsWith("/submit") ? "text-orange" : "text-white hover:text-white/80"}`}
-                >
-                  Submit
-                </a>
+                {pathname?.startsWith("/submit") ? (
+                  <span className="block text-4xl font-extrabold text-orange cursor-default select-none" aria-current="page" aria-disabled="true">Submit</span>
+                ) : (
+                  <a
+                    href="/submit/steps/1"
+                    onClick={(e) => { onNavClick(e, "/submit/steps/1"); setOpen(false); }}
+                    className="block text-4xl font-extrabold text-white hover:text-white/80"
+                  >
+                    Submit
+                  </a>
+                )}
 
                 {isConnected ? (
                   <>

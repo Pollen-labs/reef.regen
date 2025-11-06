@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { withAuthAndOnboardingGuard } from "@/components/wizard/withAuthAndOnboardingGuard";
 import { useAttestationWizard } from "@/lib/wizard/attestationWizardStore";
 import { ProgressBar } from "@/components/wizard/ProgressBar";
@@ -19,6 +19,7 @@ function StepContent() {
   const router = useRouter();
   const { currentStep, totalSteps, setPatch, reefRegenActions, dateMode, actionDate, actionStart, actionEnd, siteId, lastSavedAt } = useAttestationWizard();
   const { confirm } = useLeaveGuard();
+  const search = useSearchParams();
   const stepNum = useMemo(() => {
     const n = Number(params?.n);
     if (!Number.isFinite(n) || n < 1) return 1;
@@ -27,6 +28,18 @@ function StepContent() {
 
   // warn on tab close while in-progress
   useUnsavedWarning(true);
+
+  // Support "start fresh" via /submit/steps/1?new=1
+  useEffect(() => {
+    const isNew = search?.get('new') === '1';
+    if (!isNew) return;
+    if (stepNum === 1) {
+      try { (useAttestationWizard.getState() as any).resetAndPurge(); } catch {}
+      // remove the query param to avoid re-clearing on refresh
+      router.replace('/submit/steps/1');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, stepNum]);
 
   // Intercept browser back to confirm leaving the wizard
   useEffect(() => {

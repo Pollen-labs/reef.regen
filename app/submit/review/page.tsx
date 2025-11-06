@@ -219,8 +219,8 @@ export default function ReviewPage() {
       const jF = await resF.json().catch(() => ({}));
       if (!resF.ok) throw new Error(jF?.error || `Finalize failed (${resF.status})`);
 
-      // done
-      s.reset();
+      // done — clear wizard completely to avoid stale hydration
+      s.resetAndPurge();
       router.replace(`/submit/success?uid=${encodeURIComponent(easUID)}`);
     } catch (err: any) {
       console.error('Submit failed', err);
