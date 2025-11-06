@@ -147,16 +147,13 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
       cur.setUTCMonth(cur.getUTCMonth() + 1);
     }
   }
+  // Monthly counts as "attestations per month" attributed to the start month
   const monthly = new Map<string, number>();
   for (const a of attestations) {
     const start = a.date ? new Date(a.date) : null;
-    const end = a.endDate ? new Date(a.endDate) : start;
-    if (!start || !end) continue;
-    const val = Math.max(1, (a.actions || []).length);
-    for (const m of monthsBetween(start, end)) {
-      const k = ym(m);
-      monthly.set(k, (monthly.get(k) || 0) + val);
-    }
+    if (!start) continue;
+    const k = ym(start);
+    monthly.set(k, (monthly.get(k) || 0) + 1);
   }
   // Ensure last 6 months are present with zero-fill
   function ymStr(d: Date) { return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`; }

@@ -34,6 +34,7 @@ export default function ProfilePage() {
   const [activeAtt, setActiveAtt] = useState<any | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [internalById, setInternalById] = useState<Record<string, string | null>>({});
+  const [showLegend, setShowLegend] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -260,32 +261,43 @@ export default function ProfilePage() {
           {/* Charts row: Left line chart, Right donut + legend */}
           <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-1.5">
             {/* Line chart card */}
-            <div className="px-6 py-6 bg-vulcan-800 rounded-3xl">
-              <div className="text-vulcan-300 text-lg font-bold mb-3">Action over time (last 6 months)</div>
-              <LineChartJS data={timelinePoints} height={220} lineColor="#F6A17B" fillColor="rgba(246,161,123,0.25)" />
+            <div className="px-6 py-8 bg-vulcan-800 rounded-3xl min-h-[360px] flex flex-col">
+              <div className="text-vulcan-300 text-lg font-bold mb-3">Attestations over time (last 6 months)</div>
+              <LineChartJS data={timelinePoints} height={240} lineColor="#F6A17B" fillColor="rgba(246,161,123,0.25)" xLabelFormat="month" />
             </div>
 
             {/* Donut + legend card */}
-            <div className="px-6 py-8 bg-vulcan-800 rounded-3xl flex flex-col items-center gap-6">
-              <div className="w-full text-vulcan-300 text-lg font-bold">Regen actions</div>
-              <DonutChartJS data={actionsChart} tooltipMode="count" height={260} />
-              <div className="w-full flex flex-col gap-4">
-                {categoryLegend.map((g) => (
-                  <div key={g.name} className="w-full flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="text-vulcan-300 text-lg font-bold">{g.name}</div>
-                      {g.colors.length > 0 && (
-                        <div className="flex gap-1 mt-1" aria-label={`${g.name} action colors`}>
-                          {g.colors.map((c, i) => (
-                            <span key={`${g.name}-${i}`} className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: c }} />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-white text-xl font-black ml-3">{g.count}</span>
-                  </div>
-                ))}
+            <div className="px-6 py-8 bg-vulcan-800 rounded-3xl min-h-[360px] flex flex-col gap-4">
+              <div className="w-full flex items-center justify-between">
+                <div className="text-vulcan-300 text-lg font-bold">Regen actions</div>
+                <button
+                  type="button"
+                  onClick={() => setShowLegend((v) => !v)}
+                  className="text-sm text-white/80 hover:text-white underline-offset-4 hover:underline"
+                >
+                  {showLegend ? 'Hide details' : 'Details'}
+                </button>
               </div>
+              <DonutChartJS data={actionsChart} tooltipMode="count" height={240} />
+              {showLegend && (
+                <div className="w-full flex flex-col gap-4">
+                  {categoryLegend.map((g) => (
+                    <div key={g.name} className="w-full flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="text-vulcan-300 text-lg font-bold">{g.name}</div>
+                        {g.colors.length > 0 && (
+                          <div className="flex gap-1 mt-1" aria-label={`${g.name} action colors`}>
+                            {g.colors.map((c, i) => (
+                              <span key={`${g.name}-${i}`} className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: c }} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-white text-xl font-black ml-3">{g.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
