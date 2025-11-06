@@ -44,6 +44,24 @@ export function SiteModal({ open, mode, initial, walletAddress, onClose, onSaved
     })();
   }, [open]);
 
+  // Reset form fields on open for create mode (start fresh every time)
+  useEffect(() => {
+    if (!open) return;
+    if (mode === 'create') {
+      setName("");
+      setType("");
+      setDepthM('');
+      setAreaM2('');
+      setCoords(undefined);
+    } else if (mode === 'edit' && initial) {
+      setName(initial.name || "");
+      setType(initial.type || "");
+      setDepthM(initial.depthM ?? '');
+      setAreaM2(initial.areaM2 ?? '');
+      setCoords(initial.coords);
+    }
+  }, [open, mode, initial]);
+
   const valid = useMemo(() => {
     const hasName = name.trim().length > 0;
     const hasType = String(type).length > 0;
