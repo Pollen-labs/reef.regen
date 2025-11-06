@@ -76,18 +76,30 @@ export async function POST(req: NextRequest) {
     internal_identifier: (body.internal_id || null) as string | null,
   } as const;
 
-  const { data: inserted, error } = await supabaseAdmin
+  let inserted: any = null;
+  let error: any = null;
+  ({ data: inserted, error } = await supabaseAdmin
     .from("attestation")
     .insert(insert)
     .select("attestation_id")
-    .single();
+    .single());
   if (error) {
     const code = (error as any)?.code || '';
     const msg = (error as any)?.message || '';
     if (code === '23505' && msg.includes('attestation_internal_ident_unique')) {
-      return NextResponse.json({ error: 'Internal ID already used for this account. Choose another.' }, { status: 409 });
+      // If internal ID collides, ignore it and insert without the identifier
+      const insertNoInternal = { ...insert, internal_identifier: null as any };
+      const res2 = await supabaseAdmin
+        .from("attestation")
+        .insert(insertNoInternal)
+        .select("attestation_id")
+        .single();
+      inserted = res2.data as any;
+      error = res2.error as any;
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    } else {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
   }
   const attestationId = inserted.attestation_id as string;
 

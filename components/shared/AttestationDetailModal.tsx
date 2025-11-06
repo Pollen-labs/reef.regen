@@ -93,7 +93,7 @@ export default function AttestationDetailModal({ attestation, onClose, overlayCl
           {/* Context rows — Row1: date (full width), Row2: site + type, Row3: location + depth/area */}
           {/* Row 1: Date */}
           <div className="mb-6">
-            <div className="text-vulcan-400 text-lg">Actions took place on</div>
+            <div className="text-vulcan-400 text-lg">Actions took place on (UTC)</div>
             <div className="text-white text-xl font-black">
               {formatDateRangeShort(attestation.actionDate, attestation.actionEndDate)}
             </div>

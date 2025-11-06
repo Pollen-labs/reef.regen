@@ -51,7 +51,7 @@ export function WizardFooter({
             )}
           </div>
           {centerLabel && (
-            <div className="hidden md:block flex-1 text-vulcan-400 text-lg font-light leading-6 text-center">
+            <div className="hidden md:block flex-1 text-vulcan-400 text-base font-light leading-6 text-center">
               {centerLabel}
             </div>
           )}

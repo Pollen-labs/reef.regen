@@ -28,7 +28,7 @@ function formatDateShortInternal(value: DateInput, withSuffix: boolean): string 
   const d = parseAsUTC(value);
   if (!d) return '-';
   const base = fmtUTC.format(d);
-  return withSuffix ? `${base} (UTC)` : base;
+  return withSuffix ? `${base}` : base;
 }
 
 export function formatDateShort(value: DateInput): string {
@@ -39,6 +39,6 @@ export function formatDateRangeShort(start: DateInput, end: DateInput): string {
   const s = formatDateShortInternal(start, false);
   const e = formatDateShortInternal(end, false);
   if (s === '-' && e === '-') return '-';
-  if (s !== '-' && e !== '-') return `${s} ~ ${e} (UTC)`;
-  return (s !== '-' ? s : e) + ' (UTC)';
+  if (s !== '-' && e !== '-') return `${s} ~ ${e} `;
+  return (s !== '-' ? s : e) ;
 }

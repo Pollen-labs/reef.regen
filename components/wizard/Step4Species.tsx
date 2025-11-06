@@ -15,6 +15,7 @@ export function Step4Species() {
   const [loading, setLoading] = useState(false);
   const listRef = useRef<HTMLUListElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   // Debounced search (require >=5 characters)
   useEffect(() => {
@@ -125,6 +126,7 @@ export function Step4Species() {
         <div className="flex gap-3 items-center w-full pb-4">
           <div className="rr-dropdown flex-1">
             <Input
+              ref={inputRef}
               role="combobox"
               aria-autocomplete="list"
               aria-expanded={open}
@@ -134,6 +136,8 @@ export function Step4Species() {
               onKeyDown={onKeyDown}
               placeholder="Search species (min 5 letters)"
               className=""
+              rightIcon={q.trim().length > 0 ? 'xmark_circle_fill' : undefined}
+              onRightIconClick={() => { setQ(''); setItems([]); setOpen(false); setHighlight(-1); inputRef.current?.focus(); }}
             />
             {q.trim().length > 0 && q.trim().length < 5 && (
               <div className="mt-1 text-left text-white/60 text-xs">Type at least 5 characters to search.</div>

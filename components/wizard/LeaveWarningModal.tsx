@@ -31,7 +31,11 @@ export function LeaveWarningModal({ open, onStay, onLeave }: Props) {
           </button>
           <button
             className="w-full px-6 py-2 rounded-2xl outline outline-4 outline-offset-[-4px] outline-vulcan-500 text-white text-xl font-bold leading-8"
-            onClick={() => { try { wizard.resetAndPurge(); } catch {} onLeave(); }}
+            onClick={() => {
+              try { wizard.resetAndPurge(); } catch {}
+              // Defer navigation one tick so the provider sees the cleared state
+              setTimeout(() => onLeave(), 0);
+            }}
           >
             Discard draft and leave
           </button>
