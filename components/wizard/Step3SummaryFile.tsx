@@ -37,10 +37,17 @@ export function Step3SummaryFile() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [summary]);
 
+  const clearFile = () => {
+    setPatch({ fileBlob: null, fileName: undefined, fileSize: null, fileType: null, fileCid: undefined, fileUrl: undefined });
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
   const onSelectFile = (file: File | null | undefined) => {
     if (!file) return;
     if (file.size > MAX_BYTES) {
-      setError("File exceeds 5 MB. Please choose a smaller file.");
+      // Clear any previous selection to avoid confusion, and show explicit error
+      clearFile();
+      setError(`"${file.name}" exceeds 5 MB. Please choose a smaller file.`);
       return;
     }
     setError(null);
@@ -60,11 +67,7 @@ export function Step3SummaryFile() {
     onSelectFile(f);
   };
 
-  const onRemove = () => {
-    setPatch({ fileBlob: null, fileName: undefined, fileSize: null, fileType: null, fileCid: undefined, fileUrl: undefined });
-    setError(null);
-    if (inputRef.current) inputRef.current.value = "";
-  };
+  const onRemove = () => { clearFile(); setError(null); };
 
   // Drag & drop
   const [dragOver, setDragOver] = useState(false);

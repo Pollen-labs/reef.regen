@@ -16,9 +16,9 @@ export function Step4Species() {
   const listRef = useRef<HTMLUListElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Debounced search
+  // Debounced search (require >=5 characters)
   useEffect(() => {
-    if (q.trim().length < 2) {
+    if (q.trim().length < 5) {
       setItems([]);
       setOpen(false);
       setHighlight(-1);
@@ -86,7 +86,7 @@ export function Step4Species() {
 
   const onKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
     if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
-      setOpen(true);
+      if (q.trim().length >= 5) setOpen(true);
       return;
     }
     if (e.key === 'ArrowDown') {
@@ -134,9 +134,12 @@ export function Step4Species() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="Search here"
+              placeholder="Search species (min 5 letters)"
               className=""
             />
+            {q.trim().length > 0 && q.trim().length < 5 && (
+              <div className="mt-1 text-left text-white/60 text-xs">Type at least 5 characters to search.</div>
+            )}
             {open && (
               <ul
                 id="species-listbox"
