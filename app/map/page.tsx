@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import MapView from "@/components/map/MapView";
 import LocationPane from "@/components/map/LocationPane";
@@ -14,7 +14,7 @@ import { classesForSiteType } from "@/lib/style/siteTypeColors";
  * Shows all reef restoration locations with interactive pins.
  * Click a pin to view location details in LocationPane (Phase 3A).
  */
-export default function MapPage() {
+function MapPageContent() {
   const [activeLocationId, setActiveLocationId] = useState<string | null>(null);
   const [points, setPoints] = useState<LocationPoint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +58,7 @@ export default function MapPage() {
               const next = new URLSearchParams(searchParams?.toString() || "");
               next.set("site", att.locationId);
               next.set("att", att.id);
-              router.replace(`${pathname}?${next.toString()}`);
+              router.replace(`${pathname}?${next.toString()}` as any);
             } catch {}
           }
         }
@@ -157,7 +157,7 @@ export default function MapPage() {
       const next = new URLSearchParams(searchParams?.toString() || "");
       next.delete("site");
       const qs = next.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname);
+      router.replace((qs ? `${pathname}?${qs}` : pathname) as any);
     } catch {}
   };
 
@@ -183,7 +183,7 @@ export default function MapPage() {
       next.set("att", attestation.id);
       const siteId = activeLocationId || (attestation as any).locationId;
       if (siteId) next.set("site", siteId);
-      router.replace(`${pathname}?${next.toString()}`);
+      router.replace(`${pathname}?${next.toString()}` as any);
     } catch {}
   };
 
@@ -194,7 +194,7 @@ export default function MapPage() {
       const next = new URLSearchParams(searchParams?.toString() || "");
       next.delete("att");
       const qs = next.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname);
+      router.replace((qs ? `${pathname}?${qs}` : pathname) as any);
     } catch {}
   };
 
@@ -212,7 +212,7 @@ export default function MapPage() {
           try {
             const next = new URLSearchParams(searchParams?.toString() || "");
             next.set("site", id);
-            router.replace(`${pathname}?${next.toString()}`);
+            router.replace(`${pathname}?${next.toString()}` as any);
           } catch {}
         }}
         onDeselect={handleClosePane}
@@ -280,5 +280,17 @@ export default function MapPage() {
 
       <AttestationDetailModal attestation={activeAtt} onClose={handleCloseAttestationModal} />
     </div>
+  );
+}
+
+export default function MapPage() {
+  return (
+    <Suspense fallback={
+      <div className="absolute inset-0 bg-vulcan-900 flex items-center justify-center" style={{ top: 'var(--topnav-height, 96px)' }}>
+        <div className="text-white text-xl">Loading map...</div>
+      </div>
+    }>
+      <MapPageContent />
+    </Suspense>
   );
 }
