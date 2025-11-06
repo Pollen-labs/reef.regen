@@ -69,7 +69,7 @@ export function Step1Actions() {
     <div className="self-stretch flex flex-col items-center gap-10">
       {grouped.map((group) => (
         <div key={group.title} className="self-stretch flex flex-col items-center gap-6">
-          <div className="w-full max-w-full md:max-w-[600px] px-4 sm:px-6 flex flex-col items-stretch md:items-center gap-3 md:gap-4">
+          <div className="w-full max-w-full md:max-w-[600px] px-3 sm:px-6 flex flex-col items-stretch md:items-center gap-3 md:gap-4">
             <div className="text-vulcan-700 text-3xl text-center font-black leading-9 tracking-tight">{group.title}</div>
           </div>
           {(() => {

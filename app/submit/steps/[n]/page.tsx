@@ -107,7 +107,7 @@ function StepContent() {
   }, [stepNum]);
 
   return (
-    <div className="w-full max-w-[960px] mx-auto py-4 px-4 md:px-2 pb-40">
+    <div className="w-full max-w-[960px] mx-auto py-2 px-0 md:px-2 pb-40">
       <ProgressBar />
       <div className="py-4">
         {stepNum === 1 && (
@@ -134,6 +134,7 @@ function StepContent() {
         nextLabel={isLast ? (stepNum === totalSteps ? "Review" : "Next") : "Next"}
         nextDisabled={isFirst ? reefRegenActions.length === 0 : stepNum === 2 ? !step2Valid : false}
         centerLabel={`Step ${stepNum} of ${totalSteps} : ${stepTitle}${savedLabel ? ` • ${savedLabel}` : ''}`}
+        centerLabelMobile={`Step ${stepNum} of ${totalSteps} : ${stepTitle}`}
       />
     </div>
   );
