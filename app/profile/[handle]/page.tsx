@@ -35,6 +35,15 @@ export default function ProfilePage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [internalById, setInternalById] = useState<Record<string, string | null>>({});
   const [showLegend, setShowLegend] = useState(false);
+  const [isLg, setIsLg] = useState<boolean>(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const onChange = () => setIsLg(!!mq.matches);
+    onChange();
+    try { mq.addEventListener('change', onChange); } catch { mq.addListener(onChange); }
+    return () => { try { mq.removeEventListener('change', onChange); } catch { mq.removeListener(onChange); } };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -179,7 +188,7 @@ export default function ProfilePage() {
 
       {/* Full-width background section */}
       <div className="w-full">
-        <div className="w-full max-w-[1440px] mx-auto px-0 lg:px-24  flex justify-between items-start gap-8">
+        <div className="w-full max-w-[1440px] mx-auto px-0 lg:px-24  flex flex-col lg:flex-row lg:justify-between items-start gap-4 lg:gap-8">
         {/* Left column: profile header */}
         <div className="w-full max-w-96 flex flex-col gap-6">
           <h1 className="text-orange text-5xl md:text-7xl font-black leading-tight">{p.profile_name || p.handle}</h1>
@@ -242,7 +251,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Right column: stats + charts + map */}
-        <div className="flex-1 flex flex-col gap-1.5 min-w-[680px]">
+        <div className="flex-1 flex flex-col gap-1.5 w-full lg:min-w-[680px] mt-4 lg:mt-0">
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
             {[
@@ -263,14 +272,23 @@ export default function ProfilePage() {
           <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-1.5">
             {/* Line chart card */}
             <div className="px-6 py-8 bg-vulcan-800 rounded-3xl">
-              <div className="text-vulcan-300 text-lg font-bold mb-3">Attestations over time (last 6 months)</div>
-              <LineChartJS data={timelinePoints} height={260} lineColor="#F6A17B" fillColor="rgba(246,161,123,0.25)" xLabelFormat="month" />
+              <div className="text-vulcan-400 text-lg font-bold mb-3">Attestations over time (last 6 months)</div>
+              <LineChartJS
+                data={timelinePoints}
+                height={260}
+                lineColor="#F6A17B"
+                fillColor="rgba(246,161,123,0.25)"
+                xLabelFormat="month"
+                xTickSize={isLg ? 14 : 12}
+                yTickSize={isLg ? 14 : 12}
+                paddingLeft={isLg ? 0 : 8}
+              />
             </div>
 
             {/* Donut + legend card */}
             <div className="px-6 py-8 bg-vulcan-800 rounded-3xl min-h-[360px] flex flex-col gap-4">
               <div className="w-full flex items-center justify-between">
-                <div className="text-vulcan-300 text-lg font-bold">Regen actions</div>
+                <div className="text-vulcan-400 text-lg font-bold">Regen actions</div>
                 <button
                   type="button"
                   onClick={() => setShowLegend((v) => !v)}
@@ -279,7 +297,9 @@ export default function ProfilePage() {
                   {showLegend ? 'Hide details' : 'Show Details'}
                 </button>
               </div>
-              <DonutChartJS data={actionsChart} tooltipMode="count" height={240} />
+              <div className="w-full h-[220px] lg:h-[260px]">
+                <DonutChartJS data={actionsChart} tooltipMode="count" className="w-full h-full" />
+              </div>
               {showLegend && (
                 <div className="w-full flex flex-col gap-6">
                   {categoryLegend.map((g) => (
@@ -309,14 +329,10 @@ export default function ProfilePage() {
           {/* Full-width Map card */}
           <div className="w-full mt-1.5 bg-vulcan-800 rounded-3xl overflow-hidden">
             <div>
-              <StaticSiteMap
-                sites={data.sites}
-                height={460}
-                className="w-full"
-              />
+              <StaticSiteMap sites={data.sites} height={isLg ? 520 : 360} className="w-full" />
             </div>
             <div className="bg-vulcan-900/70 backdrop-blur-[1px] px-4 pt-3 pb-2">
-              <div className="text-vulcan-300 text-lg font-bold mb-1">Sites</div>
+              <div className="text-vulcan-400 text-lg font-bold mb-1">Sites</div>
               <StackedBarChartJS
                 segments={siteBarSegments}
                 height={40}
@@ -325,6 +341,11 @@ export default function ProfilePage() {
                 padding={4}
                 tooltipMode="count"
                 legendInside={false}
+                legendFontSize={isLg ? 12 : 11}
+                legendLineHeight={isLg ? 16 : 14}
+                legendGap={isLg ? 12 : 10}
+                legendItemGap={isLg ? 6 : 5}
+                legendIconSize={isLg ? 10 : 9}
               />
             </div>
           </div>
@@ -347,10 +368,12 @@ export default function ProfilePage() {
           <div className="pt-8 pb-24">
             <div className="text-vulcan-500 text-lg font-bold mb-2">Attestations</div>
             {(() => {
-              const colsOwner = "20% 45% 20% 10% 5%";
-              const colsPublic = "20% 50% 20% 5%";
-              const gridCols = isOwner ? colsOwner : colsPublic;
-              const header = (
+              const gridColsMobile = "35% 55% 10%";
+              const gridColsPublic = "20% 50% 25% 5%"; // date, actions, site, ...
+              const gridColsOwner = "20% 45% 20% 10% 5%"; // + ID
+              const gridCols = isLg ? (isOwner ? gridColsOwner : gridColsPublic) : gridColsMobile;
+
+              const header = isLg ? (
                 <div className="mb-1 grid gap-1" style={{ gridTemplateColumns: gridCols }}>
                   <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center">
                     <div className="text-vulcan-400 text-lg font-bold">Action date</div>
@@ -368,7 +391,18 @@ export default function ProfilePage() {
                   )}
                   <div className="h-10 px-3 bg-vulcan-800 rounded-lg" />
                 </div>
+              ) : (
+                <div className="mb-1 grid gap-1" style={{ gridTemplateColumns: gridCols }}>
+                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center">
+                    <div className="text-vulcan-400 text-lg font-bold">Action date</div>
+                  </div>
+                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center">
+                    <div className="text-vulcan-400 text-lg font-bold">Site name</div>
+                  </div>
+                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg" />
+                </div>
               );
+
               const rows = (data.attestations || []).map((a) => (
                 <button
                   key={a.id}
@@ -377,25 +411,43 @@ export default function ProfilePage() {
                   className="group w-full grid gap-1 mb-1 rounded-lg text-left cursor-pointer transition-colors hover:bg-vulcan-700/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
                   style={{ gridTemplateColumns: gridCols }}
                 >
+                  {/* Date */}
                   <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center whitespace-nowrap transition-colors group-hover:bg-vulcan-700">
                     <div className="text-vulcan-200 text-lg font-light">{formatDateShort(a.date)}</div>
                   </div>
-                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
-                    <div className="text-vulcan-200 text-lg font-bold truncate" title={a.actions.join(", ")}>{a.actions.join(", ")}</div>
-                  </div>
-                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
-                    <div className="text-vulcan-200 text-lg font-bold truncate" title={a.site || ''}>{a.site || ''}</div>
-                  </div>
-                  {isOwner && (
+
+                  {/* Actions (lg+) or Site (mobile second col) */}
+                  {isLg ? (
+                    <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
+                      <div className="text-vulcan-200 text-lg font-bold truncate" title={a.actions.join(", ")}>{a.actions.join(", ")}</div>
+                    </div>
+                  ) : (
+                    <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
+                      <div className="text-vulcan-200 text-lg font-bold truncate" title={a.site || ''}>{a.site || ''}</div>
+                    </div>
+                  )}
+
+                  {/* Site name (lg+) */}
+                  {isLg && (
+                    <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
+                      <div className="text-vulcan-200 text-lg font-bold truncate" title={a.site || ''}>{a.site || ''}</div>
+                    </div>
+                  )}
+
+                  {/* ID (owner, lg+) */}
+                  {isLg && isOwner && (
                     <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
                       <div className="text-vulcan-200 text-lg font-light truncate" title={internalById[a.id] || ''}>{internalById[a.id] || '-'}</div>
                     </div>
                   )}
+
+                  {/* Ellipsis */}
                   <div className="h-10 bg-vulcan-800 rounded-lg grid place-items-center text-flamingo-200 transition-colors group-hover:bg-vulcan-700">
                     <i className="f7-icons text-2xl">ellipsis</i>
                   </div>
                 </button>
               ));
+
               return (
                 <>
                   {header}

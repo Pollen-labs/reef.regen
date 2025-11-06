@@ -98,17 +98,12 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
     .select("site_id, site_name, lon, lat, site_type:site_type_id(name)")
     .eq("profile_id", profileId);
   if (siteErr) return NextResponse.json({ error: siteErr.message }, { status: 500 });
-  const sitesPayload = (siteList || []).map((s: any) => ({
-    id: s.site_id as string,
-    name: s.site_name as string,
-    type: (s.site_type?.name as string) || undefined,
-    coords: [Number(s.lon), Number(s.lat)] as [number, number],
-  }));
+  // Defer building sites payload until after we compute attestation counts per site
 
   // Attestations table rows: date, actions, site name
   const { data: attRows, error: attErr } = await supabaseAdmin
     .from("attestation")
-    .select("attestation_id, action_start_date, action_end_date, site:site_id(site_name), profile_id")
+    .select("attestation_id, action_start_date, action_end_date, site_id, site:site_id(site_name), profile_id")
     .eq("profile_id", profileId)
     .order("action_start_date", { ascending: false });
   if (attErr) return NextResponse.json({ error: attErr.message }, { status: 500 });
@@ -133,6 +128,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
     endDate: (a.action_end_date as string | null) || null,
     actions: actionTypesByAtt.get(a.attestation_id) || [],
     site: (a.site?.site_name as string) || undefined,
+    site_id: (a.site_id as string | null) || null,
   }));
 
   // Build monthly timeline of total actions (start..end inclusive)
@@ -165,6 +161,21 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
     months6.push(ymStr(d));
   }
   const timeline_monthly = months6.map((m) => ({ month: m, value: monthly.get(m) || 0 }));
+
+  // Build sites payload with attestation counts per site for map coloring
+  const countsBySite = new Map<string, number>();
+  for (const a of attestations) {
+    const sid = a.site_id as string | null;
+    if (!sid) continue;
+    countsBySite.set(sid, (countsBySite.get(sid) || 0) + 1);
+  }
+  const sitesPayload = (siteList || []).map((s: any) => ({
+    id: s.site_id as string,
+    name: s.site_name as string,
+    type: (s.site_type?.name as string) || undefined,
+    coords: [Number(s.lon), Number(s.lat)] as [number, number],
+    attestationCount: countsBySite.get(s.site_id as string) || 0,
+  }));
 
   const payload = {
     profile: {
