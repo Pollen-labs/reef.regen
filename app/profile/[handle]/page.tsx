@@ -67,22 +67,23 @@ export default function ProfilePage() {
       });
   }, [data]);
 
-  // Build category legend with per-action colors
+  // Build category legend with per-action items (color + label + count)
   const categoryLegend = useMemo(() => {
     const cats = data?.actions_category_breakdown || [];
     const actions = data?.actions_breakdown || [];
     return cats.map((g) => {
-      const colors: string[] = [];
-      const seen = new Set<string>();
-      for (const a of actions) {
-        if ((a.category || '') !== g.name || a.count <= 0) continue;
-        const hex = classesForRegen(a.name, a.category).hex;
-        if (!seen.has(hex)) {
-          colors.push(hex);
-          seen.add(hex);
-        }
-      }
-      return { name: g.name, count: g.count, colors } as { name: string; count: number; colors: string[] };
+      const items = actions
+        .filter((a) => (a.category || '') === g.name && a.count > 0)
+        .map((a) => ({
+          label: a.name,
+          count: a.count,
+          color: classesForRegen(a.name, a.category).hex,
+        }));
+      return { name: g.name, count: g.count, items } as {
+        name: string;
+        count: number;
+        items: { label: string; count: number; color: string }[];
+      };
     });
   }, [data?.actions_category_breakdown, data?.actions_breakdown]);
 
@@ -261,9 +262,9 @@ export default function ProfilePage() {
           {/* Charts row: Left line chart, Right donut + legend */}
           <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-1.5">
             {/* Line chart card */}
-            <div className="px-6 py-8 bg-vulcan-800 rounded-3xl min-h-[360px] flex flex-col">
+            <div className="px-6 py-8 bg-vulcan-800 rounded-3xl">
               <div className="text-vulcan-300 text-lg font-bold mb-3">Attestations over time (last 6 months)</div>
-              <LineChartJS data={timelinePoints} height={240} lineColor="#F6A17B" fillColor="rgba(246,161,123,0.25)" xLabelFormat="month" />
+              <LineChartJS data={timelinePoints} height={260} lineColor="#F6A17B" fillColor="rgba(246,161,123,0.25)" xLabelFormat="month" />
             </div>
 
             {/* Donut + legend card */}
@@ -273,27 +274,31 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowLegend((v) => !v)}
-                  className="text-sm text-white/80 hover:text-white underline-offset-4 hover:underline"
+                  className="text-sm text-white/60 hover:text-white font-bold hover:text-white/90"
                 >
-                  {showLegend ? 'Hide details' : 'Details'}
+                  {showLegend ? 'Hide details' : 'Show Details'}
                 </button>
               </div>
               <DonutChartJS data={actionsChart} tooltipMode="count" height={240} />
               {showLegend && (
-                <div className="w-full flex flex-col gap-4">
+                <div className="w-full flex flex-col gap-6">
                   {categoryLegend.map((g) => (
-                    <div key={g.name} className="w-full flex items-start justify-between">
-                      <div className="flex-1">
+                    <div key={g.name} className="w-full">
+                      <div className="w-full flex items-start justify-between mb-2">
                         <div className="text-vulcan-300 text-lg font-bold">{g.name}</div>
-                        {g.colors.length > 0 && (
-                          <div className="flex gap-1 mt-1" aria-label={`${g.name} action colors`}>
-                            {g.colors.map((c, i) => (
-                              <span key={`${g.name}-${i}`} className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: c }} />
-                            ))}
-                          </div>
-                        )}
+                        <span className="text-white text-xl font-black ml-3">{g.count}</span>
                       </div>
-                      <span className="text-white text-xl font-black ml-3">{g.count}</span>
+                      <div className="w-full flex flex-col gap-2">
+                        {g.items.map((it, idx) => (
+                          <div key={`${g.name}-${idx}`} className="w-full flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-white/90 text-lg">
+                              <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: it.color }} />
+                              <span className="truncate">{it.label}</span>
+                            </div>
+                            <span className="text-white text-lg font-bold ml-3">{it.count}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>

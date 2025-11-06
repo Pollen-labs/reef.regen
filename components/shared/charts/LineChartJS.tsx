@@ -1,6 +1,6 @@
 "use client";
 import { Line } from "react-chartjs-2";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import {
   Chart as ChartJS,
   LineElement,
@@ -17,18 +17,20 @@ export type LinePoint = { label: string; value: number };
 
 export default function LineChartJS({
   data,
-  height = 140,
+  height = 160,
   className,
   lineColor = "#F6A17B", // flamingo
   fillColor = "rgba(246,161,123,0.20)",
   xLabelFormat = "raw",
-  pointRadius = 4,
-  pointHoverRadius = 5,
-  borderWidth = 2,
+  pointRadius = 6,
+  pointHoverRadius = 8,
+  borderWidth = 4,
   xTickSize = 14,
   yTickSize = 14,
   yStep = 1,
-  paddingLeft = 28,
+  paddingLeft = 0,
+  pointBorderColor = "#F6A17B",
+  pointBorderWidth = 2,
 }: {
   data: LinePoint[];
   height?: number;
@@ -43,7 +45,10 @@ export default function LineChartJS({
   yTickSize?: number;
   yStep?: number;
   paddingLeft?: number;
+  pointBorderColor?: string;
+  pointBorderWidth?: number;
 }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const rawLabels = data.map((d) => d.label);
   const monthNames = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -78,11 +83,12 @@ export default function LineChartJS({
         pointRadius,
         pointHoverRadius,
         pointBackgroundColor: lineColor,
-        pointBorderColor: "#2C2D3A",
+        pointBorderColor,
+        pointBorderWidth,
         borderWidth,
       },
     ],
-  }), [labels.join("|"), values.join("|"), lineColor, fillColor]);
+  }), [labels.join("|"), values.join("|"), lineColor, fillColor, pointBorderColor, pointBorderWidth, pointRadius, pointHoverRadius, borderWidth]);
 
   const options: any = {
     responsive: true,
@@ -102,14 +108,37 @@ export default function LineChartJS({
     plugins: {
       legend: { display: false },
       tooltip: {
-        enabled: true,
-        callbacks: {
-          title: (items: any[]) => {
-            if (!items?.length) return "";
-            const idx = items[0].dataIndex ?? 0;
-            const raw = rawLabels[idx] || labels[idx] || "";
-            return xLabelFormat === "month" ? formatMonthYear(raw) : String(raw);
-          },
+        enabled: false,
+        external: (ctx: any) => {
+          const { chart, tooltip } = ctx;
+          const parent: HTMLElement | null = containerRef.current;
+          if (!parent) return;
+          let el = parent.querySelector<HTMLDivElement>("[data-rr-tooltip]");
+          if (!el) {
+            el = document.createElement("div");
+            el.setAttribute("data-rr-tooltip", "");
+            el.className = "pointer-events-none absolute z-10 bg-vulcan-900/80 text-white rounded-xl shadow-xl px-2 py-2";
+            el.style.opacity = "0";
+            parent.appendChild(el);
+            parent.style.position = parent.style.position || "relative";
+          }
+          if (tooltip.opacity === 0) {
+            el.style.opacity = "0";
+            return;
+          }
+          const dp = tooltip.dataPoints?.[0];
+          const idx = dp?.dataIndex ?? 0;
+          const raw = rawLabels[idx] || labels[idx] || "";
+          const title = xLabelFormat === "month" ? formatMonthYear(raw) : String(raw);
+          const val = Number(dp?.raw ?? 0);
+          el.innerHTML = `<div class=\"text-sm leading-tight\">${title}</div><div class=\"text-base font-black leading-7\">${val}</div>`;
+          const { offsetLeft, offsetTop } = chart.canvas;
+          const left = offsetLeft + tooltip.caretX;
+          const top = offsetTop + tooltip.caretY;
+          el.style.opacity = "1";
+          el.style.left = `${left}px`;
+          el.style.top = `${top}px`;
+          el.style.transform = "translate(-50%, -120%)";
         },
       },
     },
@@ -117,7 +146,7 @@ export default function LineChartJS({
   };
 
   return (
-    <div className={[className || "", "w-full"].join(" ")} style={{ height }}>
+    <div ref={containerRef} className={[className || "", "w-full"].join(" ")} style={{ height }}>
       <Line data={chartData} options={options} />
     </div>
   );
