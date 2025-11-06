@@ -45,12 +45,12 @@ function SuccessInner() {
         {/* Text column */}
         <div className="flex flex-col gap-6">
           <h1
-            className="text-white text-h2 font-black leading-[1.04] text-balance"
+            className="text-white text-5xl md:text-7xl font-black text-balance"
             style={{ textWrap: 'balance' as any }}
           >
             Submission is completed!
           </h1>
-          <div className="text-vulcan-200 text-xl font-light leading-9">All your data is submitted to the blockchain.</div>
+          <div className="text-vulcan-200 text-2xl font-light leading-9">All your data is submitted to the blockchain.</div>
 
           {uid && (
             <IdentifierBar
