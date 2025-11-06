@@ -129,16 +129,19 @@ export default function StackedBarChartJS({
 
   const legendH = showLegend && legendInside ? legendHeight : 0; // px reserved for legend inside
 
+  const wrapperStyle: React.CSSProperties | undefined = legendInside ? { height } : undefined;
+  const barAreaHeight = legendInside ? Math.max(0, height - legendH) : height;
+
   return (
-    <div ref={containerRef} className={[className || "", "w-full relative"].join(" ")} style={{ height }}>
-      <div style={{ height: Math.max(0, height - legendH) }}>
+    <div ref={containerRef} className={[className || "", "w-full relative"].join(" ")} style={wrapperStyle}>
+      <div style={{ height: barAreaHeight }}>
         <Bar data={chartData} options={options} />
       </div>
       {showLegend && (
         legendInside ? (
           <div
-            className="absolute left-0 right-0 flex flex-wrap items-center"
-            style={{ bottom: 4, gap: legendGap, fontSize: legendFontSize, lineHeight: `${legendLineHeight}px` }}
+            className="absolute left-0 right-0 flex flex-wrap items-center justify-center"
+            style={{ bottom: 8, gap: legendGap, fontSize: legendFontSize, lineHeight: `${legendLineHeight}px` }}
           >
             {segments.map((s) => (
               <div key={s.label} className="inline-flex items-center" style={{ gap: legendItemGap }}>
@@ -150,8 +153,8 @@ export default function StackedBarChartJS({
           </div>
         ) : (
           <div
-            className="flex flex-wrap items-center"
-            style={{ marginTop: 12, gap: legendGap, fontSize: legendFontSize + 2, lineHeight: `${legendLineHeight}px` }}
+            className="flex flex-wrap items-center justify-center"
+            style={{ marginTop: 12, paddingBottom: 12, gap: legendGap, fontSize: legendFontSize + 2, lineHeight: `${legendLineHeight}px` }}
           >
             {segments.map((s) => (
               <div key={s.label} className="inline-flex items-center" style={{ gap: legendItemGap + 2 }}>

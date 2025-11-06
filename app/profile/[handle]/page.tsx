@@ -319,7 +319,7 @@ export default function ProfilePage() {
               <div className="text-vulcan-300 text-lg font-bold mb-1">Sites</div>
               <StackedBarChartJS
                 segments={siteBarSegments}
-                height={36}
+                height={40}
                 barRadius={40}
                 barThickness={20}
                 padding={4}
