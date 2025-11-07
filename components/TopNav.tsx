@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import type { Route } from "next";
 import { useWeb3AuthConnect, useWeb3AuthDisconnect } from "@web3auth/modal/react";
@@ -36,6 +37,7 @@ export default function TopNav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [menuAnim, setMenuAnim] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
   const hideTimeout = useRef<number | null>(null);
@@ -136,6 +138,7 @@ export default function TopNav() {
 
   // Subtle fade/slide animation for mobile menu
   useEffect(() => {
+    setMounted(true);
     if (open) {
       const id = requestAnimationFrame(() => setMenuAnim(true));
       return () => cancelAnimationFrame(id);
@@ -222,7 +225,7 @@ export default function TopNav() {
       <div className="w-full bg-orange text-white">
         <div className="w-full px-6 md:px-10 py-1 flex items-center justify-center">
           <p className="text-xsb text-center break-words">
-            This is a preview release, all attestation will be posted on testnet, please help us to test this app and let us know any bug or issues. - update on Nov 3,2025
+            Preview release, testnet only, please help us to find any bugs. - update on Nov 6, 2025
           </p>
         </div>
       </div>
@@ -280,27 +283,29 @@ export default function TopNav() {
               {menuOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 mt-2 w-52 rounded-2xl bg-black/95 outline outline-1 outline-white/10 shadow-xl overflow-hidden"
+                  className="absolute right-0 mt-2 w-56 rounded-2xl bg-black/95 outline outline-1 outline-white/10 shadow-xl overflow-hidden"
                 >
                  <a
                     role="menuitem"
-                    className="block px-4 py-2 text-white text-lg font-bold hover:bg-white/10"
+                    className="flex items-center gap-2 px-4 py-2 text-white text-lg font-bold hover:bg-white/10"
                     href={accountHref}
                     onClick={(e) => onNavClick(e, accountHref)}
                   >
-                    View profile
+                    <i className="f7-icons text-lg">smiley</i>
+                    <span>View profile</span>
                   </a>
                  <a
                     role="menuitem"
-                    className="block px-4 py-2 text-white text-lg font-bold hover:bg-white/10"
+                    className="flex items-center gap-2 px-4 py-2 text-white text-lg font-bold hover:bg-white/10"
                     href="/profile/setting"
                     onClick={(e) => onNavClick(e, "/profile/setting")}
                   >
-                    Settings
+                    <i className="f7-icons text-lg">gear_alt</i>
+                    <span>Settings</span>
                   </a>
                  <button
                     role="menuitem"
-                    className="w-full text-left px-4 py-2 text-white text-lg font-bold hover:bg-white/10"
+                    className="w-full text-left flex items-center gap-2 px-4 py-2 text-white text-lg font-bold hover:bg-white/10"
                     onClick={async () => {
                       try { await disconnectWeb3Auth(); } catch {}
                       disconnect();
@@ -309,7 +314,8 @@ export default function TopNav() {
                       if (typeof window !== 'undefined') window.location.href = "/";
                     }}
                   >
-                    Log out
+                    <i className="f7-icons text-lg">arrow_right_to_line_alt</i>
+                    <span>Log out</span>
                   </button>
                 </div>
               )}
@@ -337,8 +343,8 @@ export default function TopNav() {
         </button>
       </div>
 
-      {/* Mobile Fullscreen Menu */}
-      {open && (
+      {/* Mobile Fullscreen Menu (Portal to body to avoid double backgrounds / stacking glitches) */}
+      {open && mounted && createPortal(
         <div
           className={`md:hidden fixed inset-0 z-[1000] bg-black transition-opacity duration-200 ease-out ${menuAnim ? 'opacity-100' : 'opacity-0'}`}
           role="dialog"
@@ -428,7 +434,7 @@ export default function TopNav() {
             </nav>
           </div>
         </div>
-      )}
+      , document.body)}
     </header>
   );
 }
