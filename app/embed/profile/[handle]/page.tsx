@@ -1,14 +1,16 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import StaticSiteMap from "@/components/profile/StaticSiteMap";
 
 type EmbedData = {
   profile: { id: string; handle: string; name?: string | null };
-  sites: { id: string; name: string; type?: string; coords: [number, number] }[];
+  sites: { id: string; name: string; type?: string; coords: [number, number]; attestationCount?: number }[];
 };
 
-export default function EmbedProfileMap({ params }: { params: { handle: string } }) {
-  const { handle } = params;
+export default function EmbedProfileMap() {
+  const params = useParams<{ handle: string }>();
+  const handle = params?.handle as string;
   const [data, setData] = useState<EmbedData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -26,13 +28,15 @@ export default function EmbedProfileMap({ params }: { params: { handle: string }
     return () => { cancelled = true; };
   }, [handle]);
 
+  // Construct base URL using NEXT_PUBLIC_APP_URL for shareable permalinks
+  const appBase = (process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : ''))
+    .toString()
+    .replace(/\/$/, "");
+
   const onClickSite = (siteId: string) => {
-    const url = `/map?site=${encodeURIComponent(siteId)}`;
-    try {
-      window.top?.location.assign(url);
-    } catch {
-      window.location.assign(url);
-    }
+    const url = `${appBase}/map?site=${encodeURIComponent(siteId)}`;
+    // Open in new tab - more reliable for cross-origin iframes
+    window.open(url, '_blank');
   };
 
   if (loading) return <div className="min-h-screen bg-black text-white grid place-items-center" style={{ height: 400 }}>Loading…</div>;
@@ -40,10 +44,10 @@ export default function EmbedProfileMap({ params }: { params: { handle: string }
 
   return (
     <div className="w-full bg-black min-h-screen">
-      <StaticSiteMap sites={data.sites as any} height={400} onSiteClick={onClickSite} className="w-full rounded-none overflow-hidden" />
+      <StaticSiteMap sites={data.sites} height={400} onSiteClick={onClickSite} className="w-full rounded-none overflow-hidden" />
       <div className="w-full px-4 py-2 bg-black/70 text-white text-xs flex items-center justify-between">
-        <span>Powered by <a href="/" target="_top" className="font-bold underline">Reef.Regen</a></span>
-        <a href={`/profile/${encodeURIComponent(handle)}`} target="_top" className="underline">View full profile</a>
+        <span>Powered by <a href={appBase} target="_blank" rel="noopener noreferrer" className="font-bold underline">Reef.Regen</a></span>
+        <a href={`${appBase}/profile/${encodeURIComponent(handle)}`} target="_blank" rel="noopener noreferrer" className="underline">View full profile</a>
       </div>
     </div>
   );

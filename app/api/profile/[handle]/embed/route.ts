@@ -21,6 +21,21 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
     .eq("profile_id", prof.id);
   if (sErr) return NextResponse.json({ error: sErr.message }, { status: 500 });
 
+  // Fetch attestations to count per site for map coloring
+  const { data: attestations, error: attErr } = await supabaseAdmin
+    .from("attestation")
+    .select("site_id")
+    .eq("profile_id", prof.id);
+  if (attErr) return NextResponse.json({ error: attErr.message }, { status: 500 });
+
+  // Build attestation counts per site
+  const countsBySite = new Map<string, number>();
+  for (const a of (attestations || [])) {
+    const sid = a.site_id as string | null;
+    if (!sid) continue;
+    countsBySite.set(sid, (countsBySite.get(sid) || 0) + 1);
+  }
+
   const payload = {
     profile: {
       id: prof.id as string,
@@ -32,6 +47,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
       name: s.site_name as string,
       type: (s.site_type?.name as string) || undefined,
       coords: [Number(s.lon), Number(s.lat)] as [number, number],
+      attestationCount: countsBySite.get(s.site_id as string) || 0,
     })),
   };
 
