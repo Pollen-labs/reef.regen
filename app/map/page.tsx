@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useAccount } from "wagmi";
 import MapView from "@/components/map/MapView";
 import LocationPane from "@/components/map/LocationPane";
 import type { LocationPoint, Location, Attestation } from "@/types/map";
@@ -22,6 +23,8 @@ function MapPageContent() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [activeAtt, setActiveAtt] = useState<Attestation | null>(null);
   const [attLimit, setAttLimit] = useState<number>(20);
+  const [internalById, setInternalById] = useState<Record<string, string | null>>({});
+  const { address, isConnected } = useAccount();
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -107,6 +110,25 @@ function MapPageContent() {
     fetchSites();
   }, []);
 
+  // Fetch owner-only internal IDs for connected wallet to show in modal
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchInternalIds() {
+      try {
+        if (!isConnected || !address) { setInternalById({}); return; }
+        const res = await fetch(`/api/profiles/att-internal?address=${address}`);
+        const json = await res.json().catch(() => ({}));
+        const map: Record<string, string | null> = {};
+        for (const it of (json?.items || [])) map[it.id] = it.internalId;
+        if (!cancelled) setInternalById(map);
+      } catch {
+        if (!cancelled) setInternalById({});
+      }
+    }
+    fetchInternalIds();
+    return () => { cancelled = true; };
+  }, [isConnected, address]);
+
   // Fetch location details when a pin is selected
   useEffect(() => {
     if (!activeLocationId) {
@@ -171,10 +193,17 @@ function MapPageContent() {
     try {
       const res = await fetch(`/api/attestations/${attestation.id}`);
       const data = await res.json();
-      if (data.attestation) setActiveAtt(data.attestation as Attestation);
-      else setActiveAtt(attestation); // fallback to list item
+      if (data.attestation) {
+        const base = data.attestation as Attestation;
+        const internalId = internalById[attestation.id] || null;
+        setActiveAtt(internalId ? { ...(base as any), internalId } : base);
+      } else {
+        const internalId = internalById[attestation.id] || null;
+        setActiveAtt(internalId ? ({ ...(attestation as any), internalId }) : attestation);
+      }
     } catch (e) {
-      setActiveAtt(attestation);
+      const internalId = internalById[attestation.id] || null;
+      setActiveAtt(internalId ? ({ ...(attestation as any), internalId }) : attestation);
     }
 
     // Update URL (?att=) and include ?site= if known for shareability

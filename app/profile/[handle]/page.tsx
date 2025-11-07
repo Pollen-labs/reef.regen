@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import DonutChartJS from "@/components/shared/charts/DonutChartJS";
+import LineChartJS from "@/components/shared/charts/LineChartJS";
 import Tag from "@/components/ui/Tag";
 import AttestationDetailModal from "@/components/shared/AttestationDetailModal";
 import { formatDateShort } from "@/lib/format/date";
@@ -11,6 +12,7 @@ import { useAccount } from "wagmi";
 import { useParams } from "next/navigation";
 import { ethers } from "ethers";
 import { env } from "@/lib/env";
+import Skeleton from "@/components/ui/Skeleton";
 
 type Api = {
   profile: { id: string; profile_name: string | null; description: string | null; website: string | null; wallet_address: string; handle: string };
@@ -33,6 +35,16 @@ export default function ProfilePage() {
   const [activeAtt, setActiveAtt] = useState<any | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [internalById, setInternalById] = useState<Record<string, string | null>>({});
+  const [showLegend, setShowLegend] = useState(false);
+  const [isLg, setIsLg] = useState<boolean>(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const onChange = () => setIsLg(!!mq.matches);
+    onChange();
+    try { mq.addEventListener('change', onChange); } catch { mq.addListener(onChange); }
+    return () => { try { mq.removeEventListener('change', onChange); } catch { mq.removeListener(onChange); } };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,11 +77,38 @@ export default function ProfilePage() {
       });
   }, [data]);
 
+  // Build category legend with per-action items (color + label + count)
+  const categoryLegend = useMemo(() => {
+    const cats = data?.actions_category_breakdown || [];
+    const actions = data?.actions_breakdown || [];
+    return cats.map((g) => {
+      const items = actions
+        .filter((a) => (a.category || '') === g.name && a.count > 0)
+        .map((a) => ({
+          label: a.name,
+          count: a.count,
+          color: classesForRegen(a.name, a.category).hex,
+        }));
+      return { name: g.name, count: g.count, items } as {
+        name: string;
+        count: number;
+        items: { label: string; count: number; color: string }[];
+      };
+    });
+  }, [data?.actions_category_breakdown, data?.actions_breakdown]);
+
   const siteTypes = data?.site_types_breakdown || [];
   const siteBarSegments = useMemo(() => {
     const palette = ["#F6A17B", "#96B5FA", "#59FCCE", "#F4EA50", "#DDB2FF", "#FADAFD"];
     return siteTypes.map((s, i) => ({ label: s.name, value: s.count, color: palette[i % palette.length] }));
   }, [siteTypes]);
+
+  // Build timeline from API monthly timeline (YYYY-MM → value)
+  const timelinePoints = useMemo(() => {
+    const items = (data as any)?.timeline_monthly as { month: string; value: number }[] | undefined;
+    if (!items || !items.length) return [] as { label: string; value: number }[];
+    return items.map((it) => ({ label: it.month, value: it.value }));
+  }, [data]);
 
   const truncateWallet = (w?: string) => (w ? `${w.slice(0, 6)}...${w.slice(-5)}` : "");
   const formatMDY = (iso: string) => {
@@ -80,21 +119,7 @@ export default function ProfilePage() {
     return `${mm}-${dd}-${yyyy}`;
   };
 
-  // Measure left donut card height to sync the right column (map + bubbles)
-  const leftCardRef = useRef<HTMLDivElement | null>(null);
-  const [leftHeight, setLeftHeight] = useState<number | null>(null);
-  useEffect(() => {
-    const el = leftCardRef.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
-    const obs = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const h = Math.round(entry.contentRect.height);
-        if (!Number.isNaN(h)) setLeftHeight(h);
-      }
-    });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
+  // No dynamic height syncing required in the new layout
 
   // Compute ownership every render to keep hook order stable
   const isOwner = useMemo(() => {
@@ -120,7 +145,58 @@ export default function ProfilePage() {
     return () => { cancelled = true; };
   }, [isOwner, address, data?.attestations?.length]);
 
-  if (loading) return <div className="w-full max-w-screen-xl mx-auto px-6 lg:px-24 py-12 text-white">Loading profile…</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen text-white">
+        <nav aria-label="Breadcrumb" className="w-full">
+          <div className="w-full max-w-[1440px] mx-auto px-0 lg:px-24 mb-2 md:mb-4 flex items-center justify-between">
+            <div className="text-vulcan-500 text-lg font-bold">Profile</div>
+            <div className="flex items-center gap-6" />
+          </div>
+        </nav>
+        <div className="w-full">
+          <div className="w-full max-w-[1440px] mx-auto px-0 lg:px-24 flex flex-col lg:flex-row lg:justify-between items-start gap-4 lg:gap-8">
+            {/* Left column skeleton */}
+            <div className="w-full lg:max-w-96 flex flex-col gap-4">
+              <Skeleton className="h-10 w-40 rounded-3xl" />
+              <Skeleton className="h-12 w-4/5" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-10 w-3/5" />
+            </div>
+
+            {/* Right column skeleton */}
+            <div className="flex-1 w-full flex flex-col gap-1.5 mt-4 lg:mt-0">
+              {/* Stats cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
+                <Skeleton className="h-24 rounded-3xl" />
+                <Skeleton className="h-24 rounded-3xl" />
+                <Skeleton className="h-24 rounded-3xl" />
+                <Skeleton className="h-24 rounded-3xl" />
+              </div>
+              {/* Charts row */}
+              <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-1.5">
+                <Skeleton className="h-80 rounded-3xl" />
+                <Skeleton className="h-80 rounded-3xl" />
+              </div>
+              {/* Map card */}
+              <Skeleton className="h-[360px] lg:h-[520px] rounded-3xl" />
+              {/* Table header + rows */}
+              <div className="mt-4">
+                <Skeleton className="h-8 w-40 mb-2" />
+                <div className="grid gap-1">
+                  <Skeleton className="h-10 rounded-lg" />
+                  <Skeleton className="h-10 rounded-lg" />
+                  <Skeleton className="h-10 rounded-lg" />
+                  <Skeleton className="h-10 rounded-lg" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (error) return <div className="w-full max-w-screen-xl mx-auto px-6 lg:px-24 py-12 text-red-300">{error}</div>;
   if (!data) return null;
 
@@ -140,14 +216,13 @@ export default function ProfilePage() {
   }
 
   const gapPx = 6; // matches gap-1.5
-  const panelPx = 168; // merged bottom panel inside the map card
 
   return (
     <div className="min-h-screen text-white">
       {/* Breadcrumb bar */}
       <nav aria-label="Breadcrumb" className="w-full">
-        <div className="w-full max-w-[1440px] mx-auto px-2 lg:px-24  mb-4 flex items-center justify-between">
-          <div className="text-vulcan-500 text-lg font-bold">Profile/ Dashboard</div>
+        <div className="w-full max-w-[1440px] mx-auto px-0 lg:px-24  mb-2 md:mb-4 flex items-center justify-between">
+          <div className="text-vulcan-500 text-lg font-bold">Profile</div>
           <div className="flex items-center gap-6">
             {isOwner && (
               <a
@@ -165,7 +240,7 @@ export default function ProfilePage() {
 
       {/* Full-width background section */}
       <div className="w-full">
-        <div className="w-full max-w-[1440px] mx-auto px-6 lg:px-24  flex justify-between items-start gap-8">
+        <div className="w-full max-w-[1440px] mx-auto px-0 lg:px-24  flex flex-col lg:flex-row lg:justify-between items-start gap-4 lg:gap-8">
         {/* Left column: profile header */}
         <div className="w-full max-w-96 flex flex-col gap-6">
           <h1 className="text-orange text-5xl md:text-7xl font-black leading-tight">{p.profile_name || p.handle}</h1>
@@ -228,14 +303,15 @@ export default function ProfilePage() {
         </div>
 
         {/* Right column: stats + charts + map */}
-        <div className="flex-1 flex flex-col gap-1.5 min-w-[680px]">
+        <div className="flex-1 flex flex-col gap-1.5 w-full lg:min-w-[680px] mt-4 lg:mt-0">
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
             {[
+              { label: "Attestations", value: data.stats.attestations_total },
               { label: "Regen actions", value: data.stats.actions_total },
               { label: "Sites", value: data.stats.sites_total },
               { label: "Species", value: data.stats.species_total },
-              { label: "Attestations", value: data.stats.attestations_total },
+              
             ].map((s) => (
               <div key={s.label} className="p-6 bg-vulcan-800 rounded-3xl flex flex-col">
                 <div className="text-h4 font-black">{s.value}</div>
@@ -244,48 +320,85 @@ export default function ProfilePage() {
             ))}
           </div>
 
-          {/* Charts + Map */}
+          {/* Charts row: Left line chart, Right donut + legend */}
           <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-1.5">
-            {/* Actions donut */}
-            <div ref={leftCardRef} className="flex flex-col gap-2">
-              <div className="px-6 py-8 bg-vulcan-800 rounded-3xl flex flex-col items-center gap-6">
-                <div className="flex flex-col items-center gap-6 w-full">
-                  <DonutChartJS data={actionsChart} tooltipMode="count" />
-                  {/* Category legend with summed totals */}
-                  <div className="w-full flex flex-col gap-1">
-                    {(data.actions_category_breakdown || []).map((g) => (
-                      <div key={g.name} className="w-full flex items-center justify-between">
-                        <span className="text-vulcan-300 text-lg font-light">{g.name}</span>
-                        <span className="text-white text-xl font-black">{g.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+            {/* Line chart card */}
+            <div className="px-6 py-8 bg-vulcan-800 rounded-3xl">
+              <div className="text-vulcan-400 text-lg font-bold mb-3">Attestations over time (last 6 months)</div>
+              <LineChartJS
+                data={timelinePoints}
+                height={260}
+                lineColor="#F6A17B"
+                fillColor="rgba(246,161,123,0.25)"
+                xLabelFormat="month"
+                xTickSize={isLg ? 14 : 12}
+                yTickSize={isLg ? 14 : 12}
+                paddingLeft={isLg ? 0 : 8}
+              />
             </div>
 
-            {/* Map + Site types merged card */}
-            <div className="bg-vulcan-800 rounded-3xl overflow-hidden" style={leftHeight ? { height: leftHeight } : undefined}>
-              {/* Map area */}
-              <div style={{ height: Math.max(320, (leftHeight ?? 0) - panelPx) }}>
-                <StaticSiteMap
-                  sites={data.sites}
-                  height={Math.max(320, (leftHeight ?? 0) - panelPx)}
-                  className="w-full rounded-t-3xl overflow-hidden"
-                />
+            {/* Donut + legend card */}
+            <div className="px-6 py-8 bg-vulcan-800 rounded-3xl min-h-[360px] flex flex-col gap-4">
+              <div className="w-full flex items-center justify-between">
+                <div className="text-vulcan-400 text-lg font-bold">Regen actions</div>
+                <button
+                  type="button"
+                  onClick={() => setShowLegend((v) => !v)}
+                  className="text-sm text-white/60 hover:text-white font-bold hover:text-white/90"
+                >
+                  {showLegend ? 'Hide details' : 'Show Details'}
+                </button>
               </div>
-              {/* Bottom panel with stacked bar + legend */}
-              <div className="bg-vulcan-900/70 backdrop-blur-[1px] px-4 pt-3 pb-1">
-                <StackedBarChartJS
-                  segments={siteBarSegments}
-                  height={32}
-                  barRadius={40}
-                  barThickness={20}
-                  padding={4}
-                  tooltipMode="count"
-                  legendInside={false}
-                />
+              <div className="w-full h-[220px] lg:h-[260px]">
+                <DonutChartJS data={actionsChart} tooltipMode="count" className="w-full h-full" />
               </div>
+              {showLegend && (
+                <div className="w-full flex flex-col gap-6">
+                  {categoryLegend.map((g) => (
+                    <div key={g.name} className="w-full">
+                      <div className="w-full flex items-start justify-between mb-2">
+                        <div className="text-vulcan-300 text-lg font-bold">{g.name}</div>
+                        <span className="text-white text-xl font-black ml-3">{g.count}</span>
+                      </div>
+                      <div className="w-full flex flex-col gap-2">
+                        {g.items.map((it, idx) => (
+                          <div key={`${g.name}-${idx}`} className="w-full flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-white/90 text-lg">
+                              <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: it.color }} />
+                              <span className="truncate">{it.label}</span>
+                            </div>
+                            <span className="text-white text-lg font-bold ml-3">{it.count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Full-width Map card */}
+          <div className="w-full mt-1.5 bg-vulcan-800 rounded-3xl overflow-hidden">
+            <div>
+              <StaticSiteMap sites={data.sites} height={isLg ? 520 : 360} className="w-full" />
+            </div>
+            <div className="bg-vulcan-900/70 backdrop-blur-[1px] px-4 pt-3 pb-2">
+              <div className="text-vulcan-400 text-lg font-bold mb-1">Sites</div>
+              <StackedBarChartJS
+                segments={siteBarSegments}
+                height={40}
+                barRadius={40}
+                barThickness={20}
+                padding={4}
+                tooltipMode="count"
+                legendInside={false}
+                legendFontSize={isLg ? 12 : 11}
+                legendLineHeight={isLg ? 16 : 14}
+                legendGap={isLg ? 12 : 10}
+                legendItemGap={isLg ? 6 : 5}
+                legendIconSize={isLg ? 10 : 9}
+              />
             </div>
           </div>
 
@@ -307,10 +420,12 @@ export default function ProfilePage() {
           <div className="pt-8 pb-24">
             <div className="text-vulcan-500 text-lg font-bold mb-2">Attestations</div>
             {(() => {
-              const colsOwner = "20% 45% 20% 10% 5%";
-              const colsPublic = "20% 50% 20% 5%";
-              const gridCols = isOwner ? colsOwner : colsPublic;
-              const header = (
+              const gridColsMobile = "35% 55% 10%";
+              const gridColsPublic = "20% 50% 25% 5%"; // date, actions, site, ...
+              const gridColsOwner = "20% 45% 20% 10% 5%"; // + ID
+              const gridCols = isLg ? (isOwner ? gridColsOwner : gridColsPublic) : gridColsMobile;
+
+              const header = isLg ? (
                 <div className="mb-1 grid gap-1" style={{ gridTemplateColumns: gridCols }}>
                   <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center">
                     <div className="text-vulcan-400 text-lg font-bold">Action date</div>
@@ -328,7 +443,18 @@ export default function ProfilePage() {
                   )}
                   <div className="h-10 px-3 bg-vulcan-800 rounded-lg" />
                 </div>
+              ) : (
+                <div className="mb-1 grid gap-1" style={{ gridTemplateColumns: gridCols }}>
+                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center">
+                    <div className="text-vulcan-400 text-lg font-bold">Action date</div>
+                  </div>
+                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center">
+                    <div className="text-vulcan-400 text-lg font-bold">Site name</div>
+                  </div>
+                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg" />
+                </div>
               );
+
               const rows = (data.attestations || []).map((a) => (
                 <button
                   key={a.id}
@@ -337,25 +463,43 @@ export default function ProfilePage() {
                   className="group w-full grid gap-1 mb-1 rounded-lg text-left cursor-pointer transition-colors hover:bg-vulcan-700/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
                   style={{ gridTemplateColumns: gridCols }}
                 >
+                  {/* Date */}
                   <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center whitespace-nowrap transition-colors group-hover:bg-vulcan-700">
                     <div className="text-vulcan-200 text-lg font-light">{formatDateShort(a.date)}</div>
                   </div>
-                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
-                    <div className="text-vulcan-200 text-lg font-bold truncate" title={a.actions.join(", ")}>{a.actions.join(", ")}</div>
-                  </div>
-                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
-                    <div className="text-vulcan-200 text-lg font-bold truncate" title={a.site || ''}>{a.site || ''}</div>
-                  </div>
-                  {isOwner && (
+
+                  {/* Actions (lg+) or Site (mobile second col) */}
+                  {isLg ? (
+                    <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
+                      <div className="text-vulcan-200 text-lg font-bold truncate" title={a.actions.join(", ")}>{a.actions.join(", ")}</div>
+                    </div>
+                  ) : (
+                    <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
+                      <div className="text-vulcan-200 text-lg font-bold truncate" title={a.site || ''}>{a.site || ''}</div>
+                    </div>
+                  )}
+
+                  {/* Site name (lg+) */}
+                  {isLg && (
+                    <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
+                      <div className="text-vulcan-200 text-lg font-bold truncate" title={a.site || ''}>{a.site || ''}</div>
+                    </div>
+                  )}
+
+                  {/* ID (owner, lg+) */}
+                  {isLg && isOwner && (
                     <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
                       <div className="text-vulcan-200 text-lg font-light truncate" title={internalById[a.id] || ''}>{internalById[a.id] || '-'}</div>
                     </div>
                   )}
+
+                  {/* Ellipsis */}
                   <div className="h-10 bg-vulcan-800 rounded-lg grid place-items-center text-flamingo-200 transition-colors group-hover:bg-vulcan-700">
                     <i className="f7-icons text-2xl">ellipsis</i>
                   </div>
                 </button>
               ));
+
               return (
                 <>
                   {header}

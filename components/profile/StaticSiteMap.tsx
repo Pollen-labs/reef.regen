@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { MAP_COLORS } from "@/lib/style/mapColors";
 
-type Site = { id: string; name: string; type?: string; coords: [number, number] };
+type Site = { id: string; name: string; type?: string; coords: [number, number]; attestationCount?: number };
 
 export default function StaticSiteMap({
   sites,
@@ -72,10 +73,15 @@ export default function StaticSiteMap({
             type: "circle",
             source: "sites",
             paint: {
-              "circle-radius": 5,
-              "circle-color": "#FF7F5C", // brand orange
+              "circle-radius": 6,
+              "circle-color": [
+                "case",
+                [">", ["get", "attestationCount"], 0],
+                MAP_COLORS.pin.hasData,
+                MAP_COLORS.pin.noData
+              ],
               "circle-stroke-width": 1,
-              "circle-stroke-color": "#3C3D50", // vulcan-800
+              "circle-stroke-color": MAP_COLORS.stroke,
             },
           });
         }
@@ -125,7 +131,7 @@ function toFeatureCollection(sites: Site[]) {
     features: (sites || []).map((s) => ({
       type: "Feature",
       geometry: { type: "Point", coordinates: s.coords },
-      properties: { id: s.id, name: s.name },
+      properties: { id: s.id, name: s.name, attestationCount: Number(s.attestationCount || 0) },
     })),
   } as const;
 }

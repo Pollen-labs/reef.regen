@@ -7,6 +7,7 @@ import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import Button from "@/components/ui/Button";
 import RevealPrivateKeyModal from "@/components/security/RevealPrivateKeyModal";
+import Skeleton from "@/components/ui/Skeleton";
 import { env } from "@/lib/env";
 import { SiteModal } from "@/components/wizard/SiteModal";
 import IdentifierBar from "@/components/ui/IdentifierBar";
@@ -191,6 +192,8 @@ export default function ProfileSettingPage() {
 
   const [revealOpen, setRevealOpen] = useState(false);
 
+  // Wallet section is now always shown; export warning clarifies limitations for native wallets.
+
   async function onLogout() {
     try {
       await disconnectWeb3Auth();
@@ -206,7 +209,7 @@ export default function ProfileSettingPage() {
     <div className="min-h-screen bg-black text-white">
       {/* Breadcrumb bar to match Profile main page */}
       <nav aria-label="Breadcrumb" className="w-full">
-        <div className="w-full max-w-[1440px] mx-auto px-2 lg:px-24 mb-4 flex items-center justify-between">
+        <div className="w-full max-w-[1440px] mx-auto px-0 lg:px-24 mb-2 md:mb-4 flex items-center justify-between">
           <div className="text-vulcan-500 text-lg font-bold">
             {profile?.handle ? (
               <a href={`/profile/${profile.handle}`} className="hover:text-white/90">Profile</a>
@@ -219,10 +222,51 @@ export default function ProfileSettingPage() {
         </div>
       </nav>
 
-      <div className="w-full max-w-[1440px] mx-auto px-6 lg:px-24 py-6 mb-12">
+      <div className="w-full max-w-[1440px] mx-auto px-0 lg:px-24 py-6 mb-12">
 
         {loading ? (
-          <div>Loading…</div>
+          <div className="w-full max-w-[600px] mx-auto">
+            {/* Basic information skeleton */}
+            <Skeleton className="h-8 w-56 mb-6 rounded-2xl" />
+            <div className="grid gap-4">
+              <div>
+                <Skeleton className="h-5 w-40 mb-2" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div>
+                <Skeleton className="h-5 w-40 mb-2" />
+                <Skeleton className="h-24 w-full" />
+              </div>
+              <div>
+                <Skeleton className="h-5 w-40 mb-2" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div>
+                <Skeleton className="h-5 w-40 mb-2" />
+                <Skeleton className="h-10 w-1/2" />
+              </div>
+              <div className="flex gap-3 mt-2">
+                <Skeleton className="h-10 w-24 rounded-xl" />
+                <Skeleton className="h-10 w-24 rounded-xl" />
+              </div>
+            </div>
+
+            {/* Sites skeleton */}
+            <Skeleton className="h-8 w-24 mt-12 mb-3 rounded-2xl" />
+            <div className="grid gap-3">
+              <Skeleton className="h-16 rounded-2xl" />
+              <Skeleton className="h-16 rounded-2xl" />
+              <Skeleton className="h-16 rounded-2xl" />
+              <Skeleton className="h-12 mt-2" />
+            </div>
+
+            {/* Wallet skeleton (when visible) */}
+            <Skeleton className="h-8 w-24 mt-12 mb-3 rounded-2xl" />
+            <div className="grid gap-4 mb-12">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-40" />
+            </div>
+          </div>
         ) : error ? (
           <div className="text-red-300">{error}</div>
         ) : (
@@ -306,10 +350,12 @@ export default function ProfileSettingPage() {
                   window.open(url, "_blank", "noopener,noreferrer");
                 }}
               />
-              <div>
-                <Button type="button" variant="outline"  onClick={() => setRevealOpen(true)}>Reveal private key</Button>
+              <div className="flex items-center gap-3 flex-wrap">
+                <Button type="button" variant="outline" onClick={() => setRevealOpen(true)}>Reveal private key</Button>
+                <span className="text-sm text-vulcan-300">
+                  Note: If you logged in with a native wallet (e.g., browser extension), this function is not available.
+                </span>
               </div>
-              
             </div>
 
             { /* session */ }

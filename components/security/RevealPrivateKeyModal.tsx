@@ -110,8 +110,7 @@ export default function RevealPrivateKeyModal({ open, onClose }: Props) {
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-[580px] max-w-[90vw] rounded-[28px] bg-vulcan-900 p-6 md:p-8 text-white">
         <div className="mb-6 grid gap-4">
-          <div className="h-28 bg-[#F6D9CC] rounded-xl" aria-label="Illustration" />
-          <div className="text-h4 font-black text-center">Important notice</div>
+          <div className="text-h4 font-black text-center text-orange">Important notice</div>
           <div className="text-vulcan-100 text-xl text-center">
             Your <b>private key</b> is your cryptographic identity, it’s what allows you to interact securely with the blockchain.
             You <b>alone</b> are responsible for keeping it safe. Anyone with access to your private key can control your wallet and assets.
