@@ -324,7 +324,7 @@ export default function ProfilePage() {
           <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-1.5">
             {/* Line chart card */}
             <div className="px-6 py-8 bg-vulcan-800 rounded-3xl">
-              <div className="text-vulcan-400 text-lg font-bold mb-3">Attestations over time (last 6 months)</div>
+              <div className="text-vulcan-400 text-lg font-bold mb-3">Attestations in the last 6 months</div>
               <LineChartJS
                 data={timelinePoints}
                 height={260}
@@ -420,91 +420,91 @@ export default function ProfilePage() {
           <div className="pt-8 pb-24">
             <div className="text-vulcan-500 text-lg font-bold mb-2">Attestations</div>
             {(() => {
-              const gridColsMobile = "35% 55% 10%";
+              const gridColsMobile = "38% 52% 10%";
               const gridColsPublic = "20% 50% 25% 5%"; // date, actions, site, ...
               const gridColsOwner = "20% 45% 20% 10% 5%"; // + ID
               const gridCols = isLg ? (isOwner ? gridColsOwner : gridColsPublic) : gridColsMobile;
 
               const header = isLg ? (
-                <div className="mb-1 grid gap-1" style={{ gridTemplateColumns: gridCols }}>
-                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center">
+                <div className="grid border border-vulcan-700/60 rounded-t-3xl overflow-hidden" style={{ gridTemplateColumns: gridCols }}>
+                  <div className="h-12 px-4 bg-vulcan-800 flex items-center border-r border-vulcan-700">
                     <div className="text-vulcan-400 text-lg font-bold">Action date</div>
                   </div>
-                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center">
+                  <div className="h-12 px-4 bg-vulcan-800 flex items-center border-r border-vulcan-700">
                     <div className="text-vulcan-400 text-lg font-bold">Regen actions</div>
                   </div>
-                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center">
+                  <div className="h-12 px-4 bg-vulcan-800 flex items-center border-r border-vulcan-700">
                     <div className="text-vulcan-400 text-lg font-bold">Site name</div>
                   </div>
                   {isOwner && (
-                    <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center">
+                    <div className="h-12 px-4 bg-vulcan-800 flex items-center border-r border-vulcan-700">
                       <div className="text-vulcan-400 text-lg font-bold">ID</div>
                     </div>
                   )}
-                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg" />
+                  <div className="h-12 bg-vulcan-800" />
                 </div>
               ) : (
-                <div className="mb-1 grid gap-1" style={{ gridTemplateColumns: gridCols }}>
-                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center">
+                <div className="grid border border-vulcan-700/60 rounded-t-3xl overflow-hidden" style={{ gridTemplateColumns: gridCols }}>
+                  <div className="h-12 px-4 bg-vulcan-900 flex items-center border-r border-vulcan-700/60">
                     <div className="text-vulcan-400 text-lg font-bold">Action date</div>
                   </div>
-                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center">
+                  <div className="h-12 px-4 bg-vulcan-900 flex items-center border-r border-vulcan-700/60">
                     <div className="text-vulcan-400 text-lg font-bold">Site name</div>
                   </div>
-                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg" />
+                  <div className="h-12 bg-vulcan-900" />
                 </div>
               );
 
-              const rows = (data.attestations || []).map((a) => (
+              const rows = (data.attestations || []).map((a, idx) => (
                 <button
                   key={a.id}
                   onClick={() => openAttestation(a.id)}
                   aria-label={`Open attestation ${formatDateShort(a.date)}`}
-                  className="group w-full grid gap-1 mb-1 rounded-lg text-left cursor-pointer transition-colors hover:bg-vulcan-700/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                  className="group w-full grid text-left cursor-pointer transition-colors hover:bg-vulcan-700/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange border-l border-r border-b border-vulcan-700/60 last:rounded-b-3xl"
                   style={{ gridTemplateColumns: gridCols }}
                 >
                   {/* Date */}
-                  <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center whitespace-nowrap transition-colors group-hover:bg-vulcan-700">
+                  <div className="h-12 px-4 bg-vulcan-800 flex items-center whitespace-nowrap border-r border-vulcan-700/60 transition-colors group-hover:bg-vulcan-700/30">
                     <div className="text-vulcan-200 text-lg font-light">{formatDateShort(a.date)}</div>
                   </div>
 
                   {/* Actions (lg+) or Site (mobile second col) */}
                   {isLg ? (
-                    <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
+                    <div className="h-12 px-4 bg-vulcan-800 flex items-center border-r border-vulcan-700/60 transition-colors group-hover:bg-vulcan-700/30">
                       <div className="text-vulcan-200 text-lg font-bold truncate" title={a.actions.join(", ")}>{a.actions.join(", ")}</div>
                     </div>
                   ) : (
-                    <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
+                    <div className="h-12 px-4 bg-vulcan-800 flex items-center border-r border-vulcan-700/60 transition-colors group-hover:bg-vulcan-700/30">
                       <div className="text-vulcan-200 text-lg font-bold truncate" title={a.site || ''}>{a.site || ''}</div>
                     </div>
                   )}
 
                   {/* Site name (lg+) */}
                   {isLg && (
-                    <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
+                    <div className="h-12 px-4 bg-vulcan-800 flex items-center border-r border-vulcan-700/60 transition-colors group-hover:bg-vulcan-700/30">
                       <div className="text-vulcan-200 text-lg font-bold truncate" title={a.site || ''}>{a.site || ''}</div>
                     </div>
                   )}
 
                   {/* ID (owner, lg+) */}
                   {isLg && isOwner && (
-                    <div className="h-10 px-3 bg-vulcan-800 rounded-lg flex items-center transition-colors group-hover:bg-vulcan-700">
+                    <div className="h-12 px-4 bg-vulcan-800 flex items-center border-r border-vulcan-700/60 transition-colors group-hover:bg-vulcan-700/30">
                       <div className="text-vulcan-200 text-lg font-light truncate" title={internalById[a.id] || ''}>{internalById[a.id] || '-'}</div>
                     </div>
                   )}
 
                   {/* Ellipsis */}
-                  <div className="h-10 bg-vulcan-800 rounded-lg grid place-items-center text-flamingo-200 transition-colors group-hover:bg-vulcan-700">
-                    <i className="f7-icons text-2xl">ellipsis</i>
+                  <div className="h-12 bg-vulcan-800 grid place-items-center transition-colors group-hover:bg-vulcan-700/30">
+                    <i className="f7-icons text-2xl text-flamingo-300">ellipsis</i>
                   </div>
                 </button>
               ));
 
               return (
-                <>
+                <div className="rounded-3xl overflow-hidden">
                   {header}
                   {rows}
-                </>
+                </div>
               );
             })()}
           </div>
@@ -534,8 +534,8 @@ function EmbedPanel({ handle }: { handle: string }) {
     <div className="px-6 py-4 bg-vulcan-900 rounded-3xl">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-vulcan-200 text-lg font-light">Embed your public site map.</div>
-          <div className="text-vulcan-200 text-sm">Clicks open Reef.Regen in a new tab.</div>
+          <div className="text-vulcan-200 text-lg font-light">Embed map data onto your site.</div>
+          <div className="text-vulcan-200 text-sm">Showcase your restoration efforts with blockchain backed data to your audience.</div>
         </div>
         <button onClick={() => setOpen((v) => !v)} className="px-4 py-2 rounded-xl bg-vulcan-800 text-white text-sm font-bold">
           {open ? 'Hide code' : 'Show code'}
