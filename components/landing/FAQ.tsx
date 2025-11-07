@@ -17,11 +17,11 @@ const faqs = [
   },
   {
     q: "Can I attach evidence or data?",
-    a: "Yes. You can include photos, reports, or other files (up to 5MB) to support your attestation.",
+    a: "Yes. You can include photo, report, or other file (1 file per attestation & max. of 5MB) to support your attestation.",
   },
   {
     q: "Is Reef.Regen free to use?",
-    a: "Yes. All transactions are gasless; you don’t pay any blockchain fees.",
+    a: "Yes. All transactions are paid by Reef.Regen, we use the delegation features from Ethereum Attestation Service (EAS) to pay for the gas on your behalf so you don’t pay any blockchain fees.",
   },
   {
     q: "Why does the logo look like fries?",
