@@ -24,7 +24,7 @@ export function WizardFooter({
   centerLabelMobile,
 }: Props) {
   return (
-    <div className="sticky bottom-2 left-0 right-0 pt-0 md:pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+    <div className="md:sticky md:bottom-2 md:left-0 md:right-0 pt-0 md:pt-2 pb-4 md:pb-[calc(1rem+env(safe-area-inset-bottom))]">
       <div className="w-full max-w-[960px] mx-auto rounded-3xl backdrop-blur-md bg-vulcan-800/70 outline outline-1 outline-vulcan-700/70 px-4 md:px-6 py-4 md:py-6">
         {/* Center label on its own line */}
         {centerLabel && (

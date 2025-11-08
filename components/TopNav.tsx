@@ -241,7 +241,7 @@ export default function TopNav() {
           </div>
         </div>
       )}
-      <div className="w-full px-6 md:px-4 py-6  md:py-4 flex justify-between items-end">
+      <div className="w-full px-3 md:px-4 py-3  md:py-4 flex justify-between items-end">
         {/* Left: Logo + Wordmark */}
         <a href="/" className="flex items-center gap-1 -m-2 p-2 md:m-0 md:p-0 rounded-2xl hover:bg-white/5">
           <img
@@ -362,7 +362,7 @@ export default function TopNav() {
           role="dialog"
           aria-modal="true"
         >
-          <div className={`flex h-full flex-col px-6 md:px-4 py-6 md:py-4 transition-transform duration-200 ease-out ${menuAnim ? 'translate-y-0' : 'translate-y-1'}` }>
+          <div className={`flex h-full flex-col px-3 md:px-4 py-3 md:py-4 transition-transform duration-200 ease-out ${menuAnim ? 'translate-y-0' : 'translate-y-1'}` }>
             {/* Top row: logo + close */}
             <div className="flex items-center justify-between">
               <a href="/" onClick={() => setOpen(false)} className="flex items-center gap-1 -m-2 p-2 rounded-2xl hover:bg-white/5">
@@ -384,21 +384,21 @@ export default function TopNav() {
 
             {/* Menu links */}
             <nav className="flex-1 w-full flex items-center justify-end">
-              <div className="text-right space-y-6">
+              <div className="text-right space-y-6 pr-3">
                 <a
                   href="/map"
                   onClick={(e) => { onNavClick(e, "/map"); setOpen(false); }}
-                  className={`block text-4xl font-extrabold ${pathname === "/map" ? "text-orange" : "text-white hover:text-white/80"}`}
+                  className={`block text-4xl font-black ${pathname === "/map" ? "text-orange" : "text-white hover:text-white/80"}`}
                 >
                   Explore
                 </a>
                 {pathname?.startsWith("/submit") ? (
-                  <span className="block text-4xl font-extrabold text-orange cursor-default select-none" aria-current="page" aria-disabled="true">Submit</span>
+                  <span className="block text-4xl font-black text-orange cursor-default select-none" aria-current="page" aria-disabled="true">Submit</span>
                 ) : (
                   <a
                     href="/submit/steps/1"
                     onClick={(e) => { onNavClick(e, "/submit/steps/1"); setOpen(false); }}
-                    className="block text-4xl font-extrabold text-white hover:text-white/80"
+                    className="block text-4xl font-black text-white hover:text-white/80"
                   >
                     Submit
                   </a>
@@ -409,14 +409,14 @@ export default function TopNav() {
                     <a
                       href={accountHref}
                       onClick={(e) => { onNavClick(e, accountHref); setOpen(false); }}
-                      className={`block text-4xl font-extrabold ${pathname.startsWith("/profile") ? "text-orange" : "text-white hover:text-white/80"}`}
+                      className={`block text-4xl font-black ${pathname.startsWith("/profile") ? "text-orange" : "text-white hover:text-white/80"}`}
                     >
                       Profile
                     </a>
                     <a
                       href="/profile/setting"
                       onClick={(e) => { onNavClick(e, "/profile/setting"); setOpen(false); }}
-                      className="block text-4xl font-extrabold text-white hover:text-white/80"
+                      className="block text-4xl font-black text-white hover:text-white/80"
                     >
                       Settings
                     </a>
@@ -428,7 +428,7 @@ export default function TopNav() {
                         try { localStorage.clear(); } catch {}
                         if (typeof window !== 'undefined') window.location.href = "/";
                       }}
-                      className="block text-4xl font-extrabold text-left text-white hover:text-white/80"
+                      className="block w-full text-4xl font-black text-right text-white hover:text-white/80"
                     >
                       Logout
                     </button>
@@ -437,7 +437,7 @@ export default function TopNav() {
                   <button
                     onClick={async () => { await handleSignIn(); setOpen(false); }}
                     disabled={web3authLoading}
-                    className="block text-4xl font-extrabold text-left text-white hover:text-white/80"
+                    className="block w-full text-4xl font-black text-right text-white hover:text-white/80"
                   >
                     {web3authLoading ? "Connecting..." : "Sign in"}
                   </button>
