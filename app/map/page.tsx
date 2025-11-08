@@ -163,7 +163,14 @@ function MapPageContent() {
 
   if (loading) {
     return (
-      <div className="absolute inset-0 bg-vulcan-900 flex items-center justify-center">
+      <div 
+        className="absolute inset-0 bg-vulcan-900 flex items-center justify-center"
+        style={{ 
+          top: 'var(--topnav-height, 96px)',
+          height: 'calc(100svh - var(--topnav-height, 96px))',
+          minHeight: 'calc(100svh - var(--topnav-height, 96px))'
+        }}
+      >
         <div className="text-white text-xl">Loading map...</div>
       </div>
     );
@@ -230,7 +237,11 @@ function MapPageContent() {
   return (
     <div
       className="absolute left-0 right-0 bottom-0"
-      style={{ top: 'var(--topnav-height, 96px)' }}
+      style={{ 
+        top: 'var(--topnav-height, 96px)',
+        height: 'calc(100svh - var(--topnav-height, 96px))',
+        minHeight: 'calc(100svh - var(--topnav-height, 96px))'
+      }}
     >
       <MapView
         points={points}
@@ -315,7 +326,14 @@ function MapPageContent() {
 export default function MapPage() {
   return (
     <Suspense fallback={
-      <div className="absolute inset-0 bg-vulcan-900 flex items-center justify-center" style={{ top: 'var(--topnav-height, 96px)' }}>
+      <div 
+        className="absolute inset-0 bg-vulcan-900 flex items-center justify-center" 
+        style={{ 
+          top: 'var(--topnav-height, 96px)',
+          height: 'calc(100svh - var(--topnav-height, 96px))',
+          minHeight: 'calc(100svh - var(--topnav-height, 96px))'
+        }}
+      >
         <div className="text-white text-xl">Loading map...</div>
       </div>
     }>

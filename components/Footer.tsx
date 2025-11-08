@@ -83,7 +83,7 @@ export default function Footer() {
             src="/assets/img-logo-repeat-footer.svg"
             alt=""
             aria-hidden="true"
-            className="w-full h-[520px] md:h-80 object-cover object-center"
+            className="w-full h-[400px] md:h-80 object-cover object-center"
           />
         </picture>
       </div>
