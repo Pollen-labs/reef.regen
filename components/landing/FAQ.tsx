@@ -1,7 +1,7 @@
 const faqs = [
   {
     q: "What is Reef.Regen?",
-    a: "Reef.Regen is a decentralized platform for documenting and verifying coral restoration actions using blockchain attestations.",
+    a: "Reef.Regen is a decentralized platform for documenting and attesting to coral restoration actions using blockchain attestations.",
   },
   {
     q: "Do I need blockchain experience to use it?",

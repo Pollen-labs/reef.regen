@@ -54,14 +54,23 @@ export default function TopNav() {
     // initialize last scroll in case user is not at top
     lastScrollY.current = window.scrollY || 0;
 
-    const THRESHOLD = 16; // px delta before considering a direction change
-    const MIN_HIDE_Y = 200; // only hide after passing this scroll position
+    // Mobile detection: use more aggressive thresholds for mobile
+    const isMobile = () => window.innerWidth < 768; // md breakpoint
+    
+    // Mobile: more aggressive (hide faster), Desktop: current behavior
+    const getThreshold = () => isMobile() ? 8 : 16; // px delta before considering a direction change
+    const getMinHideY = () => isMobile() ? 50 : 200; // only hide after passing this scroll position
+    const getHideDelay = () => isMobile() ? 50 : 200; // delay before hiding (ms)
+    
     let ticking = false;
 
     const onScroll = () => {
       const run = () => {
         const y = window.scrollY;
         const delta = y - lastScrollY.current;
+        const THRESHOLD = getThreshold();
+        const MIN_HIDE_Y = getMinHideY();
+        const HIDE_DELAY = getHideDelay();
 
         // ignore micro scrolls
         if (Math.abs(delta) < THRESHOLD) {
@@ -81,7 +90,7 @@ export default function TopNav() {
           if (hideTimeout.current) window.clearTimeout(hideTimeout.current);
           hideTimeout.current = window.setTimeout(() => {
             setIsVisible(false);
-          }, 200);
+          }, HIDE_DELAY);
         }
 
         lastScrollY.current = y;
@@ -249,7 +258,7 @@ export default function TopNav() {
             href="/map"
             onClick={(e) => onNavClick(e, "/map")}
           >
-            Map
+            Explore
           </a>
           {pathname?.startsWith("/submit") ? (
             <span
@@ -378,7 +387,7 @@ export default function TopNav() {
                   onClick={(e) => { onNavClick(e, "/map"); setOpen(false); }}
                   className={`block text-4xl font-extrabold ${pathname === "/map" ? "text-orange" : "text-white hover:text-white/80"}`}
                 >
-                  Map
+                  Explore
                 </a>
                 {pathname?.startsWith("/submit") ? (
                   <span className="block text-4xl font-extrabold text-orange cursor-default select-none" aria-current="page" aria-disabled="true">Submit</span>
