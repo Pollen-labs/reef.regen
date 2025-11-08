@@ -92,11 +92,16 @@ export default function MapView({
         document.head.appendChild(link);
       }
 
+      // Mobile: focus on east coast of America, Desktop: default (Africa)
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+      const initialCenter: [number, number] = isMobile ? [-75, 38] : [0, 15]; // Mobile: east coast US, Desktop: Africa
+      const initialZoom = isMobile ? 2.5 : 1.6; // Slightly closer zoom for mobile
+
       const map = new maplibregl.Map({
         container: containerRef.current!,
         style: "/map/styles/dark_matter.json",
-        center: [0, 15],
-        zoom: 1.6,
+        center: initialCenter,
+        zoom: initialZoom,
         minZoom: 2, // avoid world repeating at z0
         pitch: 0,
         dragRotate: false,
