@@ -37,6 +37,7 @@ export default function MapView({
   const mapRef = useRef<any>(null);
   const pulseRafRef = useRef<number | null>(null);
   const pulseStartRef = useRef<number>(0);
+  const multiPopoverRef = useRef<HTMLDivElement | null>(null);
   // Multi-select popover for overlapping pins at identical coordinates
   const [multi, setMulti] = useState<
     | null
@@ -46,6 +47,7 @@ export default function MapView({
         items: { id: string; name: string; orgName?: string | null; attestationCount: number }[];
       }
   >(null);
+  const [multiPosition, setMultiPosition] = useState<{ left: number; top: number } | null>(null);
   // Keep latest points for when map loads later
   const pointsRef = useRef(points);
   useEffect(() => {
@@ -346,6 +348,153 @@ export default function MapView({
     } catch {}
   }, [activeId]);
 
+  // Calculate popover position to keep it within viewport bounds
+  useEffect(() => {
+    if (!multi || !containerRef.current) {
+      setMultiPosition(null);
+      return;
+    }
+
+    const padding = 12;
+    const offset = 12;
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    
+    // Estimate popover dimensions (will be refined after render)
+    const estimatedWidth = isMobile ? Math.min(320, containerRef.current.offsetWidth - padding * 2) : 320;
+    const itemHeight = 60; // approximate height per item
+    const estimatedHeight = Math.min(multi.items.length * itemHeight, isMobile ? 400 : 500);
+    
+    // Get container dimensions (multi.x and multi.y are already relative to container)
+    const containerWidth = containerRef.current.offsetWidth;
+    const containerHeight = containerRef.current.offsetHeight;
+    
+    // On mobile: prefer centering horizontally, on desktop: prefer near tap point
+    let left: number;
+    let top: number;
+    
+    if (isMobile) {
+      // Mobile: center horizontally, position vertically near tap point
+      left = Math.max(padding, (containerWidth - estimatedWidth) / 2);
+      top = multi.y + offset;
+      
+      // If tap is in upper half, show below; if lower half, show above
+      if (multi.y < containerHeight / 2) {
+        top = multi.y + offset;
+      } else {
+        top = multi.y - estimatedHeight - offset;
+      }
+    } else {
+      // Desktop: prefer bottom-right of click point
+      left = multi.x + offset;
+      top = multi.y + offset;
+    }
+    
+    // Edge checking and adjustment
+    if (!isMobile) {
+      // Desktop: check right edge - flip to left side if needed
+      if (left + estimatedWidth > containerWidth - padding) {
+        // Try left side of click point
+        const leftSide = multi.x - estimatedWidth - offset;
+        if (leftSide >= padding) {
+          left = leftSide;
+        } else {
+          // Can't fit on left either, align to right edge
+          left = Math.max(padding, containerWidth - estimatedWidth - padding);
+        }
+      }
+    }
+    
+    // Check bottom edge - move up if needed (both mobile and desktop)
+    if (top + estimatedHeight > containerHeight - padding) {
+      // Try above the click point
+      const above = multi.y - estimatedHeight - offset;
+      if (above >= padding) {
+        top = above;
+      } else {
+        // Can't fit above, align to bottom edge
+        top = Math.max(padding, containerHeight - estimatedHeight - padding);
+      }
+    }
+    
+    // Check top edge - move down if needed
+    if (top < padding) {
+      top = padding;
+    }
+    
+    // Final bounds check - ensure within container
+    left = Math.max(padding, Math.min(left, containerWidth - estimatedWidth - padding));
+    top = Math.max(padding, Math.min(top, containerHeight - estimatedHeight - padding));
+    
+    setMultiPosition({ left, top });
+    
+    // Refine position after popover renders (measure actual size)
+    const refinePosition = () => {
+      if (!multiPopoverRef.current || !containerRef.current) return;
+      
+      const popoverRect = multiPopoverRef.current.getBoundingClientRect();
+      const containerRect = containerRef.current.getBoundingClientRect();
+      
+      // Convert popover position to container-relative coordinates
+      const popoverLeft = popoverRect.left - containerRect.left;
+      const popoverTop = popoverRect.top - containerRect.top;
+      const popoverWidth = popoverRect.width;
+      const popoverHeight = popoverRect.height;
+      
+      const containerWidth = containerRect.width;
+      const containerHeight = containerRect.height;
+      
+      let refinedLeft = popoverLeft;
+      let refinedTop = popoverTop;
+      
+      // Only adjust if actually going off-screen
+      const isMobileRefine = typeof window !== 'undefined' && window.innerWidth < 768;
+      
+      if (!isMobileRefine) {
+        // Desktop: check right edge
+        if (popoverLeft + popoverWidth > containerWidth - padding) {
+          // Try left side of tap point
+          const leftSide = multi.x - popoverWidth - offset;
+          if (leftSide >= padding) {
+            refinedLeft = leftSide;
+          } else {
+            refinedLeft = containerWidth - popoverWidth - padding;
+          }
+        }
+      } else {
+        // Mobile: keep centered horizontally
+        refinedLeft = Math.max(padding, (containerWidth - popoverWidth) / 2);
+      }
+      
+      if (popoverTop + popoverHeight > containerHeight - padding) {
+        // Try above tap point
+        const above = multi.y - popoverHeight - offset;
+        if (above >= padding) {
+          refinedTop = above;
+        } else {
+          refinedTop = containerHeight - popoverHeight - padding;
+        }
+      }
+      
+      if (popoverTop < padding) {
+        refinedTop = padding;
+      }
+      
+      // Final bounds check
+      refinedLeft = Math.max(padding, Math.min(refinedLeft, containerWidth - popoverWidth - padding));
+      refinedTop = Math.max(padding, Math.min(refinedTop, containerHeight - popoverHeight - padding));
+      
+      // Only update if position changed significantly (more than 5px to avoid micro-adjustments)
+      if (Math.abs(refinedLeft - popoverLeft) > 5 || Math.abs(refinedTop - popoverTop) > 5) {
+        setMultiPosition({ left: refinedLeft, top: refinedTop });
+      }
+    };
+    
+    // Use requestAnimationFrame to measure after render
+    requestAnimationFrame(() => {
+      requestAnimationFrame(refinePosition);
+    });
+  }, [multi]);
+
   // Manage pulsing ring animation for the selected feature
   useEffect(() => {
     const map = mapRef.current;
@@ -399,25 +548,30 @@ export default function MapView({
   return (
     <div className="absolute inset-0 bg-vulcan-900 overflow-hidden">
       <div ref={containerRef} className="w-full h-full" />
-      {multi && (
+      {multi && multiPosition && (
         <div
+          ref={multiPopoverRef}
           className="absolute z-20 max-w-[80vw] sm:max-w-xs"
-          style={{ left: multi.x + 12, top: multi.y + 12 }}
+          style={{ 
+            left: `${multiPosition.left}px`, 
+            top: `${multiPosition.top}px`,
+            transition: 'none' // Prevent animation when position updates
+          }}
         >
           <div className="rounded-2xl bg-vulcan-900/90 outline outline-1 outline-white/10 shadow-xl overflow-hidden">
-            <ul className="divide-y divide-white/10">
+            <ul className="divide-y divide-white/10 max-h-[60vh] overflow-y-auto">
               {multi.items.map((it) => (
                 <li key={it.id}>
                   <button
                     onClick={() => { onSelectRef.current(it.id); setMulti(null); }}
-                    className="w-full text-left px-4 py-3 block hover:bg-white/5"
+                    className="w-full text-left px-4 py-3 block hover:bg-white/5 active:bg-white/10"
                   >
                     <div className="flex items-start gap-2">
                       <span
-                        className={`mt-2 inline-block h-2 w-2 rounded-full ${it.attestationCount > 0 ? 'bg-orange' : 'bg-vulcan-500'}`}
+                        className={`mt-2 inline-block h-2 w-2 rounded-full shrink-0 ${it.attestationCount > 0 ? 'bg-orange' : 'bg-vulcan-500'}`}
                         aria-hidden
                       />
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className={`text-base font-bold leading-7 truncate ${it.attestationCount > 0 ? 'text-orange' : 'text-vulcan-400'}`}>{it.name}</div>
                         {it.orgName && (
                           <div className="text-sm text-vulcan-300 truncate">by {it.orgName}</div>
