@@ -90,7 +90,7 @@ export function Step5Contributors() {
         <Textarea
           aria-label="Contributors"
           aria-describedby="contributors-help"
-          placeholder="Jane Smith, John Smith, John Doe …"
+          placeholder="Jane Smith, John Lee, John Doe …"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}

@@ -117,7 +117,7 @@ export default function LineChartJS({
           if (!el) {
             el = document.createElement("div");
             el.setAttribute("data-rr-tooltip", "");
-            el.className = "pointer-events-none absolute z-10 bg-vulcan-900/80 text-white rounded-xl shadow-xl px-2 py-2";
+            el.className = "pointer-events-none absolute z-10 bg-vulcan-900/90 outline outline-1 outline-vulcan-700 text-white rounded-xl shadow-xl px-2 py-2";
             el.style.opacity = "0";
             parent.appendChild(el);
             parent.style.position = parent.style.position || "relative";

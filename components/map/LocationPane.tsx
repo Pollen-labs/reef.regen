@@ -49,6 +49,7 @@ export default function LocationPane({
   const startY = useRef(0);
   const startH = useRef(0);
   const dragging = useRef(false);
+  const dragCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -74,30 +75,76 @@ export default function LocationPane({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Cleanup: ensure drag listeners are removed on unmount
+  useEffect(() => {
+    return () => {
+      if (dragCleanupRef.current) {
+        dragCleanupRef.current();
+        dragCleanupRef.current = null;
+      }
+    };
+  }, []);
+
   const onDragStart = (e: React.PointerEvent) => {
     if (isMdUp) return; // desktop not draggable
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Clean up any existing drag listeners
+    if (dragCleanupRef.current) {
+      dragCleanupRef.current();
+    }
+    
     dragging.current = true;
     startY.current = e.clientY;
     startH.current = sheetH || Math.round(window.innerHeight * 0.6);
-    (e.target as Element).setPointerCapture?.(e.pointerId);
-    // Prevent text selection while dragging
+    
+    // Prevent text selection and scrolling while dragging
     document.body.style.userSelect = 'none';
+    document.body.style.touchAction = 'none';
+    
+    // Add global listeners for better tracking
+    const handleMove = (e: PointerEvent) => {
+      if (!dragging.current) return;
+      e.preventDefault();
+      const dy = e.clientY - startY.current;
+      const raw = startH.current - dy; // drag up increases height
+      const minH = Math.round((window.innerHeight || 1) * 0.2);
+      const maxH = Math.round((window.innerHeight || 1) * 0.8);
+      const next = Math.max(minH, Math.min(maxH, raw));
+      setSheetH(next);
+    };
+    
+    const handleEnd = () => {
+      if (!dragging.current) return;
+      dragging.current = false;
+      document.body.style.userSelect = '';
+      document.body.style.touchAction = '';
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleEnd);
+      window.removeEventListener('pointercancel', handleEnd);
+      dragCleanupRef.current = null;
+    };
+    
+    window.addEventListener('pointermove', handleMove, { passive: false });
+    window.addEventListener('pointerup', handleEnd);
+    window.addEventListener('pointercancel', handleEnd);
+    
+    // Store cleanup function
+    dragCleanupRef.current = handleEnd;
   };
+  
   const onDragMove = (e: React.PointerEvent) => {
+    // This is now handled by global listeners, but keep for compatibility
     if (!dragging.current || isMdUp) return;
     e.preventDefault();
-    const dy = e.clientY - startY.current;
-    const raw = startH.current - dy; // drag up increases height
-    const minH = Math.round((window.innerHeight || 1) * 0.3);
-    const maxH = Math.round((window.innerHeight || 1) * 0.9);
-    const next = Math.max(minH, Math.min(maxH, raw));
-    setSheetH(next);
   };
+  
   const onDragEnd = (e: React.PointerEvent) => {
     if (!dragging.current) return;
     dragging.current = false;
     document.body.style.userSelect = '';
-    (e.target as Element).releasePointerCapture?.(e.pointerId);
+    document.body.style.touchAction = '';
   };
 
   const mobileStyle = !isMdUp && sheetH ? { height: `${sheetH}px` } : undefined;
@@ -113,13 +160,14 @@ export default function LocationPane({
     >
       {/* Mobile drag handle (sticky) */}
       <div
-        className="md:hidden sticky top-0 z-10 -mx-4 px-4 py-2 bg-black/70 backdrop-blur-[8px] rounded-t-3xl cursor-row-resize"
+        className="md:hidden sticky top-0 z-10 -mx-4 px-4 py-4 bg-black/70 backdrop-blur-[8px] rounded-t-3xl cursor-row-resize touch-none select-none"
+        style={{ touchAction: 'none' }}
         onPointerDown={onDragStart}
         onPointerMove={onDragMove}
         onPointerUp={onDragEnd}
         onPointerCancel={onDragEnd}
       >
-        <div className="mx-auto h-1.5 w-12 rounded-full bg-white/30" aria-hidden />
+        <div className="mx-auto h-1.5 w-16 rounded-full bg-white/40" aria-hidden />
       </div>
       <div className="flex flex-col gap-2 mt-1 md:mt-0">
         {/* Header Card */}

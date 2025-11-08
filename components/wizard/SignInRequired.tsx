@@ -36,9 +36,7 @@ export function SignInRequired({ returnTo = "/submit/steps/1" }: Props) {
         />
       </div>
       <h1 className="text-white font-black leading-[1.04] text-4xl md:text-6xl mb-3">
-        Please sign in to
-        <br className="hidden md:block" />
-        continue
+        Please sign in to continue
       </h1>
       <p className="text-white/70 text-base md:text-lg max-w-[560px] mx-auto mb-8">
         The submit process would take about 5 mins to complete.

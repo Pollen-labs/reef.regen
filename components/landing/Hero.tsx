@@ -27,7 +27,7 @@ export default function Hero() {
         {/* Body text + CTA */}
         <div className="w-full max-w-[820px] self-center flex flex-col items-center gap-6">
           <p className="text-center text-xlb md:text-xlb font-light text-white/90">
-            Reef.Regen empowers communities, scientists, and organizations to document and verify coral restoration actions on the blockchain. Together, we’re building an open, transparent record of ocean impact.
+            Reef.Regen empowers communities, scientists, and organizations to document and attest to coral restoration actions on the blockchain. Together, we’re building an open, transparent record of ocean impact.
           </p>
           <a
             href="/submit/steps/1"
