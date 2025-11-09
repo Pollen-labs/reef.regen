@@ -111,7 +111,7 @@ export default function Footer() {
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-vulcan-400 hover:text-vulcan-300 transition-colors"
           >
-            <span className="text-base font-light text-vulcan-5400">Hosted by</span>
+            <span className="text-base font-light text-vulcan-5400">Stewarded by</span>
             <img
               src="/assets/meso-logo.svg"
               alt="MesoReef DAO"
