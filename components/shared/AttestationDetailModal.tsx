@@ -5,7 +5,7 @@ import IdentifierBar from "@/components/ui/IdentifierBar";
 import { classesForRegen } from "@/lib/style/regenColors";
 import { formatDateShort, formatDateRangeShort } from "@/lib/format/date";
 
-const EAS_EXPLORER_URL = process.env.NEXT_PUBLIC_EAS_EXPLORER_URL || 'https://optimism-sepolia.easscan.org';
+const EAS_EXPLORER_URL = process.env.NEXT_PUBLIC_EAS_EXPLORER_URL || 'https://optimism.easscan.org';
 const IPFS_GATEWAY = process.env.NEXT_PUBLIC_IPFS_GATEWAY || 'https://ipfs.filebase.io';
 
 export default function AttestationDetailModal({ attestation, onClose, overlayClassName }: {

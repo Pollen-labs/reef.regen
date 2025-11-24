@@ -14,7 +14,7 @@ function SuccessInner() {
   const uid = params.get("uid") || "";
   const att = params.get("att") || "";
   const site = params.get("site") || "";
-  const base = process.env.NEXT_PUBLIC_EAS_EXPLORER_URL || "https://optimism-sepolia.easscan.org";
+  const base = process.env.NEXT_PUBLIC_EAS_EXPLORER_URL || "https://optimism.easscan.org";
   const attUrl = uid ? `${base.replace(/\/$/, "")}/attestation/view/${uid}` : base;
   const appBase = (process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : ''))
     .toString()

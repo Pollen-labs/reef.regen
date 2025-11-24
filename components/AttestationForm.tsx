@@ -347,10 +347,10 @@ export function AttestationForm() {
                   method: "wallet_addEthereumChain",
                   params: [{
                     chainId: targetHex,
-                    chainName: "OP Sepolia",
+                    chainName: "Optimism",
                     nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 },
-                    rpcUrls: ["https://optimism-sepolia.blockpi.network/v1/rpc/public"],
-                    blockExplorerUrls: ["https://sepolia-optimism.etherscan.io"],
+                    rpcUrls: [process.env.NEXT_PUBLIC_RPC_URL || "https://mainnet.optimism.io"],
+                    blockExplorerUrls: ["https://optimistic.etherscan.io"],
                   }],
                 });
                 await (embeddedProvider as any).request?.({
@@ -394,7 +394,7 @@ export function AttestationForm() {
       try {
         chainNonce = await eas.getNonce(attesterAddr);
       } catch (err: any) {
-        const msg = "Failed to read nonce from EAS. Check NEXT_PUBLIC_EAS_ADDRESS and network (chainId 11155420).";
+        const msg = `Failed to read nonce from EAS. Check NEXT_PUBLIC_EAS_ADDRESS and network (chainId ${env.chainId}).`;
         addDebug(`${msg} Error: ${err?.message || String(err)}`);
         setErrors(msg);
         setSubmitting(false);
@@ -840,7 +840,7 @@ export function AttestationForm() {
         <div className="body-sm text-aquamarine-800 bg-aquamarine-50 p-4 rounded-lg border border-aquamarine-200">
           <p className="font-semibold mb-1">Submitted. Tx Hash: {result.txHash}</p>
           <a
-            href={`https://optimism-sepolia.easscan.org/tx/${result.txHash}`}
+            href={`https://optimism.easscan.org/tx/${result.txHash}`}
             target="_blank"
             rel="noreferrer"
             className="text-aquamarine-600 hover:text-aquamarine-700 underline"
@@ -853,7 +853,7 @@ export function AttestationForm() {
         <div className="body-sm text-aquamarine-800 bg-aquamarine-50 p-4 rounded-lg border border-aquamarine-200">
           <p className="font-semibold mb-1">Attestation UID: {result.uid}</p>
           <a
-            href={`https://optimism-sepolia.easscan.org/attestation/view/${result.uid}`}
+            href={`https://optimism.easscan.org/attestation/view/${result.uid}`}
             target="_blank"
             rel="noreferrer"
             className="text-aquamarine-600 hover:text-aquamarine-700 underline"
