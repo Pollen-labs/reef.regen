@@ -231,16 +231,6 @@ export default function TopNav() {
         transform: open ? 'none' as any : undefined,
       }}
     >
-      {/* Global announcement bar - only on landing page */}
-      {isLandingPage && (
-        <div className="w-full bg-orange text-white">
-          <div className="w-full px-6 md:px-10 py-1 flex items-center justify-center">
-            <p className="text-xsb text-center break-words">
-              Preview release, testnet only, please help us to find any bugs. - update on Nov 6, 2025
-            </p>
-          </div>
-        </div>
-      )}
       <div className="w-full px-3 md:px-4 py-3  md:py-4 flex justify-between items-end">
         {/* Left: Logo + Wordmark */}
         <a href="/" className="flex items-center gap-1 -m-2 p-2 md:m-0 md:p-0 rounded-2xl hover:bg-white/5">
