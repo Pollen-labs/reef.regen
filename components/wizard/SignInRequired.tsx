@@ -40,7 +40,7 @@ export function SignInRequired({ returnTo = "/submit/steps/1" }: Props) {
       </h1>
       <p className="text-white/70 text-base md:text-lg max-w-[560px] mx-auto mb-8">
         The submit process would take about 5 mins to complete.
-        You can take a look of <a href="https://optimism-sepolia.easscan.org/attestation/view/0xec4dc40f440f6c30a86d5be9a1c28d43633260c4f1f3334c97997970a2dc6698" target="_blank" rel="noopener noreferrer" className="font-semibold text-white hover:text-white/80 transition-colors">our sample</a> on blockchain here.
+        You can take a look of <a href="https://optimism.easscan.org/attestation/view/0xec4dc40f440f6c30a86d5be9a1c28d43633260c4f1f3334c97997970a2dc6698" target="_blank" rel="noopener noreferrer" className="font-semibold text-white hover:text-white/80 transition-colors">our sample</a> on blockchain here.
       </p>
       <div className="flex items-center justify-center">
         <button

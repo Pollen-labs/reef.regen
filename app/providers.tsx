@@ -15,7 +15,7 @@ export default function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
 
   const web3AuthConfig = useMemo<Web3AuthContextConfig>(() => ({
-    web3AuthOptions: {
+      web3AuthOptions: {
       clientId: process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID as string,
       web3AuthNetwork:
         (process.env.NEXT_PUBLIC_WEB3AUTH_NETWORK as any) || WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
@@ -23,12 +23,12 @@ export default function Providers({ children }: { children: ReactNode }) {
       chains: [
         {
           chainNamespace: CHAIN_NAMESPACES.EIP155,
-          chainId: "0xAA37DC", // 11155420 OP Sepolia (hex)
-          rpcTarget: process.env.NEXT_PUBLIC_RPC_URL || "https://optimism-sepolia.blockpi.network/v1/rpc/public",
-          displayName: "OP Sepolia",
+          chainId: "0xa", // 10 Optimism mainnet (hex)
+          rpcTarget: process.env.NEXT_PUBLIC_RPC_URL || "https://mainnet.optimism.io",
+          displayName: "Optimism",
           ticker: "ETH",
           tickerName: "Ethereum",
-          blockExplorerUrl: "https://sepolia-optimism.etherscan.io",
+          blockExplorerUrl: "https://optimistic.etherscan.io",
           logo: "https://images.toruswallet.io/eth.svg",
         },
       ],
@@ -86,10 +86,10 @@ function EnsureEmbeddedChain() {
                 method: "wallet_addEthereumChain",
                 params: [{
                   chainId: chainIdHex,
-                  chainName: "OP Sepolia",
+                  chainName: "Optimism",
                   nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 },
-                  rpcUrls: [process.env.NEXT_PUBLIC_RPC_URL || "https://optimism-sepolia.blockpi.network/v1/rpc/public"],
-                  blockExplorerUrls: ["https://sepolia-optimism.etherscan.io"],
+                  rpcUrls: [process.env.NEXT_PUBLIC_RPC_URL || "https://mainnet.optimism.io"],
+                  blockExplorerUrls: ["https://optimistic.etherscan.io"],
                 }],
               });
               await provider.request?.({ method: "wallet_switchEthereumChain", params: [{ chainId: chainIdHex }] });

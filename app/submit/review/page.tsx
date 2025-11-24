@@ -111,9 +111,14 @@ export default function ReviewPage() {
       const schemaUid = (s.schemaUid || env.defaultSchemaUid) as `0x${string}`;
       if (!schemaUid) throw new Error('Schema UID is not configured. Set NEXT_PUBLIC_DEFAULT_SCHEMA_UID or choose one.');
       const recipient = (s.recipient || address) as `0x${string}`;
-      const schemaString = "string organizationName,string[] reefRegenAction,string actionDate,string siteName,string siteType,string[] location,string locationType,string srs,uint256 siteDepthM,uint256 siteAreaSqM,string actionSummary,string[] biodiversity,string[] contributors,string fileName,string ipfsCID";
+      const schemaString = "string organizationName,string[] reefRegenAction,string actionDate,string siteName,string siteType,string[] location,string locationType,string srs,uint256 siteDepthM,uint256 siteAreaSqM,string actionSummary,string[] biodiversity,uint256[] coralCount,string[] contributors,string fileName,string ipfsCID";
       const encoder = new SchemaEncoder(schemaString);
       const location = (s.siteCoords || []).map(String);
+      const coralCount = (s.species || []).map((x) => {
+        const raw = x.count ?? 0;
+        const clamped = Math.max(0, Math.min(100000, raw));
+        return BigInt(clamped);
+      });
       const dataHex = encoder.encodeData([
         { name: 'organizationName', type: 'string', value: s.organizationName || '' },
         { name: 'reefRegenAction', type: 'string[]', value: (s.reefRegenActions || []) as any },
@@ -127,6 +132,7 @@ export default function ReviewPage() {
         { name: 'siteAreaSqM', type: 'uint256', value: BigInt(Math.round(Number(s.siteAreaM2 || 0))) },
         { name: 'actionSummary', type: 'string', value: s.summary || '' },
         { name: 'biodiversity', type: 'string[]', value: ((s.species || []).map(x => x.scientificName) as any) },
+        { name: 'coralCount', type: 'uint256[]', value: (coralCount as any) },
         { name: 'contributors', type: 'string[]', value: ((s.contributors || []) as any) },
         { name: 'fileName', type: 'string', value: s.fileName || '' },
         { name: 'ipfsCID', type: 'string', value: cidLocal || '' },

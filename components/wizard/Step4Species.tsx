@@ -105,7 +105,7 @@ export function Step4Species() {
   const onChangeCount = (id: string, value: string) => {
     // keep only digits
     const cleaned = value.replace(/[^0-9]/g, "");
-    const num = cleaned === "" ? null : Math.min(1_000_000, Number(cleaned));
+    const num = cleaned === "" ? null : Math.min(100_000, Number(cleaned));
     const next = species.map((s) => (s.taxonId === id ? { ...s, count: num } : s));
     setPatch({ species: next });
   };
