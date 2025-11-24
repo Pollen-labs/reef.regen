@@ -1,3 +1,38 @@
+Reef.Regen — EAS Schema v0.5 (DB‑aligned, coral count)
+
+Deployed raw schema (single line):
+string organizationName,string[] reefRegenAction,string actionDate,string siteName,string siteType,string[] location,string locationType,string srs,uint256 siteDepthM,uint256 siteAreaSqM,string actionSummary,string[] biodiversity,uint256[] coralCount,string[] contributors,string fileName,string ipfsCID
+
+Pretty format:
+string organizationName,
+string[] reefRegenAction,
+string actionDate,
+string siteName,
+string siteType,
+string[] location,
+string locationType,
+string srs,
+uint256 siteDepthM,
+uint256 siteAreaSqM,
+string actionSummary,
+string[] biodiversity,
+uint256[] coralCount,
+string[] contributors,
+string fileName,
+string ipfsCID
+
+Notes
+- `coralCount` is an array of integers; enforce each value between 0 and 100000 in code/tests.
+- Location is [lon, lat] (strings) in GeoJSON order; enforce exactly two items in code/tests.
+- `locationType` = "coordinate-decimal/lon-lat" (FE constant; not in DB).
+- `srs` = "EPSG:4326" (FE constant; not in DB).
+- `reefRegenAction` uses `regen_type.name` values; DB joins via ids.
+- Depth/area are integers (meters, m^2) for EAS; DB may store decimals.
+
+Deploy on: TBD (update with EAS schema id and date after deployment)
+
+---
+
 Reef.Regen — EAS Schema v0.4 (DB‑aligned)
 
 Deployed raw schema (single line):

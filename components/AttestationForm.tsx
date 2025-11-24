@@ -88,10 +88,10 @@ export function AttestationForm() {
     setDebugEvents((prev) => [line, ...prev].slice(0, 100));
   }
 
-  // Build EAS encoded data for the deployed schema (v0.4)
+  // Build EAS encoded data for the deployed schema (v0.5)
   const LOCATION_TYPE = "coordinate-decimal/lon-lat" as const;
   const SRS = "EPSG:4326" as const;
-  const schemaString = "string organizationName,string[] reefRegenAction,string actionDate,string siteName,string siteType,string[] location,string locationType,string srs,uint256 siteDepthM,uint256 siteAreaSqM,string actionSummary,string[] biodiversity,string[] contributors,string fileName,string ipfsCID";
+  const schemaString = "string organizationName,string[] reefRegenAction,string actionDate,string siteName,string siteType,string[] location,string locationType,string srs,uint256 siteDepthM,uint256 siteAreaSqM,string actionSummary,string[] biodiversity,uint256[] coralCount,string[] contributors,string fileName,string ipfsCID";
   const encodedData = useMemo(() => {
     try {
       const encoder = new SchemaEncoder(schemaString);
@@ -105,6 +105,7 @@ export function AttestationForm() {
       const areaInt = values.surfaceArea === "" ? 0n : BigInt(Math.round(Number(values.surfaceArea)));
       const fileName = selectedFile?.name || "";
       const ipfsCID = values.fileCid || "";
+      const coralCount = biodiversity.map(() => 0n);
       return encoder.encodeData([
         { name: "organizationName", type: "string", value: values.organizationName },
         { name: "reefRegenAction", type: "string[]", value: actions as any },
@@ -118,6 +119,7 @@ export function AttestationForm() {
         { name: "siteAreaSqM", type: "uint256", value: areaInt },
         { name: "actionSummary", type: "string", value: values.summary },
         { name: "biodiversity", type: "string[]", value: biodiversity as any },
+        { name: "coralCount", type: "uint256[]", value: coralCount as any },
         { name: "contributors", type: "string[]", value: contributors as any },
         { name: "fileName", type: "string", value: fileName },
         { name: "ipfsCID", type: "string", value: ipfsCID },
@@ -139,6 +141,7 @@ export function AttestationForm() {
     const areaInt = v.surfaceArea === "" ? 0n : BigInt(Math.round(Number(v.surfaceArea)));
     const fileName = selectedFile?.name || "";
     const ipfsCID = v.fileCid || "";
+    const coralCount = biodiversity.map(() => 0n);
     return encoder.encodeData([
       { name: "organizationName", type: "string", value: v.organizationName },
       { name: "reefRegenAction", type: "string[]", value: actions as any },
@@ -152,6 +155,7 @@ export function AttestationForm() {
       { name: "siteAreaSqM", type: "uint256", value: areaInt },
       { name: "actionSummary", type: "string", value: v.summary },
       { name: "biodiversity", type: "string[]", value: biodiversity as any },
+      { name: "coralCount", type: "uint256[]", value: coralCount as any },
       { name: "contributors", type: "string[]", value: contributors as any },
       { name: "fileName", type: "string", value: fileName },
       { name: "ipfsCID", type: "string", value: ipfsCID },

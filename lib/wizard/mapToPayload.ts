@@ -23,6 +23,11 @@ export function buildEasPayload(s: WizardState) {
     siteAreaSqM: s.siteAreaM2 ?? 0,
     actionSummary: s.summary || "",
     biodiversity: (s.species || []).map((x) => x.scientificName),
+    coralCount: (s.species || []).map((x) => {
+      const raw = x.count ?? 0;
+      const clamped = Math.max(0, Math.min(100000, raw));
+      return clamped;
+    }),
     contributors: s.contributors || [],
     fileName: s.fileName || "",
     ipfsCID: s.fileCid || "",
@@ -44,4 +49,3 @@ export function buildFinalizeBody(s: WizardState, walletAddress: string) {
     internal_id: s.internalId || undefined,
   };
 }
-
