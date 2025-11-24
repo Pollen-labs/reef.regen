@@ -33,11 +33,7 @@ export default function Providers({ children }: { children: ReactNode }) {
         },
       ],
       uiConfig: {
-        appName: process.env.NEXT_PUBLIC_MM_DAPP_NAME || "Reef Impact Attest",
         mode: "dark",
-        loginMethodsOrder: ["google", "github", "twitter"],
-        // Optional: set to your logo if you want it shown inside modal
-        // appLogo: "/assets/logo.svg",
       },
     },
   }), []);
