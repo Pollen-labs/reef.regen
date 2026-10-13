@@ -28,13 +28,11 @@ export default function MapView({
   activeId,
   onSelect,
   onDeselect,
-  onReady,
 }: {
   points: LocationPoint[];
   activeId?: string;
   onSelect: (id: string) => void;
   onDeselect: () => void;
-  onReady?: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
@@ -141,7 +139,6 @@ export default function MapView({
       } catch {}
 
       map.on("load", () => {
-        onReady?.();
         // Initial empty source (data will be set by points effect)
         if (!map.getSource("locations")) {
           map.addSource("locations", {

@@ -19,7 +19,6 @@ function MapPageContent() {
   const [activeLocationId, setActiveLocationId] = useState<string | null>(null);
   const [points, setPoints] = useState<LocationPoint[]>([]);
   const [loading, setLoading] = useState(true);
-  const [mapReady, setMapReady] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [activeAtt, setActiveAtt] = useState<Attestation | null>(null);
@@ -162,27 +161,6 @@ function MapPageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeLocationId, attLimit]); // refetch when limit grows
 
-  if (loading || !mapReady) {
-    return (
-      <div
-        className="absolute inset-0 bg-vulcan-900"
-        style={{
-          top: 'var(--topnav-height, 96px)',
-          height: 'calc(100svh - var(--topnav-height, 96px))',
-          minHeight: 'calc(100svh - var(--topnav-height, 96px))'
-        }}
-      >
-        <div className="absolute inset-0 animate-pulse bg-gradient-to-b from-vulcan-800/50 to-vulcan-900" />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-3 text-vulcan-400">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-vulcan-600 border-t-flamingo-400" />
-            <div className="text-sm">Loading map…</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const handleClosePane = () => {
     setActiveLocationId(null);
     setSelectedLocation(null);
@@ -251,9 +229,8 @@ function MapPageContent() {
       }}
     >
       <MapView
-        points={points}
+        points={loading ? [] : points}
         activeId={activeLocationId || undefined}
-        onReady={() => setMapReady(true)}
         onSelect={(id) => {
           setActiveLocationId(id);
           // Update URL for shareable deep link to this site
@@ -265,6 +242,18 @@ function MapPageContent() {
         }}
         onDeselect={handleClosePane}
       />
+
+      {loading && (
+        <div className="absolute inset-0 z-20 bg-vulcan-900 pointer-events-none">
+          <div className="absolute inset-0 animate-pulse bg-gradient-to-b from-vulcan-800/50 to-vulcan-900" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3 text-vulcan-400">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-vulcan-600 border-t-flamingo-400" />
+              <div className="text-sm">Loading map…</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* LocationPane - with slide animation */}
       {locationLoading && (
