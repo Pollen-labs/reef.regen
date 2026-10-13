@@ -99,7 +99,7 @@ Checked via `pnpm outdated`. **22 of 25 packages are behind.**
 
 ### Recommended upgrade order
 
-1. **Immediate:** ~~Pin Next.js to stable (`16.4.0`), remove `chartjs-plugin-datalabels`, align `@web3auth/base` to match `@web3auth/modal` major.~~ ✅ `chartjs-plugin-datalabels` removed, `@web3auth/base` aligned (removed). **Next: pin Next.js to `16.4.0`** (canary `16.0.2-canary.2` → stable).
+1. **Immediate:** ~~Pin Next.js to stable (`16.4.0`), remove `chartjs-plugin-datalabels`, align `@web3auth/base` to match `@web3auth/modal` major.~~ ✅ All done — `chartjs-plugin-datalabels` removed, `@web3auth/base` aligned (removed), Next.js pinned to `16.4.0` stable (commit `cc95cc04`).
 2. **Near-term:** Upgrade maplibre-gl to v5+ (biggest map perf win). Update viem, ethers, supabase-js, react-query (all minor).
 3. **Dedicated sprint:** React 19, wagmi v3, zod v4, zustand v5, tailwind v4, TypeScript 7. Each is a major migration — do them one at a time with testing.
 
@@ -328,14 +328,14 @@ If a user hasn't logged in since the mainnet migration (Nov 24, 2025), their bro
 
 | # | Issue | Location | Detail |
 |---|-------|----------|--------|
-| 3 | **Network config mismatch** | `app/providers.tsx:26` vs `.env.example` | `providers.tsx` hardcodes Optimism mainnet (chainId `0xa`=10). `.env.example` line 1 sets `NEXT_PUBLIC_CHAIN_ID=11155420` (Optimism Sepolia). README also says "Optimism Sepolia". Docs and example env are stale relative to the mainnet cutover. New developers will misconfigure. **Fix:** Update `.env.example` and README to reflect mainnet. |
+| 3 | ~~**Network config mismatch**~~ | ~~`app/providers.tsx:26` vs `.env.example`~~ | ✅ **Fixed** — `.env.example` and README updated to Optimism Mainnet (chainId 10, `sapphire_mainnet`, `optimism.easscan.org`, EAS version 0.26, MapLibre 5.24.0, Node 20.9+). `.env.example` force-added to git (was gitignored). |
 | 4 | **Placeholder MapTiler key in style JSON** | `public/map/styles/dark_matter.json` | Ships with `get_your_own_OpIi9ZULNHzrESv6T2vL` baked in. Swapped at runtime by `transformRequest`, but the raw file is publicly inspectable. If runtime key injection is bypassed, tiles 403. |
 
 ### Performance issues
 
 | # | Issue | Location | Detail |
 |---|-------|----------|--------|
-| 5 | **Profile page eager-loads all chart components** | `app/profile/[handle]/page.tsx:3-10` | Statically imports `DonutChartJS`, `LineChartJS`, `StackedBarChartJS`. Chart.js + react-chartjs-2 are fully bundled into the profile route. Should use `next/dynamic` (as the map page does for the donut). |
+| 5 | ~~**Profile page eager-loads all chart components**~~ | ~~`app/profile/[handle]/page.tsx:3-10`~~ | ✅ **Fixed** — `DonutChartJS`, `LineChartJS`, `StackedBarChartJS`, and `StaticSiteMap` converted to `next/dynamic` with `ssr: false`. Chart.js + MapLibre removed from profile route initial bundle. |
 | 6 | ~~**`MapCrosshairPicker` static-imports maplibre-gl**~~ | ~~`components/wizard/MapCrosshairPicker.tsx:4`~~ | ✅ **Fixed** — changed to dynamic `import("maplibre-gl")` + type-only import. ~700KB removed from `/submit` bundle. |
 | 7 | **No RSC data fetching** | `app/map/page.tsx` | The most-visited page is 100% client-rendered with `fetch` in `useEffect`. No server-side data fetching, no React Query caching. |
 | 8 | ~~**No `Cache-Control` on public API**~~ | ~~`app/api/attestations/public/route.ts`~~ | ✅ **Fixed** — added `export const revalidate = 60`. Repeat `/map` visits within 60s skip the Supabase query. |
@@ -344,7 +344,7 @@ If a user hasn't logged in since the mainnet migration (Nov 24, 2025), their bro
 
 | # | Issue | Location | Detail |
 |---|-------|----------|--------|
-| 9 | **`localStorage.clear()` on logout wipes wizard draft** | `components/TopNav.tsx:315,418`, `app/profile/setting/page.tsx:203` | Full `localStorage.clear()` wipes the persisted Zustand wizard state (`reefregen.attestation.wizard.v1`). A user mid-wizard who logs out loses draft work without warning. Should selectively clear only auth-related keys. |
+| 9 | ~~**`localStorage.clear()` on logout wipes wizard draft**~~ | ~~`components/TopNav.tsx:315,418`, `app/profile/setting/page.tsx:203`~~ | ✅ **Fixed** — `localStorage.clear()` replaced with `clearAuthStorage()` (`lib/auth/clearAuthStorage.ts`) in all 3 logout sites. Preserves `reefregen.attestation.wizard.v1` (wizard draft) while clearing all auth/session keys. |
 | 10 | **No `loading.tsx` / `error.tsx` route boundaries** | throughout | Each page handles loading/error inline. Shared route-level boundaries would improve resilience. |
 
 ### Hygiene
@@ -379,21 +379,22 @@ If a user hasn't logged in since the mainnet migration (Nov 24, 2025), their bro
 | Fix Rules-of-Hooks violation in `AttestationDetailModal` | Small | Prevents potential runtime breakage | ✅ Done — `useEffect` hoisted above early return, ESM import |
 | Replace `require("react")` with ESM imports | Small | Correctness, tree-shaking | ✅ Done — fixed in `AttestationDetailModal`, `LocationPane`, and `SiteModal` (third site missed by initial review; replaced `require().createElement` with `next/dynamic`) |
 | Remove unused `chartjs-plugin-datalabels` | Trivial | Cleaner dependency tree | ✅ Done — verified `chart.js`+`react-chartjs-2` are still used by the 3 chart components; only the datalabels plugin was unused |
-| Update `.env.example` and README for mainnet | Trivial | Prevents developer misconfiguration | ⬜ Not yet done |
+| Update `.env.example` and README for mainnet | Trivial | Prevents developer misconfiguration | ✅ Done — all Sepolia refs updated to OP Mainnet; `.env.example` force-added to git (was gitignored) (commit `b2c684d8`) |
 
 ### Phase 2 — Bigger improvements (separate sprints)
 
 | Task | Effort | Impact | Status |
 |------|--------|--------|--------|
 | Upgrade maplibre-gl v3 → v5 | Medium | Biggest map perf win (WebGL2) | ✅ Done — v3.6.2 → v5.24.0 (commit `2dd98afd`) |
-| Pin Next.js canary → stable (`16.4.0`) | Medium | Production stability | ⬜ Not yet done |
-| Adopt React Query for data fetching | Medium | Caching, dedup, background refetch | ⬜ Not yet done |
+| Pin Next.js canary → stable (`16.4.0`) | Medium | Production stability | ✅ Done — `16.0.2-canary.2` → `16.4.0` (commit `cc95cc04`). Also moved `experimental.turbo` → top-level `turbopack`, fixed async `searchParams` in `generateMetadata`. |
+| Adopt React Query for data fetching | Medium | Caching, dedup, background refetch | ⬜ Not yet done — low priority; `revalidate = 60` on public API already provides server-side caching |
 | Upgrade `@web3auth/modal` to v11 + `defaultChainId` | Medium | Eliminates chain switch entirely | ⬜ Deferred — v11 requires wagmi v3 (major migration). v10 fix with `useSwitchChain()` applied instead. |
-| Lazy-load chart components on profile page | Small | Reduces profile route bundle | ⬜ Not yet done |
-| Selective localStorage clearing on logout | Small | Prevents wizard draft data loss | ⬜ Not yet done |
-| Remove dead `WalletConnect.tsx` component | Small | Code cleanliness | ⬜ Not yet done |
-| Add ESLint config + fix `as any` casts | Medium | Type safety, code quality | ⬜ Not yet done |
-| Add unit tests for `lib/eas.ts` and `lib/validation.ts` | Medium | Business logic correctness | ⬜ Not yet done |
+| Lazy-load chart components on profile page | Small | Reduces profile route bundle | ✅ Done — `DonutChartJS`, `LineChartJS`, `StackedBarChartJS`, `StaticSiteMap` converted to `next/dynamic` (commit `b2c684d8`) |
+| Selective localStorage clearing on logout | Small | Prevents wizard draft data loss | ✅ Done — `clearAuthStorage()` replaces `localStorage.clear()` in 3 logout sites; preserves `reefregen.attestation.wizard.v1` (commit `b2c684d8`) |
+| ~~Remove dead `WalletConnect.tsx` component~~ | ~~Small~~ | ~~Code cleanliness~~ | ❌ **Invalid** — verified `WalletConnect.tsx` IS actively used in `app/attest/page.tsx` and `app/profile/setup/page.tsx`. Doc was wrong. |
+| Update `.env.example` and README for mainnet | Trivial | Prevents developer misconfiguration | ✅ Done — all Sepolia refs updated to mainnet, `.env.example` force-added to git (was gitignored) (commit `b2c684d8`) |
+| Add ESLint config + fix `as any` casts | Medium | Type safety, code quality | ⬜ Not yet done — 100+ `as any` casts; many at SDK boundaries (ethers/Web3Auth/maplibre) where proper types don't exist. ESLint setup worthwhile; fixing all casts is not. |
+| Add unit tests for `lib/eas.ts` and `lib/validation.ts` | Medium | Business logic correctness | ⬜ Not yet done — `lib/eas.ts` (EIP-712 typed data builder) is highest priority; `lib/validation.ts` (Zod schemas) is lower since Zod provides runtime validation. |
 
 ### Phase 3 — Major upgrades (dedicated sprints, one at a time)
 

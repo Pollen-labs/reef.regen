@@ -356,8 +356,8 @@ This project is maintained by Pollen Labs. For contributions, please:
 
 ## Acknowledgments
 
-- [**Pollen Labs**](https://pollenlabs.org/)- Creation and development
-- [**MesoReef DAO**](https://mesoreefdao.org/) - Maintenance and community hosting
+- [**Pollen Labs**](https://pollenlabs.org/) - Concept, design, and development
+- [**MesoReef DAO**](https://mesoreefdao.org/) - Stewardship and community support
 
 ---
 
