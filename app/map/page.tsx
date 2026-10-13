@@ -19,6 +19,7 @@ function MapPageContent() {
   const [activeLocationId, setActiveLocationId] = useState<string | null>(null);
   const [points, setPoints] = useState<LocationPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mapReady, setMapReady] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [activeAtt, setActiveAtt] = useState<Attestation | null>(null);
@@ -161,7 +162,7 @@ function MapPageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeLocationId, attLimit]); // refetch when limit grows
 
-  if (loading) {
+  if (loading || !mapReady) {
     return (
       <div
         className="absolute inset-0 bg-vulcan-900"
@@ -252,6 +253,7 @@ function MapPageContent() {
       <MapView
         points={points}
         activeId={activeLocationId || undefined}
+        onReady={() => setMapReady(true)}
         onSelect={(id) => {
           setActiveLocationId(id);
           // Update URL for shareable deep link to this site
