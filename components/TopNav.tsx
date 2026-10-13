@@ -6,6 +6,7 @@ import type { Route } from "next";
 import { useWeb3AuthConnect, useWeb3AuthDisconnect } from "@web3auth/modal/react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useLeaveGuard } from "@/hooks/useLeaveGuard";
+import { clearAuthStorage } from "@/lib/auth/clearAuthStorage";
 import Button from "@/components/ui/Button";
 
 /**
@@ -321,7 +322,7 @@ export default function TopNav() {
                       try { await disconnectWeb3Auth(); } catch {}
                       disconnect();
                       setMenuOpen(false);
-                      try { localStorage.clear(); } catch {}
+                        try { clearAuthStorage(); } catch {}
                       if (typeof window !== 'undefined') window.location.href = "/";
                     }}
                   >
@@ -424,7 +425,7 @@ export default function TopNav() {
                         try { await disconnectWeb3Auth(); } catch {}
                         disconnect();
                         setOpen(false);
-                        try { localStorage.clear(); } catch {}
+                      try { clearAuthStorage(); } catch {}
                         if (typeof window !== 'undefined') window.location.href = "/";
                       }}
                       className="block w-full text-4xl font-black text-right text-white hover:text-white/80"

@@ -1,18 +1,20 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import DonutChartJS from "@/components/shared/charts/DonutChartJS";
-import LineChartJS from "@/components/shared/charts/LineChartJS";
+import dynamic from "next/dynamic";
 import Tag from "@/components/ui/Tag";
 import AttestationDetailModal from "@/components/shared/AttestationDetailModal";
 import { formatDateShort } from "@/lib/format/date";
-import StaticSiteMap from "@/components/profile/StaticSiteMap";
 import { classesForRegen } from "@/lib/style/regenColors";
-import StackedBarChartJS from "@/components/shared/charts/StackedBarChartJS";
 import { useAccount } from "wagmi";
 import { useParams } from "next/navigation";
 import { ethers } from "ethers";
 import { env } from "@/lib/env";
 import Skeleton from "@/components/ui/Skeleton";
+
+const DonutChartJS = dynamic(() => import("@/components/shared/charts/DonutChartJS"), { ssr: false });
+const LineChartJS = dynamic(() => import("@/components/shared/charts/LineChartJS"), { ssr: false });
+const StackedBarChartJS = dynamic(() => import("@/components/shared/charts/StackedBarChartJS"), { ssr: false });
+const StaticSiteMap = dynamic(() => import("@/components/profile/StaticSiteMap"), { ssr: false });
 
 type Api = {
   profile: { id: string; profile_name: string | null; description: string | null; website: string | null; wallet_address: string; handle: string };
