@@ -18,7 +18,7 @@
     "ethers": "^6.13.2",
     "framework7-icons": "^5.0.5",
     "maplibre-gl": "^5.24.0",
-    "next": "16.0.2-canary.2",
+    "next": "16.4.0",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.3.1",

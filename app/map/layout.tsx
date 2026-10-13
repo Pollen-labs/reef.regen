@@ -4,9 +4,10 @@ export default function MapLayout({ children }: { children: React.ReactNode }) {
   return children as any;
 }
 
-export async function generateMetadata({ searchParams }: { searchParams?: Record<string, string | string[] | undefined> }): Promise<Metadata> {
-  const site = (searchParams?.site as string) || "";
-  const att = (searchParams?.att as string) || "";
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }): Promise<Metadata> {
+  const sp = await searchParams;
+  const site = (sp?.site as string) || "";
+  const att = (sp?.att as string) || "";
   const baseStr = (process.env.NEXT_PUBLIC_APP_URL || "").toString() || undefined;
   const base = baseStr ? new URL(baseStr) : undefined;
   const og = new URL("/opengraph/map", base || new URL("http://localhost"));

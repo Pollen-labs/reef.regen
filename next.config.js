@@ -3,11 +3,9 @@ const path = require('path');
 const nextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
-  experimental: {
-    turbo: {
-      resolveAlias: {
-        '@react-native-async-storage/async-storage': path.resolve(__dirname, 'lib/stubs/async-storage.ts'),
-      },
+  turbopack: {
+    resolveAlias: {
+      '@react-native-async-storage/async-storage': path.resolve(__dirname, 'lib/stubs/async-storage.ts'),
     },
   },
 };
