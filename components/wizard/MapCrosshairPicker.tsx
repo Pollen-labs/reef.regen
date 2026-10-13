@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import maplibregl from "maplibre-gl";
+import type { Map as MaplibreMap } from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import Button from "@/components/ui/Button";
 
 type Props = {
@@ -13,7 +14,7 @@ type Props = {
 };
 
 export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, showPick = true }: Props) {
-  const mapRef = useRef<maplibregl.Map | null>(null);
+  const mapRef = useRef<MaplibreMap | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   // Capture starting values once so subsequent prop changes don't re-center or re-zoom the map.
   const [startCenter] = useState<[number, number]>(initial ?? [100, 10]);
@@ -25,10 +26,12 @@ export function MapCrosshairPicker({ initial, onPick, interactive = true, zoom, 
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
-    let map: maplibregl.Map | null = null;
+    let map: MaplibreMap | null = null;
     let wheelHandler: ((e: WheelEvent) => void) | null = null;
     const styleUrl = process.env.NEXT_PUBLIC_MAP_STYLE_URL || "/map/styles/dark_matter.json";
     const init = async () => {
+      const [{ default: maplibregl }] = await Promise.all([import("maplibre-gl")]);
+      maplibregl.prewarm();
       try {
         // Prefetch style JSON to fail fast if path is wrong
         const styleResp = await fetch(styleUrl, { cache: "no-store" });

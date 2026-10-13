@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import "maplibre-gl/dist/maplibre-gl.css";
 import type { ResourceType, RequestParameters } from "maplibre-gl";
 import type { LocationPoint } from "@/types/map";
 import { MAP_COLORS } from "@/lib/style/mapColors";
@@ -84,15 +85,8 @@ export default function MapView({
       ]);
       if (destroyed) return;
 
-      // Inject MapLibre CSS via CDN once
-      const linkId = "maplibre-css";
-      if (!document.getElementById(linkId)) {
-        const link = document.createElement("link");
-        link.id = linkId;
-        link.rel = "stylesheet";
-        link.href = "https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css";
-        document.head.appendChild(link);
-      }
+      // Prewarm the worker pool for faster map initialization
+      maplibregl.prewarm();
 
       // Mobile: focus on east coast of America, Desktop: default (Africa)
       const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
