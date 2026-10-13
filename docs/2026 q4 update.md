@@ -14,10 +14,10 @@ The project is a Next.js app for creating verifiable, on-chain coral restoration
 All 16 feature docs (v0.1 through v1.6) have been implemented and shipped. The codebase is functional and on mainnet, but has accumulated:
 
 - **22 of 25 npm packages behind** — including a Next.js canary in production and maplibre-gl 3 major versions behind.
-- **2 bugs** (Rules-of-Hooks violation, `require("react")` anti-pattern).
+- **2 bugs** (Rules-of-Hooks violation, `require("react")` anti-pattern). ✅ **Fixed** — see Section 6.
 - **Map loading inefficiency** — no caching, CDN-loaded CSS, outdated maplibre, no skeleton.
 - **Sign-in chain-switch popup** — `EnsureEmbeddedChain` triggered a visible `wallet_switchEthereumChain` popup on connect. **Fixed:** replaced raw RPC with SDK's `useSwitchChain()` hook (silent for embedded wallets), removed `@web3auth/base@9` version skew, fixed `handleSignIn` race condition, added `enableLogging` for debugging. v11 upgrade with `defaultChainId` deferred (requires wagmi v3 major migration).
-- **1 unused dependency**, **1 dead/duplicate component**, and pervasive `as any` casts.
+- **1 unused dependency**, **1 dead/duplicate component**, and pervasive `as any` casts. Unused dependency (`chartjs-plugin-datalabels`) ✅ **Removed**.
 
 This document covers all findings and proposes a two-phase remediation plan.
 
@@ -99,7 +99,7 @@ Checked via `pnpm outdated`. **22 of 25 packages are behind.**
 
 ### Recommended upgrade order
 
-1. **Immediate:** Pin Next.js to stable (`16.4.0`), remove `chartjs-plugin-datalabels`, align `@web3auth/base` to match `@web3auth/modal` major.
+1. **Immediate:** ~~Pin Next.js to stable (`16.4.0`), remove `chartjs-plugin-datalabels`, align `@web3auth/base` to match `@web3auth/modal` major.~~ ✅ `chartjs-plugin-datalabels` removed, `@web3auth/base` aligned (removed). **Next: pin Next.js to `16.4.0`** (canary `16.0.2-canary.2` → stable).
 2. **Near-term:** Upgrade maplibre-gl to v5+ (biggest map perf win). Update viem, ethers, supabase-js, react-query (all minor).
 3. **Dedicated sprint:** React 19, wagmi v3, zod v4, zustand v5, tailwind v4, TypeScript 7. Each is a major migration — do them one at a time with testing.
 
@@ -321,8 +321,8 @@ If a user hasn't logged in since the mainnet migration (Nov 24, 2025), their bro
 
 | # | Issue | Location | Detail |
 |---|-------|----------|--------|
-| 1 | **Rules-of-Hooks violation** | `components/shared/AttestationDetailModal.tsx:16-26` | A `useEffect` is called via `require('react').useEffect` *after* an early return (`if (!attestation) return null`). Hooks called conditionally → React will warn and behavior is undefined when `attestation` toggles. Must hoist the hook above the early return and use a normal `import { useEffect }`. |
-| 2 | **`require("react")` anti-pattern** | `components/map/LocationPane.tsx:318-339`, `components/shared/AttestationDetailModal.tsx` | Uses `require("react").useState` / `require("react").useEffect` instead of ESM imports. Works today but breaks under strict ESM bundler edge cases and confuses tree-shaking. Replace with `import { useState, useEffect } from "react"`. |
+| 1 | ~~**Rules-of-Hooks violation**~~ | ~~`components/shared/AttestationDetailModal.tsx:16-26`~~ | ✅ **Fixed** — `useEffect` hoisted above the early return, ESM `import { useEffect } from "react"` added, `require('react')` + try/catch removed. |
+| 2 | ~~**`require("react")` anti-pattern**~~ | ~~`components/map/LocationPane.tsx:318-339`, `components/shared/AttestationDetailModal.tsx`, `components/wizard/SiteModal.tsx:144`~~ | ✅ **Fixed** — replaced with ESM imports. *Note: original review missed a third site — `SiteModal.tsx:144` used `require('react').createElement(require('@/components/profile/StaticSiteMap').default, …)`; replaced with `next/dynamic` import + JSX.* |
 
 ### Configuration issues
 
@@ -351,7 +351,7 @@ If a user hasn't logged in since the mainnet migration (Nov 24, 2025), their bro
 
 | # | Issue | Location | Detail |
 |---|-------|----------|--------|
-| 11 | **Unused dependency** | `package.json` | `chartjs-plugin-datalabels@^2.2.0` is never imported. Safe to remove. |
+| 11 | ~~**Unused dependency**~~ | ~~`package.json`~~ | ✅ **Fixed** — `chartjs-plugin-datalabels@^2.2.0` removed via `pnpm remove`. Verified the 3 chart components (`DonutChartJS`, `StackedBarChartJS`, `LineChartJS`) use `chart.js` + `react-chartjs-2` with custom `externalTooltip`/HTML legends — the datalabels plugin was never imported or registered. |
 | 12 | **Dead/duplicate component** | `components/WalletConnect.tsx` | Re-implements sign-in + email upsert already handled by `TopNav` + `ProfileEmailSync`. Verify if still rendered anywhere; if not, remove. |
 | 13 | **No ESLint config, no tests** | project root | README acknowledges manual testing only. No lint devDeps, no ESLint config. `as any` casts are pervasive. Business logic in `lib/eas.ts`, `lib/validation.ts` warrants unit tests. |
 | 14 | **`as any` casts pervasive** | throughout | `router.replace(... as any)`, `useWeb3Auth() as any`, `(source as any).setData(...)`, feature props as `any`. Strict mode is on but routinely bypassed. `typedRoutes: true` is enabled yet route strings are still cast to `any`. |
@@ -376,9 +376,9 @@ If a user hasn't logged in since the mainnet migration (Nov 24, 2025), their bro
 | Fix setup page 3-sec flash (loading spinner while checking profile) | Small | Eliminates form flash for returning users | ✅ Done |
 | Add `enableLogging: true` in dev mode for Web3Auth debugging | Trivial | Console logs show exactly where auth flow stalls | ✅ Done |
 | Update `viem` to `^2.45.0` (Web3Auth peer requirement) | Trivial | Meets `@web3auth/modal@10` peer dep | ✅ Done |
-| Fix Rules-of-Hooks violation in `AttestationDetailModal` | Small | Prevents potential runtime breakage | ⬜ Not yet done |
-| Replace `require("react")` with ESM imports | Small | Correctness, tree-shaking | ⬜ Not yet done |
-| Remove unused `chartjs-plugin-datalabels` | Trivial | Cleaner dependency tree | ⬜ Not yet done |
+| Fix Rules-of-Hooks violation in `AttestationDetailModal` | Small | Prevents potential runtime breakage | ✅ Done — `useEffect` hoisted above early return, ESM import |
+| Replace `require("react")` with ESM imports | Small | Correctness, tree-shaking | ✅ Done — fixed in `AttestationDetailModal`, `LocationPane`, and `SiteModal` (third site missed by initial review; replaced `require().createElement` with `next/dynamic`) |
+| Remove unused `chartjs-plugin-datalabels` | Trivial | Cleaner dependency tree | ✅ Done — verified `chart.js`+`react-chartjs-2` are still used by the 3 chart components; only the datalabels plugin was unused |
 | Update `.env.example` and README for mainnet | Trivial | Prevents developer misconfiguration | ⬜ Not yet done |
 
 ### Phase 2 — Bigger improvements (separate sprints)

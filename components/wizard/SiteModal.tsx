@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { MapCrosshairPicker } from "@/components/wizard/MapCrosshairPicker";
 import Dropdown, { type DropdownOption } from "@/components/ui/Dropdown";
 import Input from "@/components/ui/Input";
 import NumberInput from "@/components/ui/NumberInput";
 import Button from "@/components/ui/Button";
+
+const StaticSiteMap = dynamic(() => import("@/components/profile/StaticSiteMap"), { ssr: false });
 
 type SiteType = { code: number; label: string };
 type Site = {
@@ -141,11 +144,11 @@ export function SiteModal({ open, mode, initial, walletAddress, onClose, onSaved
             {/* Static map with orange pin; allow pan/zoom for verification */}
             {/** Using profile StaticSiteMap for consistent visuals */}
             <div className="rounded-2xl overflow-hidden">
-              {require('react').createElement(require('@/components/profile/StaticSiteMap').default, {
-                sites: [{ id: initial.id || 'site', name: initial.name || 'Site', coords: initial.coords! }],
-                height: 280,
-                onSiteClick: () => {}, // enable interactivity without actions
-              })}
+              <StaticSiteMap
+                sites={[{ id: initial.id || 'site', name: initial.name || 'Site', coords: initial.coords! }]}
+                height={280}
+                onSiteClick={() => {}}
+              />
             </div>
             <div className="mt-2 text-sm text-white/80"><code>{initial.coords[0]}, {initial.coords[1]}</code> <span className="ml-2">[lon, lat]</span></div>
             <div className="mt-2 text-white/70 text-sm">Location is fixed and cannot be changed.</div>

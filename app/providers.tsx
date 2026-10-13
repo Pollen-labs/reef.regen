@@ -35,6 +35,9 @@ export default function Providers({ children }: { children: ReactNode }) {
       uiConfig: {
         mode: "dark",
       },
+      walletServicesConfig: {
+        confirmationStrategy: "auto-approve",
+      } as any,
     },
   }), []);
 
