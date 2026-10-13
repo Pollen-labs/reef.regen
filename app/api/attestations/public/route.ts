@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { classesForSiteType } from "@/lib/style/siteTypeColors";
 
+// Cache the public sites GeoJSON for 60 seconds to avoid re-querying Supabase on every /map visit
+export const revalidate = 60;
+
 // Returns one feature per Site from the v0.4 view `site_points_v`
 export async function GET() {
   // Prefer selecting site type name if available in the view; fallback otherwise

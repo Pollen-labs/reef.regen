@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { MAP_COLORS } from "@/lib/style/mapColors";
 
 type Site = { id: string; name: string; type?: string; coords: [number, number]; attestationCount?: number };
@@ -24,15 +25,8 @@ export default function StaticSiteMap({
       const [{ default: maplibregl }] = await Promise.all([import("maplibre-gl")]);
       if (destroyed) return;
 
-      // Inject MapLibre CSS once
-      const linkId = "maplibre-css";
-      if (!document.getElementById(linkId)) {
-        const link = document.createElement("link");
-        link.id = linkId;
-        link.rel = "stylesheet";
-        link.href = "https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css";
-        document.head.appendChild(link);
-      }
+      // Prewarm the worker pool for faster map initialization
+      maplibregl.prewarm();
 
       const map = new maplibregl.Map({
         container: containerRef.current!,

@@ -80,6 +80,11 @@ function ProfileSetupInner() {
             <p className="text-vulcan-400 text-xl md:text-2xl font-light leading-9">Sign in to set up your profile.</p>
             <WalletConnect />
           </div>
+        ) : loading ? (
+          <div className="flex flex-col items-center gap-4 py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-vulcan-600 border-t-flamingo-400" />
+            <p className="text-vulcan-400 text-sm">Checking your profile…</p>
+          </div>
         ) : (
           <form onSubmit={onSubmit} className="flex flex-col gap-6">
             <div className="flex flex-col gap-4">
