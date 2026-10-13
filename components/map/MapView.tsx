@@ -102,7 +102,7 @@ export default function MapView({
         pitch: 0,
         dragRotate: false,
         pitchWithRotate: false,
-        attributionControl: true,
+        attributionControl: {},
         transformRequest: (
           u: string | RequestParameters,
           _resourceType?: ResourceType
