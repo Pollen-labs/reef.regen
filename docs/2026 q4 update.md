@@ -16,7 +16,7 @@ All 16 feature docs (v0.1 through v1.6) have been implemented and shipped. The c
 - **22 of 25 npm packages behind** — including a Next.js canary in production and maplibre-gl 3 major versions behind.
 - **2 bugs** (Rules-of-Hooks violation, `require("react")` anti-pattern).
 - **Map loading inefficiency** — no caching, CDN-loaded CSS, outdated maplibre, no skeleton.
-- **Sign-in chain-switch popup** — `EnsureEmbeddedChain` triggers a visible `wallet_switchEthereumChain` popup on connect because the Web3Auth dashboard has Ethereum mainnet configured alongside OP mainnet, causing the embedded wallet to default to ETH mainnet. Fix: remove ETH mainnet from dashboard, or upgrade to Web3Auth v11 with `defaultChainId`.
+- **Sign-in chain-switch popup** — `EnsureEmbeddedChain` triggered a visible `wallet_switchEthereumChain` popup on connect. **Fixed:** replaced raw RPC with SDK's `useSwitchChain()` hook (silent for embedded wallets), removed `@web3auth/base@9` version skew, fixed `handleSignIn` race condition, added `enableLogging` for debugging. v11 upgrade with `defaultChainId` deferred (requires wagmi v3 major migration).
 - **1 unused dependency**, **1 dead/duplicate component**, and pervasive `as any` casts.
 
 This document covers all findings and proposes a two-phase remediation plan.
@@ -59,8 +59,8 @@ Checked via `pnpm outdated`. **22 of 25 packages are behind.**
 | Package | Current | Latest | Concern |
 |---------|---------|--------|---------|
 | **next** | `16.0.2-canary.2` | `16.4.0` | Running a canary/pre-release in production. Should pin to stable. |
-| **maplibre-gl** | `3.6.2` | `6.14.0` | 3 major versions behind. v5 adds WebGL2 support and significant render perf. CDN CSS is also pinned to `3.6.2` literally while package.json is `^3.6.2` — drift risk. |
-| **@web3auth/base** | `^9.7.0` | v11 available | Major version skew with `@web3auth/modal@^10.8.0`. Lockfile shows duplicate `@web3auth/auth` (9.6.4 and 10.7.0) installed. Should align to a single major. |
+| **maplibre-gl** | ~~`3.6.2`~~ → `5.24.0` | `6.14.0` | ✅ Upgraded to v5 (WebGL2, perf). v6 deferred (ESM-only, no default import). |
+| ~~**@web3auth/base**~~ | ~~`^9.7.0`~~ | — | ✅ **Removed** — orphaned v8-era package, never loaded by `@web3auth/modal@10`. Imports moved to `@web3auth/modal`. |
 
 ### Major version available (evaluate before upgrading)
 
@@ -72,7 +72,8 @@ Checked via `pnpm outdated`. **22 of 25 packages are behind.**
 | zustand | `4.5.7` | `5.0.15` | Major but relatively smooth migration. |
 | tailwindcss | `3.4.18` | `4.3.3` | v4 is CSS-first config, breaking. Defer. |
 | typescript | `5.9.3` | `7.0.2` | Major. Defer unless needed. |
-| @web3auth/modal | `10.8.0` | `11.4.3` | Major. Align with @web3auth/base. |
+| @web3auth/modal | `10.8.0` | `11.4.3` | Major. v11 requires wagmi v3 (major migration). Deferred — staying on v10 with `useSwitchChain()` fix. |
+| viem | ~~`2.17.0`~~ → `2.45.0` | `2.57.5` | ✅ Updated to meet Web3Auth v10+ peer requirement. |
 
 ### Minor / safe updates
 
@@ -198,6 +199,8 @@ React Query (`@tanstack/react-query`) is already installed and wrapped in provid
 ---
 
 ## 5. Sign-In Popup — Analysis & Fix
+
+> **Status: Implemented (v10 fixes).** v11 upgrade with `defaultChainId` was attempted but reverted — v11 requires wagmi v3 (major breaking change across the entire codebase). Fixed on v10 instead: replaced raw `wallet_switchEthereumChain` RPC with SDK's `useSwitchChain()` hook, removed `@web3auth/base@9` version skew, fixed `handleSignIn` race condition (local sign-in was broken), fixed 3-sec setup page flash, added `enableLogging` for debugging. Also discovered and fixed a Client ID / network mismatch that prevented local testing (devnet Client ID was being used with `sapphire_mainnet`).
 
 ### Current behavior
 
@@ -333,9 +336,9 @@ If a user hasn't logged in since the mainnet migration (Nov 24, 2025), their bro
 | # | Issue | Location | Detail |
 |---|-------|----------|--------|
 | 5 | **Profile page eager-loads all chart components** | `app/profile/[handle]/page.tsx:3-10` | Statically imports `DonutChartJS`, `LineChartJS`, `StackedBarChartJS`. Chart.js + react-chartjs-2 are fully bundled into the profile route. Should use `next/dynamic` (as the map page does for the donut). |
-| 6 | **`MapCrosshairPicker` static-imports maplibre-gl** | `components/wizard/MapCrosshairPicker.tsx:4` | `import maplibregl from "maplibre-gl"` at module top → ~700KB eagerly bundled into `/submit` route. Should use dynamic `import("maplibre-gl")` inside the effect. |
+| 6 | ~~**`MapCrosshairPicker` static-imports maplibre-gl**~~ | ~~`components/wizard/MapCrosshairPicker.tsx:4`~~ | ✅ **Fixed** — changed to dynamic `import("maplibre-gl")` + type-only import. ~700KB removed from `/submit` bundle. |
 | 7 | **No RSC data fetching** | `app/map/page.tsx` | The most-visited page is 100% client-rendered with `fetch` in `useEffect`. No server-side data fetching, no React Query caching. |
-| 8 | **No `Cache-Control` on public API** | `app/api/attestations/public/route.ts` | No `revalidate` or cache headers. Every `/map` visit re-queries `site_points_v`. |
+| 8 | ~~**No `Cache-Control` on public API**~~ | ~~`app/api/attestations/public/route.ts`~~ | ✅ **Fixed** — added `export const revalidate = 60`. Repeat `/map` visits within 60s skip the Supabase query. |
 
 ### UX issues
 
@@ -352,7 +355,7 @@ If a user hasn't logged in since the mainnet migration (Nov 24, 2025), their bro
 | 12 | **Dead/duplicate component** | `components/WalletConnect.tsx` | Re-implements sign-in + email upsert already handled by `TopNav` + `ProfileEmailSync`. Verify if still rendered anywhere; if not, remove. |
 | 13 | **No ESLint config, no tests** | project root | README acknowledges manual testing only. No lint devDeps, no ESLint config. `as any` casts are pervasive. Business logic in `lib/eas.ts`, `lib/validation.ts` warrants unit tests. |
 | 14 | **`as any` casts pervasive** | throughout | `router.replace(... as any)`, `useWeb3Auth() as any`, `(source as any).setData(...)`, feature props as `any`. Strict mode is on but routinely bypassed. `typedRoutes: true` is enabled yet route strings are still cast to `any`. |
-| 15 | **Web3Auth version skew** | `package.json` | `@web3auth/base@^9.7.0` vs `@web3auth/modal@^10.8.0` — major version mismatch. Lockfile shows duplicate `@web3auth/auth` (9.6.4 and 10.7.0). Should align to a single major. |
+| 15 | ~~**Web3Auth version skew**~~ | ~~`package.json`~~ | ✅ **Fixed** — `@web3auth/base@9` removed. All imports now from `@web3auth/modal@10`. |
 
 ---
 
@@ -360,31 +363,37 @@ If a user hasn't logged in since the mainnet migration (Nov 24, 2025), their bro
 
 ### Phase 1 — Quick wins (1 session)
 
-| Task | Effort | Impact |
-|------|--------|--------|
-| Remove Ethereum mainnet from Web3Auth dashboard + disable `EnsureEmbeddedChain` (sign-in popup fix) | Small | Eliminates visible popup on sign-in |
-| Bundle MapLibre CSS from npm (remove unpkg CDN) | Small | Eliminates CDN round-trip, fixes version drift |
-| Add `revalidate = 60` to `/api/attestations/public` | Trivial | Caches map data, reduces API latency |
-| Add map loading skeleton (dark placeholder) | Small | Improves perceived load time |
-| Dynamic-import maplibre-gl in `MapCrosshairPicker` | Small | Removes ~700KB from `/submit` bundle |
-| Fix Rules-of-Hooks violation in `AttestationDetailModal` | Small | Prevents potential runtime breakage |
-| Replace `require("react")` with ESM imports | Small | Correctness, tree-shaking |
-| Remove unused `chartjs-plugin-datalabels` | Trivial | Cleaner dependency tree |
-| Update `.env.example` and README for mainnet | Trivial | Prevents developer misconfiguration |
+| Task | Effort | Impact | Status |
+|------|--------|--------|--------|
+| Bundle MapLibre CSS from npm (remove unpkg CDN) | Small | Eliminates CDN round-trip, fixes version drift | ✅ Done (commit `51eea156`) |
+| Add `revalidate = 60` to `/api/attestations/public` | Trivial | Caches map data, reduces API latency | ✅ Done (commit `51eea156`) |
+| Add map loading skeleton (dark placeholder + spinner) | Small | Improves perceived load time | ✅ Done (commit `51eea156`) |
+| Dynamic-import maplibre-gl in `MapCrosshairPicker` | Small | Removes ~700KB from `/submit` bundle | ✅ Done (commit `51eea156`) |
+| Add `maplibregl.prewarm()` to all 3 map components | Small | Pre-warms Web Worker pool, faster map init | ✅ Done (commit `51eea156`) |
+| Remove `@web3auth/base@9` version skew (import from `@web3auth/modal`) | Small | Fixes type drift, removes orphaned package | ✅ Done |
+| Replace raw `wallet_switchEthereumChain` RPC with SDK's `useSwitchChain()` | Small | Silent chain switch for embedded wallets, no popup | ✅ Done |
+| Fix `handleSignIn` race condition (check `connect()` return, useEffect navigation) | Small | Fixes broken local sign-in — was navigating before connection confirmed | ✅ Done |
+| Fix setup page 3-sec flash (loading spinner while checking profile) | Small | Eliminates form flash for returning users | ✅ Done |
+| Add `enableLogging: true` in dev mode for Web3Auth debugging | Trivial | Console logs show exactly where auth flow stalls | ✅ Done |
+| Update `viem` to `^2.45.0` (Web3Auth peer requirement) | Trivial | Meets `@web3auth/modal@10` peer dep | ✅ Done |
+| Fix Rules-of-Hooks violation in `AttestationDetailModal` | Small | Prevents potential runtime breakage | ⬜ Not yet done |
+| Replace `require("react")` with ESM imports | Small | Correctness, tree-shaking | ⬜ Not yet done |
+| Remove unused `chartjs-plugin-datalabels` | Trivial | Cleaner dependency tree | ⬜ Not yet done |
+| Update `.env.example` and README for mainnet | Trivial | Prevents developer misconfiguration | ⬜ Not yet done |
 
 ### Phase 2 — Bigger improvements (separate sprints)
 
-| Task | Effort | Impact |
-|------|--------|--------|
-| Upgrade maplibre-gl v3 → v5+ | Medium | Biggest map perf win (WebGL2) |
-| Pin Next.js canary → stable (`16.4.0`) | Medium | Production stability |
-| Adopt React Query for data fetching | Medium | Caching, dedup, background refetch |
-| Upgrade `@web3auth/*` to v11 + use `defaultChainId` | Medium | Eliminates chain-switch popup, fixes version skew |
-| Lazy-load chart components on profile page | Small | Reduces profile route bundle |
-| Selective localStorage clearing on logout | Small | Prevents wizard draft data loss |
-| Remove dead `WalletConnect.tsx` component | Small | Code cleanliness |
-| Add ESLint config + fix `as any` casts | Medium | Type safety, code quality |
-| Add unit tests for `lib/eas.ts` and `lib/validation.ts` | Medium | Business logic correctness |
+| Task | Effort | Impact | Status |
+|------|--------|--------|--------|
+| Upgrade maplibre-gl v3 → v5 | Medium | Biggest map perf win (WebGL2) | ✅ Done — v3.6.2 → v5.24.0 (commit `2dd98afd`) |
+| Pin Next.js canary → stable (`16.4.0`) | Medium | Production stability | ⬜ Not yet done |
+| Adopt React Query for data fetching | Medium | Caching, dedup, background refetch | ⬜ Not yet done |
+| Upgrade `@web3auth/modal` to v11 + `defaultChainId` | Medium | Eliminates chain switch entirely | ⬜ Deferred — v11 requires wagmi v3 (major migration). v10 fix with `useSwitchChain()` applied instead. |
+| Lazy-load chart components on profile page | Small | Reduces profile route bundle | ⬜ Not yet done |
+| Selective localStorage clearing on logout | Small | Prevents wizard draft data loss | ⬜ Not yet done |
+| Remove dead `WalletConnect.tsx` component | Small | Code cleanliness | ⬜ Not yet done |
+| Add ESLint config + fix `as any` casts | Medium | Type safety, code quality | ⬜ Not yet done |
+| Add unit tests for `lib/eas.ts` and `lib/validation.ts` | Medium | Business logic correctness | ⬜ Not yet done |
 
 ### Phase 3 — Major upgrades (dedicated sprints, one at a time)
 

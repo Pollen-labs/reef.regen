@@ -35,6 +35,7 @@ export default function TopNav() {
   const { isConnected, address } = useAccount();
   const { disconnect } = useDisconnect();
   const [profileHandle, setProfileHandle] = useState<string | null>(null);
+  const [pendingRedirect, setPendingRedirect] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [menuAnim, setMenuAnim] = useState(false);
@@ -197,15 +198,23 @@ export default function TopNav() {
   const handleSignIn = async () => {
     try {
       if (!isConnected) {
-        await connectWeb3Auth();
+        const conn = await connectWeb3Auth();
+        if (!conn) return; // Connection failed, cancelled, or popup blocked
       }
-      // After successful connect, go to onboarding setup step with return path
       const ret = encodeURIComponent(pathname || "/");
-      router.push((`/profile/setup?redirect=${ret}`) as Route);
+      setPendingRedirect(ret);
     } catch (error) {
       console.error("Failed to connect:", error);
     }
   };
+
+  // Navigate to setup page only after isConnected confirms (it updates async after connect())
+  useEffect(() => {
+    if (isConnected && pendingRedirect !== null) {
+      router.push((`/profile/setup?redirect=${pendingRedirect}`) as Route);
+      setPendingRedirect(null);
+    }
+  }, [isConnected, pendingRedirect, router]);
 
   const accountHref = profileHandle ? `/profile/${profileHandle}` : "/profile/setup";
 
