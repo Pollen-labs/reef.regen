@@ -1,0 +1,103 @@
+# Reef.Regen
+
+> A free platform where anyone doing coral restoration — dive shops, NGOs, community groups, citizen scientists — can document their work as verifiable, tamper-proof records on the blockchain. No crypto knowledge needed.
+
+## What is Reef.Regen?
+
+Coral reefs are dying. The people working to save them — planting corals, monitoring reefs, transplanting fragments — rarely get credit for their work. Reef.Regen fixes this by letting anyone create a permanent, publicly verifiable record of their restoration actions.
+
+Think of it as a digital logbook for coral restoration that can't be faked or altered. Every action you record — where you did it, when, what species, how many corals, with photo evidence — becomes a public attestation that anyone can verify independently.
+
+## Who is it for?
+
+- **Dive shops and tour operators** — show clients your reef restoration is real and ongoing
+- **Marine NGOs and research groups** — create transparent, auditable records of your conservation work
+- **Community projects** — document grassroots reef restoration with the same credibility as large organizations
+- **Citizen scientists** — contribute to a shared public dataset of coral restoration worldwide
+- **Funders and verifier organizations** — browse the map to find and verify real restoration activity
+
+## What can you do here?
+
+- **[Explore the map](https://reefregen.org/map)** — See restoration sites around the world. Click any pin to see what actions were taken, by whom, and when.
+- **[Record a restoration action](https://reefregen.org/submit)** — Sign in with Google, Apple, or email, then follow a simple 5-step form: what you did, when and where, photos and notes, species observed, and who helped.
+- **[View organization profiles](https://reefregen.org/profile)** — See public profiles with stats, charts, and a timeline of all restoration work.
+- **[Share your work](https://reefregen.org/)** — Every attestation generates a shareable link with a custom image for social media.
+
+## How does it work? (plain English)
+
+1. **Sign in** with your Google, Apple, LinkedIn, or email account — no wallet setup, no crypto experience needed
+2. **Fill in the form** — what restoration action you did, the GPS location, date, photos, species, and who contributed
+3. **Sign your record** — the platform creates a digital signature using your account (you don't pay any gas fees)
+4. **It's permanent** — your record is published to the Ethereum Attestation Service on Optimism, a public blockchain. It can't be altered or deleted.
+5. **It's public** — your action appears on the global map and your organization's profile for anyone to see and verify
+
+## Why blockchain?
+
+Traditional databases can be edited by whoever controls them. Blockchain attestations are permanent and publicly verifiable — no one can quietly change the records. This builds trust: funders, partners, and the public can independently verify that restoration work actually happened, when, and by whom.
+
+The platform uses the **Ethereum Attestation Service (EAS)** on **Optimism** — a fast, low-cost blockchain. Users never touch crypto or pay fees; the platform covers that automatically.
+
+## Key pages
+
+- [Home](https://reefregen.org/) — What Reef.Regen is and why it matters
+- [Map](https://reefregen.org/map) — Interactive map of all public restoration sites worldwide
+- [Record an action](https://reefregen.org/submit) — Start the 5-step form (requires sign-in)
+- [Attest](https://reefregen.org/attest) — Quick entry point for creating an attestation
+- [Profile](https://reefregen.org/profile) — Public organization profiles with restoration stats and history
+
+## Built by
+
+- [Pollen Labs](https://pollenlabs.org/) — Concept, design, development, and sole maintenance of Reef.Regen
+- [MesoReef DAO](https://mesoreefdao.org/) — Stewardship and community support
+
+## Frequently asked questions
+
+**Do I need blockchain experience to use it?**
+No. You can log in with Google, Apple, or LinkedIn; your wallet is created automatically and we cover the transaction gas.
+
+**Who can submit a restoration action?**
+Anyone. From community groups to NGOs, dive shops, or individual volunteers.
+
+**What happens after I submit an action?**
+Your submission is stored as a verifiable record on Ethereum (Optimism network) and appears on the public reef map.
+
+**Can I attach evidence or data?**
+Yes. You can include a photo, report, or other file (1 file per attestation, max 5MB) to support your attestation.
+
+**Is Reef.Regen free to use?**
+Yes. All transactions are paid by Reef.Regen — we use the delegation features from the Ethereum Attestation Service (EAS) to pay for the gas on your behalf so you don't pay any blockchain fees.
+
+---
+
+## Technical details (for developers and integrators)
+
+### Tech stack
+
+- **Frontend**: Next.js 16 (App Router), React 18, TypeScript, Tailwind CSS
+- **Maps**: MapLibre GL 5 with MapTiler vector tiles
+- **Auth**: Web3Auth Modal (embedded wallet, social login), Wagmi v2, Viem
+- **Backend**: Supabase (PostgreSQL + PostGIS)
+- **Blockchain**: Ethereum Attestation Service on Optimism Mainnet (chainId 10)
+- **Storage**: IPFS via Filebase for evidence photos
+- **Relayer**: Cloudflare Worker for gasless EAS attestation submission
+- **Hosting**: Netlify
+
+### How attestations work (technical)
+
+1. User authenticates via Web3Auth (embedded wallet, no browser extension)
+2. Client builds EIP-712 typed data per the EAS delegated attestation schema
+3. User signs with their embedded wallet
+4. A Cloudflare Worker relayer submits the signed attestation to EAS on Optimism (gasless for the user)
+5. Attestation UID is stored in Supabase and the action appears on the map
+
+### EAS schema
+
+Attestations use EAS schema UID `0xd15191c82976ae7030dc20f56430b998d9ad586b243d29dbb58522f709af3b46` on Optimism Mainnet with 16 structured fields: action types, location (lon/lat), depth, surface area, species diversity, coral counts, contributors, and file references.
+
+### For developers
+
+- Source code: https://github.com/Pollen-labs/reef.regen
+- Environment setup: see `.env.example` in the repository
+- Documentation: `docs/` directory contains full product specs (v0.1–v1.6)
+- Package manager: pnpm 9.11.0
+- Node.js 20.9+ required

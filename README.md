@@ -70,9 +70,9 @@ Reef.Regen follows a modern full-stack architecture:
                         └──────────┬─────────┘
                                    ▼
                         ┌──────────────────────┐
-                        │  EAS (Blockchain)    │
-                        │  Optimism Sepolia    │
-                        └──────────────────────┘
+                         │  EAS (Blockchain)    │
+                         │  Optimism Mainnet    │
+                         └──────────────────────┘
 ```
 
 ### Component Layers
@@ -80,7 +80,7 @@ Reef.Regen follows a modern full-stack architecture:
 - **Frontend**: Next.js 16 (App Router) with React 18
 - **Backend**: Supabase (PostgreSQL + Edge Functions)
 - **Relayer**: Cloudflare Worker for gasless transactions
-- **Blockchain**: Ethereum Attestation Service on Optimism Sepolia
+- **Blockchain**: Ethereum Attestation Service on Optimism Mainnet
 - **Storage**: IPFS via Filebase for evidence files
 
 ## Tech Stack
@@ -93,7 +93,7 @@ Reef.Regen follows a modern full-stack architecture:
 - **Styling**: Tailwind CSS
 - **State Management**: Zustand (with persistence)
 - **Form Validation**: Zod
-- **Maps**: MapLibre GL 3.6.2
+- **Maps**: MapLibre GL 5.24.0
 - **Charts**: Chart.js + react-chartjs-2
 - **Wallet Integration**: 
   - Web3Auth Modal (@web3auth/modal)
@@ -110,7 +110,7 @@ Reef.Regen follows a modern full-stack architecture:
 ### Infrastructure
 
 - **Relayer**: Cloudflare Worker (TypeScript)
-- **Blockchain**: Optimism Sepolia (Chain ID: 11155420)
+- **Blockchain**: Optimism Mainnet (Chain ID: 10)
 - **EAS Contract**: `0x4200000000000000000000000000000000000021`
 - **Package Manager**: pnpm 9.11.0
 
@@ -118,7 +118,7 @@ Reef.Regen follows a modern full-stack architecture:
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 20.9+
 - pnpm 9.11.0 (managed via Corepack)
 - Supabase account and project
 - Cloudflare Workers account (for relayer)
@@ -158,8 +158,8 @@ Reef.Regen follows a modern full-stack architecture:
    
    # EAS Configuration
    NEXT_PUBLIC_EAS_ADDRESS=0x4200000000000000000000000000000000000021
-   NEXT_PUBLIC_EAS_VERSION=1.0.0
-   NEXT_PUBLIC_CHAIN_ID=11155420
+    NEXT_PUBLIC_EAS_VERSION=0.26
+    NEXT_PUBLIC_CHAIN_ID=10
    NEXT_PUBLIC_DEFAULT_SCHEMA_UID=your_schema_uid
    
    # Relayer
@@ -190,10 +190,10 @@ Reef.Regen follows a modern full-stack architecture:
    
    See `eas-relayer/` directory for the relayer implementation. Deploy to Cloudflare Workers with the following secrets:
    - `RELAYER_PRIVATE_KEY`: Funded wallet private key
-   - `RPC_URL`: Optimism Sepolia RPC endpoint
-   - `EAS_ADDRESS`: EAS contract address
-   - `CHAIN_ID`: 11155420
-   - `EAS_DOMAIN_VERSION`: 1.0.0
+    - `RPC_URL`: Optimism Mainnet RPC endpoint
+    - `EAS_ADDRESS`: EAS contract address
+    - `CHAIN_ID`: 10
+    - `EAS_DOMAIN_VERSION`: 0.26
    - `ALLOWED_SCHEMA_UIDS`: Comma-separated schema UIDs
    - `ALLOWED_ORIGINS`: Comma-separated allowed origins
 
@@ -307,8 +307,8 @@ Currently uses manual testing. Consider adding:
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key | Yes |
 | `NEXT_PUBLIC_WEB3AUTH_CLIENT_ID` | Web3Auth client ID | Yes |
 | `NEXT_PUBLIC_EAS_ADDRESS` | EAS contract address | Yes |
-| `NEXT_PUBLIC_EAS_VERSION` | EAS domain version (1.0.0) | Yes |
-| `NEXT_PUBLIC_CHAIN_ID` | Chain ID (11155420 for OP Sepolia) | Yes |
+| `NEXT_PUBLIC_EAS_VERSION` | EAS domain version (0.26) | Yes |
+| `NEXT_PUBLIC_CHAIN_ID` | Chain ID (10 for OP Mainnet) | Yes |
 | `NEXT_PUBLIC_DEFAULT_SCHEMA_UID` | Default EAS schema UID | Yes |
 | `RELAYER_URL` | Cloudflare Worker relayer URL | Yes |
 | `RELAYER_INVOKE_KEY` | Supabase anon key for relayer auth | Yes |
@@ -323,10 +323,10 @@ Currently uses manual testing. Consider adding:
 | Variable | Description |
 |----------|-------------|
 | `RELAYER_PRIVATE_KEY` | Funded wallet private key |
-| `RPC_URL` | Optimism Sepolia RPC endpoint |
+| `RPC_URL` | Optimism Mainnet RPC endpoint |
 | `EAS_ADDRESS` | EAS contract address |
-| `CHAIN_ID` | 11155420 |
-| `EAS_DOMAIN_VERSION` | 1.0.0 |
+| `CHAIN_ID` | 10 |
+| `EAS_DOMAIN_VERSION` | 0.26 |
 | `ALLOWED_SCHEMA_UIDS` | Comma-separated schema UIDs |
 | `ALLOWED_ORIGINS` | Comma-separated allowed origins |
 
@@ -356,8 +356,8 @@ This project is maintained by Pollen Labs. For contributions, please:
 
 ## Acknowledgments
 
-- [**Pollen Labs**](https://pollenlabs.org/)- Creation and development
-- [**MesoReef DAO**](https://mesoreefdao.org/) - Maintenance and community hosting
+- [**Pollen Labs**](https://pollenlabs.org/) - Concept, design, and development
+- [**MesoReef DAO**](https://mesoreefdao.org/) - Stewardship and community support
 
 ---
 

@@ -9,6 +9,7 @@ import Button from "@/components/ui/Button";
 import RevealPrivateKeyModal from "@/components/security/RevealPrivateKeyModal";
 import Skeleton from "@/components/ui/Skeleton";
 import { env } from "@/lib/env";
+import { clearAuthStorage } from "@/lib/auth/clearAuthStorage";
 import { SiteModal } from "@/components/wizard/SiteModal";
 import IdentifierBar from "@/components/ui/IdentifierBar";
 
@@ -200,7 +201,7 @@ export default function ProfileSettingPage() {
     } catch {}
     disconnect();
     if (typeof window !== 'undefined') {
-      try { localStorage.clear(); } catch {}
+      try { clearAuthStorage(); } catch {}
       window.location.href = "/";
     }
   }
