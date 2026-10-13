@@ -316,8 +316,8 @@ export default function LocationPane({
 const DonutChart = dynamic(() => import("@/components/shared/charts/DonutChartJS"), { ssr: false });
 
 function LazyDonut({ data }: { data: { label: string; count: number; color: string }[] }) {
-  const [ready, setReady] = require("react").useState(false);
-  require("react").useEffect(() => {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
     const idle = (cb: () => void) => (
       (window as any).requestIdleCallback ? (window as any).requestIdleCallback(cb, { timeout: 500 }) : setTimeout(cb, 200)
     );

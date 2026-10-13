@@ -1,4 +1,5 @@
 "use client";
+import { useEffect } from "react";
 import type { Attestation } from "@/types/map";
 import Tag from "@/components/ui/Tag";
 import IdentifierBar from "@/components/ui/IdentifierBar";
@@ -13,17 +14,16 @@ export default function AttestationDetailModal({ attestation, onClose, overlayCl
   onClose: () => void;
   overlayClassName?: string; // optional: customize overlay styles
 }) {
+  // Close on ESC for convenience (hook must run before any early return)
+  useEffect(() => {
+    if (!attestation) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [attestation, onClose]);
+
   if (!attestation) return null;
 
-  // Close on ESC for convenience
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    require('react').useEffect(() => {
-      const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-      window.addEventListener('keydown', onKey);
-      return () => window.removeEventListener('keydown', onKey);
-    }, [onClose]);
-  } catch {}
   const siteType = attestation.siteType ?? "-";
   const locStr = attestation.lat != null && attestation.lng != null ? `${attestation.lat.toFixed(5)}, ${attestation.lng.toFixed(5)}` : "-";
   const depthStr = attestation.depthM != null ? `${attestation.depthM} meter` : "-";
